@@ -16,7 +16,8 @@ class ReportActivity : AppCompatActivity() {
         val name: String,
         val textId: Int,
         val buttonId: Int,
-        val label: String
+        val label: String,
+        val placeholder: String
     )
 
     private lateinit var platforms: List<Platform>
@@ -28,11 +29,41 @@ class ReportActivity : AppCompatActivity() {
         supportActionBar?.setDisplayUseLogoEnabled(true)
 
         platforms = listOf(
-            Platform("instagram", R.id.text_instagram, R.id.button_paste_instagram, "Paste link Instagram"),
-            Platform("facebook", R.id.text_facebook, R.id.button_paste_facebook, "Paste link Facebook"),
-            Platform("twitter", R.id.text_twitter, R.id.button_paste_twitter, "Paste link Twitter"),
-            Platform("tiktok", R.id.text_tiktok, R.id.button_paste_tiktok, "Paste link TikTok"),
-            Platform("youtube", R.id.text_youtube, R.id.button_paste_youtube, "Paste link YouTube")
+            Platform(
+                "instagram",
+                R.id.text_instagram,
+                R.id.button_paste_instagram,
+                "Paste link Instagram",
+                "https://instagram.com/placeholder"
+            ),
+            Platform(
+                "facebook",
+                R.id.text_facebook,
+                R.id.button_paste_facebook,
+                "Paste link Facebook",
+                "https://facebook.com/placeholder"
+            ),
+            Platform(
+                "twitter",
+                R.id.text_twitter,
+                R.id.button_paste_twitter,
+                "Paste link Twitter",
+                "https://twitter.com/placeholder"
+            ),
+            Platform(
+                "tiktok",
+                R.id.text_tiktok,
+                R.id.button_paste_tiktok,
+                "Paste link TikTok",
+                "https://www.tiktok.com/placeholder"
+            ),
+            Platform(
+                "youtube",
+                R.id.text_youtube,
+                R.id.button_paste_youtube,
+                "Paste link YouTube",
+                "https://youtu.be/placeholder"
+            )
         )
 
         platforms.forEach { setupPasteButton(it) }
@@ -47,22 +78,21 @@ class ReportActivity : AppCompatActivity() {
     private fun setupPasteButton(platform: Platform) {
         val textView = findViewById<TextView>(platform.textId)
         val button = findViewById<Button>(platform.buttonId)
+        textView.text = platform.placeholder
         button.text = platform.label
         button.setOnClickListener {
-            if (textView.visibility == View.GONE) {
+            if (button.text != "Batalkan") {
                 val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
                 val clip = clipboard.primaryClip
                 val text = clip?.getItemAt(0)?.coerceToText(this)?.toString() ?: ""
                 if (isValidLink(text, platform.name)) {
                     textView.text = text.trim()
-                    textView.visibility = View.VISIBLE
                     button.text = "Batalkan"
                 } else {
                     Toast.makeText(this, "Link konten tidak valid", Toast.LENGTH_SHORT).show()
                 }
             } else {
-                textView.text = ""
-                textView.visibility = View.GONE
+                textView.text = platform.placeholder
                 button.text = platform.label
             }
         }
@@ -94,9 +124,8 @@ class ReportActivity : AppCompatActivity() {
         if (platform != null) {
             val textView = findViewById<TextView>(platform.textId)
             val button = findViewById<Button>(platform.buttonId)
-            if (textView.visibility == View.GONE) {
+            if (button.text != "Batalkan") {
                 textView.text = text.trim()
-                textView.visibility = View.VISIBLE
                 button.text = "Batalkan"
             }
         }

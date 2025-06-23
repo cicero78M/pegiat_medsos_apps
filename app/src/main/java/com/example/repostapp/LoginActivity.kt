@@ -72,7 +72,7 @@ class LoginActivity : AppCompatActivity() {
                             val token = obj.optString("token", "")
                             val user = obj.optJSONObject("user")
                             val userId = user?.optString("user_id", nrp) ?: nrp
-                            val intent = Intent(this@LoginActivity, UserProfileActivity::class.java).apply {
+                            val intent = Intent(this@LoginActivity, DashboardActivity::class.java).apply {
                                 putExtra("token", token)
                                 putExtra("userId", userId)
                             }

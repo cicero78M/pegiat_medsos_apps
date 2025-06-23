@@ -64,7 +64,18 @@ class LoginActivity : AppCompatActivity() {
 
                     withContext(Dispatchers.Main) {
                         if (success) {
-                            startActivity(Intent(this@LoginActivity, DashboardActivity::class.java))
+                            val data = try {
+                                val obj = JSONObject(responseBody ?: "{}")
+                                obj.optJSONObject("data")
+                            } catch (e: Exception) {
+                                null
+                            }
+                            val intent = Intent(this@LoginActivity, UserProfileActivity::class.java).apply {
+                                putExtra("nrp", data?.optString("nrp", nrp) ?: nrp)
+                                putExtra("name", data?.optString("name", ""))
+                                putExtra("phone", data?.optString("whatsapp", phone) ?: phone)
+                            }
+                            startActivity(intent)
                             finish()
                         } else {
                             Toast.makeText(this@LoginActivity, message, Toast.LENGTH_SHORT).show()

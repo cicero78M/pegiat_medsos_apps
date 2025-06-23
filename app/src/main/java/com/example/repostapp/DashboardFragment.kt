@@ -42,6 +42,7 @@ class DashboardFragment : Fragment(R.layout.fragment_dashboard) {
 
     private lateinit var adapter: PostAdapter
     private lateinit var progressBar: ProgressBar
+    private lateinit var emptyView: android.widget.TextView
     private val downloadedIds = mutableSetOf<String>()
 
     private val requestPermission =
@@ -63,6 +64,7 @@ class DashboardFragment : Fragment(R.layout.fragment_dashboard) {
         }
         val recycler = view.findViewById<RecyclerView>(R.id.recycler_posts)
         progressBar = view.findViewById(R.id.progress_loading)
+        emptyView = view.findViewById(R.id.text_empty)
         recycler.layoutManager = LinearLayoutManager(requireContext())
         recycler.adapter = adapter
 
@@ -121,6 +123,7 @@ class DashboardFragment : Fragment(R.layout.fragment_dashboard) {
                 client.newCall(req).execute().use { resp ->
                     val body = resp.body?.string()
                     withContext(Dispatchers.Main) {
+                        emptyView.visibility = View.GONE
                         if (resp.isSuccessful) {
                             val arr = try {
                                 JSONObject(body ?: "{}").optJSONArray("data")
@@ -158,6 +161,7 @@ class DashboardFragment : Fragment(R.layout.fragment_dashboard) {
                                 }
                             }
                             adapter.setData(posts)
+                            emptyView.visibility = if (posts.isEmpty()) View.VISIBLE else View.GONE
                             progressBar.visibility = View.GONE
                         } else {
                             progressBar.visibility = View.GONE

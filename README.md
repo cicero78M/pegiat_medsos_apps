@@ -32,3 +32,5 @@ found in the [docs](docs/) directory:
 - [`ARCHITECTURE.md`](docs/ARCHITECTURE.md) – overview of activities and
   fragments.
 - [`USAGE.md`](docs/USAGE.md) – how to build and interact with the app.
+- [`landing_page.html`](docs/landing_page.html) – a lightweight landing page
+  describing key features and providing a download link.

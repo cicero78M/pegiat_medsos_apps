@@ -15,3 +15,7 @@ The project uses Gradle Kotlin DSL. To build the project you would typically run
 ```
 
 Additional implementation is required to integrate Instagram APIs and handle authentication.
+
+The app retrieves user profile information from the [Cicero_V2](https://github.com/cicero78M/Cicero_V2) backend API.
+After a successful login, the token and user ID returned by `/api/auth/user-login`
+are used to request `/api/users/{userId}` to display the profile screen.

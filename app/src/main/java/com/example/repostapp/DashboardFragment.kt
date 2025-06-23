@@ -109,7 +109,9 @@ class DashboardFragment : Fragment(R.layout.fragment_dashboard) {
                                 val created = obj.optString("created_at")
                                 val createdDate = try {
                                     if (created.contains("T")) {
-                                        java.time.OffsetDateTime.parse(created).toLocalDate()
+                                        java.time.OffsetDateTime.parse(created)
+                                            .atZoneSameInstant(java.time.ZoneId.systemDefault())
+                                            .toLocalDate()
                                     } else {
                                         java.time.LocalDateTime.parse(created, formatter).toLocalDate()
                                     }

@@ -3,6 +3,9 @@ package com.example.repostapp
 import android.os.Bundle
 import android.widget.TextView
 import android.widget.Toast
+import android.widget.Button
+import android.content.Intent
+import androidx.core.content.edit
 import androidx.appcompat.app.AppCompatActivity
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -18,6 +21,13 @@ class UserProfileActivity : AppCompatActivity() {
         setContentView(R.layout.activity_profile)
         val userId = intent.getStringExtra("userId") ?: ""
         val token = intent.getStringExtra("token") ?: ""
+        findViewById<Button>(R.id.button_logout).setOnClickListener {
+            val prefs = getSharedPreferences("auth", MODE_PRIVATE)
+            prefs.edit { clear() }
+            val intent = Intent(this, MainActivity::class.java)
+            startActivity(intent)
+            finish()
+        }
         if (userId.isNotBlank() && token.isNotBlank()) {
             fetchProfile(userId, token)
         }

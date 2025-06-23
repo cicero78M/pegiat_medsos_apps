@@ -4,6 +4,10 @@ import android.os.Bundle
 import android.view.View
 import android.widget.TextView
 import android.widget.Toast
+import android.widget.Button
+import android.content.Intent
+import android.content.Context
+import androidx.core.content.edit
 import androidx.core.os.bundleOf
 import androidx.fragment.app.Fragment
 import kotlinx.coroutines.CoroutineScope
@@ -31,6 +35,13 @@ class UserProfileFragment : Fragment(R.layout.activity_profile) {
         super.onViewCreated(view, savedInstanceState)
         val userId = arguments?.getString(ARG_USER_ID) ?: ""
         val token = arguments?.getString(ARG_TOKEN) ?: ""
+        view.findViewById<Button>(R.id.button_logout).setOnClickListener {
+            val prefs = requireContext().getSharedPreferences("auth", Context.MODE_PRIVATE)
+            prefs.edit { clear() }
+            val intent = Intent(requireContext(), MainActivity::class.java)
+            startActivity(intent)
+            activity?.finish()
+        }
         if (userId.isNotBlank() && token.isNotBlank()) {
             fetchProfile(userId, token, view)
         }

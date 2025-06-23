@@ -1,67 +1,191 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:orientation="vertical"
-    android:padding="16dp"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <TextView
-        android:id="@+id/text_index"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Urutan:" />
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
 
-    <TextView
-        android:id="@+id/text_client_id"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Client ID:" />
+        <ImageView
+            android:id="@+id/image_cover"
+            android:layout_width="0dp"
+            android:layout_height="200dp"
+            android:scaleType="centerCrop"
+            android:src="@drawable/profile_cover_placeholder"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
 
-    <TextView
-        android:id="@+id/text_name"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Nama:" />
+        <ImageView
+            android:id="@+id/image_avatar"
+            android:layout_width="110dp"
+            android:layout_height="110dp"
+            android:layout_marginTop="-55dp"
+            android:scaleType="centerCrop"
+            android:src="@drawable/profile_avatar_placeholder"
+            android:background="@drawable/avatar_background"
+            app:layout_constraintTop_toBottomOf="@id/image_cover"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent" />
 
-    <TextView
-        android:id="@+id/text_rank"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Pangkat:" />
+        <TextView
+            android:id="@+id/text_name"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Nama:"
+            android:textStyle="bold"
+            android:textSize="20sp"
+            app:layout_constraintTop_toBottomOf="@id/image_avatar"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            android:layout_marginTop="8dp" />
 
-    <TextView
-        android:id="@+id/text_nrp"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="NRP:" />
+        <TextView
+            android:id="@+id/text_rank"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Pangkat:"
+            android:textSize="16sp"
+            app:layout_constraintTop_toBottomOf="@id/text_name"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent" />
 
-    <TextView
-        android:id="@+id/text_satfung"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Satfung:" />
+        <LinearLayout
+            android:id="@+id/stats_container"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:orientation="horizontal"
+            app:layout_constraintTop_toBottomOf="@id/text_rank"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent">
 
-    <TextView
-        android:id="@+id/text_jabatan"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Jabatan:" />
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical">
 
-    <TextView
-        android:id="@+id/text_ig"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Username IG:" />
+                <TextView
+                    android:id="@+id/stat_posts"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:text="0"
+                    android:textSize="18sp"
+                    android:textStyle="bold" />
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:text="Posts"
+                    android:textSize="12sp" />
+            </LinearLayout>
 
-    <TextView
-        android:id="@+id/text_tiktok"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Username TikTok:" />
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical">
 
-    <TextView
-        android:id="@+id/text_status"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Status:" />
-</LinearLayout>
+                <TextView
+                    android:id="@+id/stat_followers"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:text="0"
+                    android:textSize="18sp"
+                    android:textStyle="bold" />
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:text="Followers"
+                    android:textSize="12sp" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/stat_following"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:text="0"
+                    android:textSize="18sp"
+                    android:textStyle="bold" />
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:text="Following"
+                    android:textSize="12sp" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/info_container"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_margin="16dp"
+            android:orientation="vertical"
+            app:layout_constraintTop_toBottomOf="@id/stats_container"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent">
+
+            <TextView
+                android:id="@+id/text_index"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Urutan:" />
+
+            <TextView
+                android:id="@+id/text_client_id"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Client ID:" />
+
+            <TextView
+                android:id="@+id/text_nrp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="NRP:" />
+
+            <TextView
+                android:id="@+id/text_satfung"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Satfung:" />
+
+            <TextView
+                android:id="@+id/text_jabatan"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Jabatan:" />
+
+            <TextView
+                android:id="@+id/text_ig"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Username IG:" />
+
+            <TextView
+                android:id="@+id/text_tiktok"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Username TikTok:" />
+
+            <TextView
+                android:id="@+id/text_status"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Status:" />
+        </LinearLayout>
+    </androidx.constraintlayout.widget.ConstraintLayout>
+</ScrollView>

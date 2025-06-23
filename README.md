@@ -2,7 +2,8 @@
 
 This project contains a minimal Android application skeleton. The app includes several activities:
 
-- `MainActivity` as a landing page
+- `MainActivity` as a landing page. It checks for a saved JWT token and
+  immediately opens the dashboard when the token is valid.
 - `LoginActivity` for user authentication
 - `UserProfileActivity` to show user details
 - `DashboardActivity` to display Instagram posts fetched from official accounts

@@ -1,0 +1,21 @@
+# Building and Running
+
+This project relies on the standard Android toolchain. You can open the
+repository with **Android Studio Flamingo (or newer)** and press the *Run* button
+on an attached emulator or device.
+
+If you have the Gradle wrapper installed you may also build from the command
+line:
+
+```bash
+./gradlew assembleDebug
+```
+
+The app requires an active internet connection to reach the backend API hosted on
+`papiqo.com`. Login uses the `/api/auth/user-login` endpoint which returns a JWT
+and the user identifier. These values are saved in `SharedPreferences` under the
+`auth` key space.
+
+After a successful login the dashboard fetches Instagram posts via
+`/api/insta/posts?client_id=<id>` and displays today's content. Tapping a post
+will download it to the public *Downloads* directory and show a share dialog.

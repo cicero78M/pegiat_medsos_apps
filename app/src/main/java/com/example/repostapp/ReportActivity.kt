@@ -23,6 +23,9 @@ class ReportActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_report)
+        supportActionBar?.setDisplayShowHomeEnabled(true)
+        supportActionBar?.setLogo(R.mipmap.ic_launcher)
+        supportActionBar?.setDisplayUseLogoEnabled(true)
 
         platforms = listOf(
             Platform("instagram", R.id.text_instagram, R.id.button_paste_instagram, "Paste link Instagram"),

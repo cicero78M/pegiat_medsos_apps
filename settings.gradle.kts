@@ -13,5 +13,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "RepostInstagramApp"
+rootProject.name = "CiceroReposter"
 include(":app")

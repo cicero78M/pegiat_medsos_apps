@@ -11,6 +11,9 @@ class DashboardActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_dashboard)
+        supportActionBar?.setDisplayShowHomeEnabled(true)
+        supportActionBar?.setLogo(R.mipmap.ic_launcher)
+        supportActionBar?.setDisplayUseLogoEnabled(true)
 
         val token = intent.getStringExtra("token")
         val userId = intent.getStringExtra("userId")

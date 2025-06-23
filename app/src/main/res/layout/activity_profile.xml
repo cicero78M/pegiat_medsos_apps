@@ -31,22 +31,33 @@
             app:layout_constraintEnd_toEndOf="parent" />
 
         <TextView
-            android:id="@+id/text_name"
+            android:id="@+id/text_username"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Nama:"
+            android:text="@username"
             android:textStyle="bold"
-            android:textSize="20sp"
+            android:textSize="18sp"
             app:layout_constraintTop_toBottomOf="@id/image_avatar"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             android:layout_marginTop="8dp" />
 
         <TextView
-            android:id="@+id/text_rank"
+            android:id="@+id/text_name"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Pangkat:"
+            android:text="Nama"
+            android:textStyle="bold"
+            android:textSize="20sp"
+            app:layout_constraintTop_toBottomOf="@id/text_username"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent" />
+
+        <TextView
+            android:id="@+id/text_nrp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="NRP"
             android:textSize="16sp"
             app:layout_constraintTop_toBottomOf="@id/text_name"
             app:layout_constraintStart_toStartOf="parent"
@@ -58,7 +69,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
             android:orientation="horizontal"
-            app:layout_constraintTop_toBottomOf="@id/text_rank"
+            app:layout_constraintTop_toBottomOf="@id/text_nrp"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent">
 
@@ -139,54 +150,87 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent">
 
-            <TextView
-                android:id="@+id/text_index"
-                android:layout_width="wrap_content"
+            <LinearLayout
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Urutan:" />
+                android:orientation="horizontal">
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Client ID:" />
+                <TextView
+                    android:id="@+id/text_client_id"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="2" />
+            </LinearLayout>
 
-            <TextView
-                android:id="@+id/text_client_id"
-                android:layout_width="wrap_content"
+            <LinearLayout
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Client ID:" />
+                android:orientation="horizontal">
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Satfung:" />
+                <TextView
+                    android:id="@+id/text_satfung"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="2" />
+            </LinearLayout>
 
-            <TextView
-                android:id="@+id/text_nrp"
-                android:layout_width="wrap_content"
+            <LinearLayout
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="NRP:" />
+                android:orientation="horizontal">
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Jabatan:" />
+                <TextView
+                    android:id="@+id/text_jabatan"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="2" />
+            </LinearLayout>
 
-            <TextView
-                android:id="@+id/text_satfung"
-                android:layout_width="wrap_content"
+            <LinearLayout
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Satfung:" />
+                android:orientation="horizontal">
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Username TikTok:" />
+                <TextView
+                    android:id="@+id/text_tiktok"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="2" />
+            </LinearLayout>
 
-            <TextView
-                android:id="@+id/text_jabatan"
-                android:layout_width="wrap_content"
+            <LinearLayout
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Jabatan:" />
+                android:orientation="horizontal">
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Status:" />
+                <TextView
+                    android:id="@+id/text_status"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="2" />
+            </LinearLayout>
 
-            <TextView
-                android:id="@+id/text_ig"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Username IG:" />
-
-            <TextView
-                android:id="@+id/text_tiktok"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Username TikTok:" />
-
-        <TextView
-            android:id="@+id/text_status"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Status:" />
-    </LinearLayout>
+        </LinearLayout>
 
     <Button
         android:id="@+id/button_logout"

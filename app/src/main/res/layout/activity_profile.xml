@@ -22,4 +22,34 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Telepon:" />
+
+    <TextView
+        android:id="@+id/text_satfung"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Satfung:" />
+
+    <TextView
+        android:id="@+id/text_jabatan"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Jabatan:" />
+
+    <TextView
+        android:id="@+id/text_ig"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Username IG:" />
+
+    <TextView
+        android:id="@+id/text_tiktok"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Username TikTok:" />
+
+    <TextView
+        android:id="@+id/text_status"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Status:" />
 </LinearLayout>

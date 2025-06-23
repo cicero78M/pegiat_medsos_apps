@@ -16,7 +16,8 @@ data class InstaPost(
     val isVideo: Boolean = false,
     val videoUrl: String? = null,
     val sourceUrl: String? = null,
-    var downloaded: Boolean = false
+    var downloaded: Boolean = false,
+    var localPath: String? = null
 )
 
 class PostAdapter(

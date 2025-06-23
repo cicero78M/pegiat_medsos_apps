@@ -1,11 +1,48 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:orientation="vertical"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Report Link Page" />
-</LinearLayout>
+    <LinearLayout
+        android:orientation="vertical"
+        android:padding="16dp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <EditText
+            android:id="@+id/input_instagram"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Link Instagram" />
+
+        <EditText
+            android:id="@+id/input_facebook"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Link Facebook" />
+
+        <EditText
+            android:id="@+id/input_twitter"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Link Twitter" />
+
+        <EditText
+            android:id="@+id/input_tiktok"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Link TikTok" />
+
+        <EditText
+            android:id="@+id/input_youtube"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Link YouTube" />
+
+        <Button
+            android:id="@+id/button_send_report"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Kirim" />
+    </LinearLayout>
+</ScrollView>

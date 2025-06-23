@@ -12,11 +12,17 @@ data class InstaPost(
     val id: String,
     val caption: String?,
     val imageUrl: String?,
-    val createdAt: String
+    val createdAt: String,
+    val isVideo: Boolean = false,
+    val videoUrl: String? = null,
+    val sourceUrl: String? = null,
+    var downloaded: Boolean = false
 )
 
-class PostAdapter(private val items: MutableList<InstaPost>) :
-    RecyclerView.Adapter<PostAdapter.PostViewHolder>() {
+class PostAdapter(
+    private val items: MutableList<InstaPost>,
+    private val onItemClicked: (InstaPost) -> Unit
+) : RecyclerView.Adapter<PostAdapter.PostViewHolder>() {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): PostViewHolder {
         val view = LayoutInflater.from(parent.context)
@@ -27,7 +33,9 @@ class PostAdapter(private val items: MutableList<InstaPost>) :
     override fun getItemCount() = items.size
 
     override fun onBindViewHolder(holder: PostViewHolder, position: Int) {
-        holder.bind(items[position])
+        val item = items[position]
+        holder.bind(item)
+        holder.itemView.setOnClickListener { onItemClicked(item) }
     }
 
     fun setData(data: List<InstaPost>) {
@@ -39,6 +47,7 @@ class PostAdapter(private val items: MutableList<InstaPost>) :
     class PostViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         private val captionText: TextView = itemView.findViewById(R.id.text_caption)
         private val imageView: ImageView = itemView.findViewById(R.id.image_post)
+        private val downloadedIcon: ImageView = itemView.findViewById(R.id.icon_downloaded)
 
         fun bind(post: InstaPost) {
             captionText.text = post.caption ?: ""
@@ -48,6 +57,7 @@ class PostAdapter(private val items: MutableList<InstaPost>) :
             } else {
                 imageView.setImageDrawable(null)
             }
+            downloadedIcon.visibility = if (post.downloaded) View.VISIBLE else View.GONE
         }
     }
 }

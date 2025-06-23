@@ -9,35 +9,70 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
 
-        <EditText
-            android:id="@+id/input_instagram"
+        <TextView
+            android:id="@+id/text_instagram"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Link Instagram" />
+            android:visibility="gone"
+            android:paddingBottom="8dp" />
 
-        <EditText
-            android:id="@+id/input_facebook"
-            android:layout_width="match_parent"
+        <Button
+            android:id="@+id/button_paste_instagram"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:hint="Link Facebook" />
+            android:text="Paste link Instagram" />
 
-        <EditText
-            android:id="@+id/input_twitter"
+        <TextView
+            android:id="@+id/text_facebook"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Link Twitter" />
+            android:visibility="gone"
+            android:paddingBottom="8dp" />
 
-        <EditText
-            android:id="@+id/input_tiktok"
-            android:layout_width="match_parent"
+        <Button
+            android:id="@+id/button_paste_facebook"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:hint="Link TikTok" />
+            android:text="Paste link Facebook" />
 
-        <EditText
-            android:id="@+id/input_youtube"
+        <TextView
+            android:id="@+id/text_twitter"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Link YouTube" />
+            android:visibility="gone"
+            android:paddingBottom="8dp" />
+
+        <Button
+            android:id="@+id/button_paste_twitter"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Paste link Twitter" />
+
+        <TextView
+            android:id="@+id/text_tiktok"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:visibility="gone"
+            android:paddingBottom="8dp" />
+
+        <Button
+            android:id="@+id/button_paste_tiktok"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Paste link TikTok" />
+
+        <TextView
+            android:id="@+id/text_youtube"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:visibility="gone"
+            android:paddingBottom="8dp" />
+
+        <Button
+            android:id="@+id/button_paste_youtube"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Paste link YouTube" />
 
         <Button
             android:id="@+id/button_send_report"

@@ -6,6 +6,7 @@ import android.widget.Button
 import android.widget.EditText
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.edit
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -72,6 +73,12 @@ class LoginActivity : AppCompatActivity() {
                             val token = obj.optString("token", "")
                             val user = obj.optJSONObject("user")
                             val userId = user?.optString("user_id", nrp) ?: nrp
+                            val prefs = getSharedPreferences("auth", MODE_PRIVATE)
+                            prefs.edit {
+                                putString("token", token)
+                                putString("userId", userId)
+                            }
+
                             val intent = Intent(this@LoginActivity, DashboardActivity::class.java).apply {
                                 putExtra("token", token)
                                 putExtra("userId", userId)

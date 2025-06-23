@@ -8,6 +8,7 @@ import android.provider.Settings
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
+import android.widget.Button
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -34,8 +35,10 @@ class MainActivity : AppCompatActivity() {
         val userId = prefs.getString("userId", null)
         if (!token.isNullOrBlank() && !userId.isNullOrBlank()) {
             validateToken(token, userId)
-        } else {
-            navigateToLogin()
+        }
+
+        findViewById<Button>(R.id.button_open_login).setOnClickListener {
+            startActivity(Intent(this, LoginActivity::class.java))
         }
     }
 
@@ -51,13 +54,11 @@ class MainActivity : AppCompatActivity() {
                     withContext(Dispatchers.Main) {
                         if (resp.isSuccessful) {
                             navigateToDashboard(token, userId)
-                        } else {
-                            navigateToLogin()
                         }
                     }
                 }
             } catch (_: Exception) {
-                withContext(Dispatchers.Main) { navigateToLogin() }
+                // ignore
             }
         }
     }
@@ -68,11 +69,6 @@ class MainActivity : AppCompatActivity() {
             putExtra("userId", userId)
         }
         startActivity(intent)
-        finish()
-    }
-
-    private fun navigateToLogin() {
-        startActivity(Intent(this, LoginActivity::class.java))
         finish()
     }
 

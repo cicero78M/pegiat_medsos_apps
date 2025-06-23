@@ -44,6 +44,16 @@ class UserProfileActivity : AppCompatActivity() {
                             findViewById<TextView>(R.id.text_nrp).text = "NRP: " + (data?.optString("user_id") ?: userId)
                             findViewById<TextView>(R.id.text_name).text = "Nama: " + (data?.optString("nama") ?: "")
                             findViewById<TextView>(R.id.text_phone).text = "Telepon: " + (data?.optString("whatsapp") ?: "")
+                            findViewById<TextView>(R.id.text_satfung).text =
+                                "Satfung: " + (data?.optString("divisi") ?: "")
+                            findViewById<TextView>(R.id.text_jabatan).text =
+                                "Jabatan: " + (data?.optString("jabatan") ?: "")
+                            findViewById<TextView>(R.id.text_ig).text =
+                                "Username IG: " + (data?.optString("insta") ?: "")
+                            findViewById<TextView>(R.id.text_tiktok).text =
+                                "Username TikTok: " + (data?.optString("tiktok") ?: "")
+                            findViewById<TextView>(R.id.text_status).text =
+                                "Status: " + (data?.optString("status") ?: "")
                         } else {
                             Toast.makeText(this@UserProfileActivity, "Gagal memuat profil", Toast.LENGTH_SHORT).show()
                         }

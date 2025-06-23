@@ -6,10 +6,16 @@
     android:layout_height="match_parent">
 
     <TextView
-        android:id="@+id/text_nrp"
+        android:id="@+id/text_index"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="NRP:" />
+        android:text="Urutan:" />
+
+    <TextView
+        android:id="@+id/text_client_id"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Client ID:" />
 
     <TextView
         android:id="@+id/text_name"
@@ -18,10 +24,16 @@
         android:text="Nama:" />
 
     <TextView
-        android:id="@+id/text_phone"
+        android:id="@+id/text_rank"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Telepon:" />
+        android:text="Pangkat:" />
+
+    <TextView
+        android:id="@+id/text_nrp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="NRP:" />
 
     <TextView
         android:id="@+id/text_satfung"

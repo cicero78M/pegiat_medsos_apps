@@ -17,8 +17,7 @@ class DashboardActivity : AppCompatActivity() {
 
         val fragments = listOf<Fragment>(
             UserProfileFragment.newInstance(userId, token),
-            DashboardFragment.newInstance(userId, token),
-            ReportFragment()
+            DashboardFragment.newInstance(userId, token)
         )
 
         val viewPager = findViewById<ViewPager2>(R.id.view_pager)
@@ -32,7 +31,6 @@ class DashboardActivity : AppCompatActivity() {
             when (item.itemId) {
                 R.id.nav_profile -> { viewPager.currentItem = 0; true }
                 R.id.nav_insta -> { viewPager.currentItem = 1; true }
-                R.id.nav_report -> { viewPager.currentItem = 2; true }
                 else -> false
             }
         }
@@ -42,7 +40,6 @@ class DashboardActivity : AppCompatActivity() {
                 when (position) {
                     0 -> bottomNav.selectedItemId = R.id.nav_profile
                     1 -> bottomNav.selectedItemId = R.id.nav_insta
-                    2 -> bottomNav.selectedItemId = R.id.nav_report
                 }
             }
         })

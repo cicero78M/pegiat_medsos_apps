@@ -64,16 +64,17 @@ class LoginActivity : AppCompatActivity() {
 
                     withContext(Dispatchers.Main) {
                         if (success) {
-                            val data = try {
-                                val obj = JSONObject(responseBody ?: "{}")
-                                obj.optJSONObject("data")
+                            val obj = try {
+                                JSONObject(responseBody ?: "{}")
                             } catch (e: Exception) {
-                                null
+                                JSONObject()
                             }
+                            val token = obj.optString("token", "")
+                            val user = obj.optJSONObject("user")
+                            val userId = user?.optString("user_id", nrp) ?: nrp
                             val intent = Intent(this@LoginActivity, UserProfileActivity::class.java).apply {
-                                putExtra("nrp", data?.optString("nrp", nrp) ?: nrp)
-                                putExtra("name", data?.optString("name", ""))
-                                putExtra("phone", data?.optString("whatsapp", phone) ?: phone)
+                                putExtra("token", token)
+                                putExtra("userId", userId)
                             }
                             startActivity(intent)
                             finish()

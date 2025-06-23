@@ -23,3 +23,6 @@ After a successful login, the token and user ID returned by `/api/auth/user-logi
 are used to request `/api/users/{userId}` to display the profile screen.
 The profile screen displays the following fields in order: Urutan, Client ID, Nama, Pangkat, NRP, Satfung, Jabatan, Username IG, Username TikTok and Status.
 After logging in the user is redirected to `DashboardActivity` where a bottom navigation bar lets them open the profile, Instagram content and link report pages.
+`DashboardFragment` now loads Instagram posts using the `/api/insta/rapid-posts`
+endpoint from the Cicero_V2 backend, which fetches data via RapidAPI based on
+the user's Instagram username.

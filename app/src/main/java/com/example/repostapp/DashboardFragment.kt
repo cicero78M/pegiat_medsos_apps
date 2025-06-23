@@ -41,16 +41,47 @@ class DashboardFragment : Fragment(R.layout.fragment_dashboard) {
         recycler.adapter = adapter
 
         val token = arguments?.getString(ARG_TOKEN) ?: ""
-        if (token.isNotBlank()) {
-            fetchTodayPosts(token)
+        val userId = arguments?.getString(ARG_USER_ID) ?: ""
+        if (token.isNotBlank() && userId.isNotBlank()) {
+            fetchUsernameAndPosts(userId, token)
         }
     }
 
-    private fun fetchTodayPosts(token: String) {
+    private fun fetchUsernameAndPosts(userId: String, token: String) {
         CoroutineScope(Dispatchers.IO).launch {
             val client = OkHttpClient()
-            val today = LocalDate.now().toString()
-            val url = "https://papiqo.com/api/insta/db-posts?date=$today"
+            val req = Request.Builder()
+                .url("https://papiqo.com/api/users/$userId")
+                .header("Authorization", "Bearer $token")
+                .build()
+            try {
+                client.newCall(req).execute().use { resp ->
+                    val body = resp.body?.string()
+                    val username = if (resp.isSuccessful) {
+                        try {
+                            JSONObject(body ?: "{}").optJSONObject("data")?.optString("insta")
+                        } catch (_: Exception) { null }
+                    } else null
+                    withContext(Dispatchers.Main) {
+                        if (!username.isNullOrBlank()) {
+                            fetchTodayPosts(token, username)
+                        } else {
+                            Toast.makeText(requireContext(), "Username IG tidak ditemukan", Toast.LENGTH_SHORT).show()
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(requireContext(), "Gagal memuat profil", Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+    }
+
+    private fun fetchTodayPosts(token: String, username: String) {
+        CoroutineScope(Dispatchers.IO).launch {
+            val client = OkHttpClient()
+            val url = "https://papiqo.com/api/insta/rapid-posts?username=$username&limit=10"
             val req = Request.Builder()
                 .url(url)
                 .header("Authorization", "Bearer $token")
@@ -70,7 +101,7 @@ class DashboardFragment : Fragment(R.layout.fragment_dashboard) {
                                     InstaPost(
                                         id = obj.optString("id"),
                                         caption = obj.optString("caption"),
-                                        imageUrl = obj.optString("image_url"),
+                                        imageUrl = obj.optString("thumbnail"),
                                         createdAt = obj.optString("created_at")
                                     )
                                 )

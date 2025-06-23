@@ -96,11 +96,15 @@ class DashboardFragment : Fragment(R.layout.fragment_dashboard) {
                                 JSONObject(body ?: "{}").optJSONArray("data")
                             } catch (_: Exception) { JSONArray() }
                             val posts = mutableListOf<InstaPost>()
-                            val today = java.time.LocalDate.now().toString()
+                            val formatter = java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
+                            val today = java.time.LocalDate.now()
                             for (i in 0 until arr.length()) {
                                 val obj = arr.optJSONObject(i) ?: continue
                                 val created = obj.optString("created_at")
-                                if (created.take(10) == today) {
+                                val createdDate = try {
+                                    java.time.LocalDateTime.parse(created, formatter).toLocalDate()
+                                } catch (_: Exception) { null }
+                                if (createdDate == today) {
                                     posts.add(
                                         InstaPost(
                                             id = obj.optString("shortcode"),

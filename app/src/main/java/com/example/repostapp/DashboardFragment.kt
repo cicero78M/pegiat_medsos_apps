@@ -96,17 +96,21 @@ class DashboardFragment : Fragment(R.layout.fragment_dashboard) {
                                 JSONObject(body ?: "{}").optJSONArray("data")
                             } catch (_: Exception) { JSONArray() }
                             val posts = mutableListOf<InstaPost>()
+                            val today = java.time.LocalDate.now().toString()
                             for (i in 0 until arr.length()) {
                                 val obj = arr.optJSONObject(i) ?: continue
-                                posts.add(
-                                    InstaPost(
-                                        id = obj.optString("shortcode"),
-                                        caption = obj.optString("caption"),
-                                        imageUrl = obj.optString("image_url")
-                                            .ifBlank { obj.optString("thumbnail_url") },
-                                        createdAt = obj.optString("created_at")
+                                val created = obj.optString("created_at")
+                                if (created.take(10) == today) {
+                                    posts.add(
+                                        InstaPost(
+                                            id = obj.optString("shortcode"),
+                                            caption = obj.optString("caption"),
+                                            imageUrl = obj.optString("image_url")
+                                                .ifBlank { obj.optString("thumbnail_url") },
+                                            createdAt = created
+                                        )
                                     )
-                                )
+                                }
                             }
                             adapter.setData(posts)
                         } else {

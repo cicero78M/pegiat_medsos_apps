@@ -192,7 +192,7 @@ class DashboardFragment : Fragment(R.layout.fragment_dashboard) {
     }
 
     private fun downloadPost(post: InstaPost) {
-        val url = if (post.isVideo) post.videoUrl else post.sourceUrl ?: post.imageUrl
+        val url = if (post.isVideo) post.videoUrl else post.imageUrl ?: post.sourceUrl
         if (url.isNullOrBlank()) return
         val fileName = post.id + if (post.isVideo) ".mp4" else ".jpg"
         progressBar.visibility = View.VISIBLE
@@ -259,7 +259,7 @@ class DashboardFragment : Fragment(R.layout.fragment_dashboard) {
             intent.putExtra(Intent.EXTRA_STREAM, uri)
             intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
         } else {
-            val url = if (post.isVideo) post.videoUrl else post.sourceUrl ?: post.imageUrl
+            val url = if (post.isVideo) post.videoUrl else post.imageUrl ?: post.sourceUrl
             if (!url.isNullOrBlank()) intent.putExtra(Intent.EXTRA_TEXT, url)
         }
         val clipboard = requireContext().getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager

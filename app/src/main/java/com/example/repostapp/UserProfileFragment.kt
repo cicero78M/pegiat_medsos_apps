@@ -65,26 +65,24 @@ class UserProfileFragment : Fragment(R.layout.activity_profile) {
                             } catch (_: Exception) {
                                 null
                             }
-                            rootView.findViewById<TextView>(R.id.text_index).text =
-                                "Urutan: " + (data?.optString("index") ?: "")
-                            rootView.findViewById<TextView>(R.id.text_client_id).text =
-                                "Client ID: " + (data?.optString("client_id") ?: "")
+                            val insta = data?.optString("insta") ?: ""
+                            rootView.findViewById<TextView>(R.id.text_username).text =
+                                "@" + insta
                             rootView.findViewById<TextView>(R.id.text_name).text =
-                                "Nama: " + (data?.optString("nama") ?: "")
-                            rootView.findViewById<TextView>(R.id.text_rank).text =
-                                "Pangkat: " + (data?.optString("title") ?: "")
+                                (data?.optString("title") ?: "") + " " + (data?.optString("nama") ?: "")
                             rootView.findViewById<TextView>(R.id.text_nrp).text =
-                                "NRP: " + (data?.optString("user_id") ?: userId)
+                                (data?.optString("user_id") ?: userId)
+                            rootView.findViewById<TextView>(R.id.text_client_id).text =
+                                (data?.optString("client_id") ?: "")
                             rootView.findViewById<TextView>(R.id.text_satfung).text =
-                                "Satfung: " + (data?.optString("divisi") ?: "")
+                                (data?.optString("divisi") ?: "")
                             rootView.findViewById<TextView>(R.id.text_jabatan).text =
-                                "Jabatan: " + (data?.optString("jabatan") ?: "")
-                            rootView.findViewById<TextView>(R.id.text_ig).text =
-                                "Username IG: " + (data?.optString("insta") ?: "")
+                                (data?.optString("jabatan") ?: "")
                             rootView.findViewById<TextView>(R.id.text_tiktok).text =
-                                "Username TikTok: " + (data?.optString("tiktok") ?: "")
+                                (data?.optString("tiktok") ?: "")
                             rootView.findViewById<TextView>(R.id.text_status).text =
-                                "Status: " + (data?.optString("status") ?: "")
+                                (data?.optString("status") ?: "")
+                            fetchStats(token, insta, rootView)
                         } else {
                             Toast.makeText(requireContext(), "Gagal memuat profil", Toast.LENGTH_SHORT).show()
                         }
@@ -95,6 +93,54 @@ class UserProfileFragment : Fragment(R.layout.activity_profile) {
                     Toast.makeText(requireContext(), "Gagal terhubung ke server", Toast.LENGTH_SHORT).show()
                 }
             }
+        }
+    }
+
+    private fun fetchStats(token: String, username: String, rootView: View) {
+        if (username.isBlank()) return
+        CoroutineScope(Dispatchers.IO).launch {
+            val stats = getStatsFromDb(token, username) ?: run {
+                fetchAndStoreStats(token, username)
+                getStatsFromDb(token, username)
+            }
+            withContext(Dispatchers.Main) {
+                rootView.findViewById<TextView>(R.id.stat_posts).text =
+                    (stats?.optInt("post_count") ?: 0).toString()
+                rootView.findViewById<TextView>(R.id.stat_followers).text =
+                    (stats?.optInt("follower_count") ?: 0).toString()
+                rootView.findViewById<TextView>(R.id.stat_following).text =
+                    (stats?.optInt("following_count") ?: 0).toString()
+            }
+        }
+    }
+
+    private suspend fun getStatsFromDb(token: String, username: String): JSONObject? {
+        val client = OkHttpClient()
+        val req = Request.Builder()
+            .url("https://papiqo.com/api/insta/profile?username=$username")
+            .header("Authorization", "Bearer $token")
+            .build()
+        return try {
+            client.newCall(req).execute().use { resp ->
+                if (!resp.isSuccessful) return null
+                val body = resp.body?.string()
+                val obj = JSONObject(body ?: "{}")
+                obj.optJSONObject("data") ?: obj
+            }
+        } catch (_: Exception) {
+            null
+        }
+    }
+
+    private suspend fun fetchAndStoreStats(token: String, username: String) {
+        val client = OkHttpClient()
+        val req = Request.Builder()
+            .url("https://papiqo.com/api/insta/rapid-profile?username=$username")
+            .header("Authorization", "Bearer $token")
+            .build()
+        try {
+            client.newCall(req).execute().close()
+        } catch (_: Exception) {
         }
     }
 }

@@ -23,14 +23,14 @@ class LoginActivity : AppCompatActivity() {
         supportActionBar?.hide()
         setContentView(R.layout.activity_login)
         val nrpInput = findViewById<EditText>(R.id.input_nrp)
-        val phoneInput = findViewById<EditText>(R.id.input_phone)
+        val passwordInput = findViewById<EditText>(R.id.input_password)
         val loginButton = findViewById<Button>(R.id.button_login)
 
         loginButton.setOnClickListener {
             val nrp = nrpInput.text.toString().trim()
-            val phone = phoneInput.text.toString().trim()
+            val phone = passwordInput.text.toString().trim()
             if (nrp.isBlank() || phone.isBlank()) {
-                Toast.makeText(this, "NRP dan nomor telp wajib diisi", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "NRP dan password wajib diisi", Toast.LENGTH_SHORT).show()
             } else {
                 login(nrp, phone)
             }

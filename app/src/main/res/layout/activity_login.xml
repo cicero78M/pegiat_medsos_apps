@@ -61,14 +61,15 @@
                     <com.google.android.material.textfield.TextInputLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:hint="Nomor Telp"
+                        android:hint="Password"
                         android:layout_marginTop="16dp"
-                        app:startIconDrawable="@android:drawable/ic_menu_call">
+                        app:startIconDrawable="@android:drawable/ic_lock_lock">
 
                         <com.google.android.material.textfield.TextInputEditText
-                            android:id="@+id/input_phone"
+                            android:id="@+id/input_password"
                             android:layout_width="match_parent"
-                            android:layout_height="wrap_content" />
+                            android:layout_height="wrap_content"
+                            android:inputType="textPassword" />
                     </com.google.android.material.textfield.TextInputLayout>
 
                     <com.google.android.material.button.MaterialButton

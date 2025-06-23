@@ -17,7 +17,7 @@ class DashboardActivity : AppCompatActivity() {
 
         val fragments = listOf<Fragment>(
             UserProfileFragment.newInstance(userId, token),
-            DashboardFragment(),
+            DashboardFragment.newInstance(userId, token),
             ReportFragment()
         )
 

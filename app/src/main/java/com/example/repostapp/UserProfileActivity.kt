@@ -4,9 +4,11 @@ import android.os.Bundle
 import android.widget.TextView
 import android.widget.Toast
 import android.widget.Button
+import android.widget.ImageView
 import android.content.Intent
 import androidx.core.content.edit
 import androidx.appcompat.app.AppCompatActivity
+import com.bumptech.glide.Glide
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -69,8 +71,22 @@ class UserProfileActivity : AppCompatActivity() {
                                 (data?.optString("jabatan") ?: "")
                             findViewById<TextView>(R.id.text_tiktok).text =
                                 (data?.optString("tiktok") ?: "")
-                            findViewById<TextView>(R.id.text_status).text =
-                                (data?.optString("status") ?: "")
+                            val statusText = data?.optString("status") ?: ""
+                            findViewById<TextView>(R.id.text_status).text = statusText
+
+                            val avatarUrl = data?.optString("profile_pic_url") ?: ""
+                            Glide.with(this@UserProfileActivity)
+                                .load(avatarUrl)
+                                .placeholder(R.drawable.profile_avatar_placeholder)
+                                .error(R.drawable.profile_avatar_placeholder)
+                                .into(findViewById(R.id.image_avatar))
+
+                            val statusImage = if (statusText.equals("true", true)) {
+                                R.drawable.ic_status_true
+                            } else {
+                                R.drawable.ic_status_false
+                            }
+                            findViewById<ImageView>(R.id.image_status).setImageResource(statusImage)
                             fetchStats(token, insta)
                         } else {
                             Toast.makeText(this@UserProfileActivity, "Gagal memuat profil", Toast.LENGTH_SHORT).show()

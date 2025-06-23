@@ -7,9 +7,11 @@ import android.widget.Toast
 import android.widget.Button
 import android.content.Intent
 import android.content.Context
+import android.widget.ImageView
 import androidx.core.content.edit
 import androidx.core.os.bundleOf
 import androidx.fragment.app.Fragment
+import com.bumptech.glide.Glide
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -80,8 +82,22 @@ class UserProfileFragment : Fragment(R.layout.activity_profile) {
                                 (data?.optString("jabatan") ?: "")
                             rootView.findViewById<TextView>(R.id.text_tiktok).text =
                                 (data?.optString("tiktok") ?: "")
-                            rootView.findViewById<TextView>(R.id.text_status).text =
-                                (data?.optString("status") ?: "")
+                            val statusText = data?.optString("status") ?: ""
+                            rootView.findViewById<TextView>(R.id.text_status).text = statusText
+
+                            val avatarUrl = data?.optString("profile_pic_url") ?: ""
+                            Glide.with(this@UserProfileFragment)
+                                .load(avatarUrl)
+                                .placeholder(R.drawable.profile_avatar_placeholder)
+                                .error(R.drawable.profile_avatar_placeholder)
+                                .into(rootView.findViewById(R.id.image_avatar))
+
+                            val statusImage = if (statusText.equals("true", true)) {
+                                R.drawable.ic_status_true
+                            } else {
+                                R.drawable.ic_status_false
+                            }
+                            rootView.findViewById<ImageView>(R.id.image_status).setImageResource(statusImage)
                             fetchStats(token, insta, rootView)
                         } else {
                             Toast.makeText(requireContext(), "Gagal memuat profil", Toast.LENGTH_SHORT).show()

@@ -40,38 +40,44 @@ class DashboardFragment : Fragment(R.layout.fragment_dashboard) {
         recycler.layoutManager = LinearLayoutManager(requireContext())
         recycler.adapter = adapter
 
-        val userId = arguments?.getString(ARG_USER_ID) ?: ""
         val token = arguments?.getString(ARG_TOKEN) ?: ""
-        if (userId.isNotBlank() && token.isNotBlank()) {
-            fetchTodayPosts(userId, token)
+        if (token.isNotBlank()) {
+            fetchTodayPosts(token)
         }
     }
 
-    private fun fetchTodayPosts(userId: String, token: String) {
+    private fun fetchTodayPosts(token: String) {
         CoroutineScope(Dispatchers.IO).launch {
             val client = OkHttpClient()
-            val profileReq = Request.Builder()
-                .url("https://papiqo.com/api/users/$userId")
+            val today = LocalDate.now().toString()
+            val url = "https://papiqo.com/api/insta/db-posts?date=$today"
+            val req = Request.Builder()
+                .url(url)
                 .header("Authorization", "Bearer $token")
                 .build()
             try {
-                client.newCall(profileReq).execute().use { resp ->
+                client.newCall(req).execute().use { resp ->
                     val body = resp.body?.string()
-                    if (resp.isSuccessful) {
-                        val data = try {
-                            JSONObject(body ?: "{}").optJSONObject("data")
-                        } catch (_: Exception) { null }
-                        val username = data?.optString("insta") ?: ""
-                        if (username.isNotBlank()) {
-                            fetchPostsByUsername(username, token)
-                        } else {
-                            withContext(Dispatchers.Main) {
-                                Toast.makeText(requireContext(), "Username IG tidak ditemukan", Toast.LENGTH_SHORT).show()
+                    withContext(Dispatchers.Main) {
+                        if (resp.isSuccessful) {
+                            val arr = try {
+                                JSONObject(body ?: "{}").optJSONArray("data")
+                            } catch (_: Exception) { JSONArray() }
+                            val posts = mutableListOf<InstaPost>()
+                            for (i in 0 until arr.length()) {
+                                val obj = arr.optJSONObject(i) ?: continue
+                                posts.add(
+                                    InstaPost(
+                                        id = obj.optString("id"),
+                                        caption = obj.optString("caption"),
+                                        imageUrl = obj.optString("image_url"),
+                                        createdAt = obj.optString("created_at")
+                                    )
+                                )
                             }
-                        }
-                    } else {
-                        withContext(Dispatchers.Main) {
-                            Toast.makeText(requireContext(), "Gagal memuat profil", Toast.LENGTH_SHORT).show()
+                            adapter.setData(posts)
+                        } else {
+                            Toast.makeText(requireContext(), "Gagal mengambil konten", Toast.LENGTH_SHORT).show()
                         }
                     }
                 }
@@ -79,49 +85,6 @@ class DashboardFragment : Fragment(R.layout.fragment_dashboard) {
                 withContext(Dispatchers.Main) {
                     Toast.makeText(requireContext(), "Gagal terhubung ke server", Toast.LENGTH_SHORT).show()
                 }
-            }
-        }
-    }
-
-    private suspend fun fetchPostsByUsername(username: String, token: String) {
-        val client = OkHttpClient()
-        val url = "https://papiqo.com/api/insta/rapid-posts?username=$username&limit=20"
-        val req = Request.Builder()
-            .url(url)
-            .header("Authorization", "Bearer $token")
-            .build()
-        try {
-            client.newCall(req).execute().use { resp ->
-                val body = resp.body?.string()
-                withContext(Dispatchers.Main) {
-                    if (resp.isSuccessful) {
-                        val arr = try {
-                            JSONObject(body ?: "{}").optJSONArray("data")
-                        } catch (_: Exception) { JSONArray() }
-                        val today = LocalDate.now().toString()
-                        val posts = mutableListOf<InstaPost>()
-                        for (i in 0 until arr.length()) {
-                            val obj = arr.optJSONObject(i) ?: continue
-                            val created = obj.optString("created_at")
-                            if (created.startsWith(today)) {
-                                posts.add(
-                                    InstaPost(
-                                        id = obj.optString("id"),
-                                        caption = obj.optString("caption"),
-                                        createdAt = created
-                                    )
-                                )
-                            }
-                        }
-                        adapter.setData(posts)
-                    } else {
-                        Toast.makeText(requireContext(), "Gagal mengambil posting", Toast.LENGTH_SHORT).show()
-                    }
-                }
-            }
-        } catch (e: Exception) {
-            withContext(Dispatchers.Main) {
-                Toast.makeText(requireContext(), "Gagal terhubung ke server", Toast.LENGTH_SHORT).show()
             }
         }
     }

@@ -1,7 +1,6 @@
 package com.example.repostapp
 
 import android.Manifest
-import android.app.DownloadManager
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
@@ -177,24 +176,9 @@ class DashboardFragment : Fragment(R.layout.fragment_dashboard) {
 
     private fun handlePostClicked(post: InstaPost) {
         if (!downloadedIds.contains(post.id)) {
-            val dialog = androidx.appcompat.app.AlertDialog.Builder(requireContext())
-                .setMessage("Download konten ini?")
-                .setPositiveButton("Download") { _, _ ->
-                    requestStorageAndDownload(post)
-                }
-                .setNegativeButton("Batal", null)
-                .create()
-            dialog.show()
+            requestStorageAndDownload(post)
         } else {
-            val options = arrayOf("Share", "Lapor")
-            androidx.appcompat.app.AlertDialog.Builder(requireContext())
-                .setItems(options) { _, which ->
-                    when (which) {
-                        0 -> sharePost(post)
-                        1 -> startActivity(Intent(requireContext(), ReportActivity::class.java))
-                    }
-                }
-                .show()
+            showShareDialog(post)
         }
     }
 
@@ -211,28 +195,79 @@ class DashboardFragment : Fragment(R.layout.fragment_dashboard) {
         val url = if (post.isVideo) post.videoUrl else post.sourceUrl ?: post.imageUrl
         if (url.isNullOrBlank()) return
         val fileName = post.id + if (post.isVideo) ".mp4" else ".jpg"
-        val request = DownloadManager.Request(Uri.parse(url))
-            .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
-            .setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, fileName)
-            .setTitle(fileName)
-        val dm = requireContext().getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
-        dm.enqueue(request)
-        downloadedIds.add(post.id)
-        post.downloaded = true
-        val prefs = requireContext().getSharedPreferences("downloads", Context.MODE_PRIVATE)
-        prefs.edit().putStringSet("ids", downloadedIds).apply()
-        adapter.notifyDataSetChanged()
+        progressBar.visibility = View.VISIBLE
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                val client = OkHttpClient()
+                val req = Request.Builder().url(url).build()
+                client.newCall(req).execute().use { resp ->
+                    val body = resp.body ?: return@use
+                    val dir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
+                    val file = java.io.File(dir, fileName)
+                    file.outputStream().use { out ->
+                        val total = body.contentLength()
+                        var downloaded = 0L
+                        val buf = ByteArray(8 * 1024)
+                        var read: Int
+                        while (body.byteStream().read(buf).also { read = it } != -1) {
+                            out.write(buf, 0, read)
+                            downloaded += read
+                            val progress = if (total > 0) (downloaded * 100 / total).toInt() else 0
+                            withContext(Dispatchers.Main) {
+                                progressBar.isIndeterminate = false
+                                progressBar.progress = progress
+                            }
+                        }
+                    }
+                    post.localPath = file.absolutePath
+                }
+                withContext(Dispatchers.Main) {
+                    downloadedIds.add(post.id)
+                    post.downloaded = true
+                    val prefs = requireContext().getSharedPreferences("downloads", Context.MODE_PRIVATE)
+                    prefs.edit().putStringSet("ids", downloadedIds).apply()
+                    progressBar.visibility = View.GONE
+                    progressBar.isIndeterminate = true
+                    adapter.notifyDataSetChanged()
+                }
+            } catch (_: Exception) {
+                withContext(Dispatchers.Main) {
+                    progressBar.visibility = View.GONE
+                    progressBar.isIndeterminate = true
+                    Toast.makeText(requireContext(), "Gagal download", Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
     }
 
     private fun sharePost(post: InstaPost) {
-        val url = if (post.isVideo) post.videoUrl else post.sourceUrl ?: post.imageUrl
-        if (url.isNullOrBlank()) return
+        val fileName = post.id + if (post.isVideo) ".mp4" else ".jpg"
+        val dir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
+        val file = java.io.File(dir, fileName)
         val intent = Intent(Intent.ACTION_SEND)
         intent.type = if (post.isVideo) "video/*" else "image/*"
-        intent.putExtra(Intent.EXTRA_TEXT, url)
+        if (file.exists()) {
+            intent.putExtra(Intent.EXTRA_STREAM, Uri.fromFile(file))
+            intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        } else {
+            val url = if (post.isVideo) post.videoUrl else post.sourceUrl ?: post.imageUrl
+            if (!url.isNullOrBlank()) intent.putExtra(Intent.EXTRA_TEXT, url)
+        }
         val clipboard = requireContext().getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
         clipboard.setPrimaryClip(ClipData.newPlainText("caption", post.caption ?: ""))
         startActivity(Intent.createChooser(intent, "Share via"))
+    }
+
+    private fun showShareDialog(post: InstaPost) {
+        val options = arrayOf("Share", "Lapor")
+        androidx.appcompat.app.AlertDialog.Builder(requireContext())
+            .setItems(options) { _, which ->
+                when (which) {
+                    0 -> sharePost(post)
+                    1 -> startActivity(Intent(requireContext(), ReportActivity::class.java))
+                }
+            }
+            .show()
     }
 
     private fun openStoragePermissionSettings() {

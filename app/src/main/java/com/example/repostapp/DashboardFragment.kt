@@ -2,6 +2,7 @@ package com.example.repostapp
 
 import android.os.Bundle
 import android.view.View
+import android.widget.ProgressBar
 import android.widget.Toast
 import androidx.core.os.bundleOf
 import androidx.fragment.app.Fragment
@@ -30,18 +31,21 @@ class DashboardFragment : Fragment(R.layout.fragment_dashboard) {
     }
 
     private lateinit var adapter: PostAdapter
+    private lateinit var progressBar: ProgressBar
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
         adapter = PostAdapter(mutableListOf())
         val recycler = view.findViewById<RecyclerView>(R.id.recycler_posts)
+        progressBar = view.findViewById(R.id.progress_loading)
         recycler.layoutManager = LinearLayoutManager(requireContext())
         recycler.adapter = adapter
 
         val token = arguments?.getString(ARG_TOKEN) ?: ""
         val userId = arguments?.getString(ARG_USER_ID) ?: ""
         if (token.isNotBlank() && userId.isNotBlank()) {
+            progressBar.visibility = View.VISIBLE
             fetchClientAndPosts(userId, token)
         }
     }
@@ -67,12 +71,14 @@ class DashboardFragment : Fragment(R.layout.fragment_dashboard) {
                         if (clientId.isNotBlank()) {
                             fetchPosts(token, clientId)
                         } else {
+                            progressBar.visibility = View.GONE
                             Toast.makeText(requireContext(), "Gagal memuat data", Toast.LENGTH_SHORT).show()
                         }
                     }
                 }
             } catch (e: Exception) {
                 withContext(Dispatchers.Main) {
+                    progressBar.visibility = View.GONE
                     Toast.makeText(requireContext(), "Gagal terhubung ke server", Toast.LENGTH_SHORT).show()
                 }
             }
@@ -102,7 +108,11 @@ class DashboardFragment : Fragment(R.layout.fragment_dashboard) {
                                 val obj = arr.optJSONObject(i) ?: continue
                                 val created = obj.optString("created_at")
                                 val createdDate = try {
-                                    java.time.LocalDateTime.parse(created, formatter).toLocalDate()
+                                    if (created.contains("T")) {
+                                        java.time.OffsetDateTime.parse(created).toLocalDate()
+                                    } else {
+                                        java.time.LocalDateTime.parse(created, formatter).toLocalDate()
+                                    }
                                 } catch (_: Exception) { null }
                                 if (createdDate == today) {
                                     posts.add(
@@ -117,13 +127,16 @@ class DashboardFragment : Fragment(R.layout.fragment_dashboard) {
                                 }
                             }
                             adapter.setData(posts)
+                            progressBar.visibility = View.GONE
                         } else {
+                            progressBar.visibility = View.GONE
                             Toast.makeText(requireContext(), "Gagal mengambil konten", Toast.LENGTH_SHORT).show()
                         }
                     }
                 }
             } catch (e: Exception) {
                 withContext(Dispatchers.Main) {
+                    progressBar.visibility = View.GONE
                     Toast.makeText(requireContext(), "Gagal terhubung ke server", Toast.LENGTH_SHORT).show()
                 }
             }

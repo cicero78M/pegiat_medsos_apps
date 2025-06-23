@@ -41,9 +41,16 @@ class UserProfileActivity : AppCompatActivity() {
                             } catch (_: Exception) {
                                 null
                             }
-                            findViewById<TextView>(R.id.text_nrp).text = "NRP: " + (data?.optString("user_id") ?: userId)
-                            findViewById<TextView>(R.id.text_name).text = "Nama: " + (data?.optString("nama") ?: "")
-                            findViewById<TextView>(R.id.text_phone).text = "Telepon: " + (data?.optString("whatsapp") ?: "")
+                            findViewById<TextView>(R.id.text_index).text =
+                                "Urutan: " + (data?.optString("index") ?: "")
+                            findViewById<TextView>(R.id.text_client_id).text =
+                                "Client ID: " + (data?.optString("client_id") ?: "")
+                            findViewById<TextView>(R.id.text_name).text =
+                                "Nama: " + (data?.optString("nama") ?: "")
+                            findViewById<TextView>(R.id.text_rank).text =
+                                "Pangkat: " + (data?.optString("title") ?: "")
+                            findViewById<TextView>(R.id.text_nrp).text =
+                                "NRP: " + (data?.optString("user_id") ?: userId)
                             findViewById<TextView>(R.id.text_satfung).text =
                                 "Satfung: " + (data?.optString("divisi") ?: "")
                             findViewById<TextView>(R.id.text_jabatan).text =

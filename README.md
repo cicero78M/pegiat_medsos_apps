@@ -19,3 +19,4 @@ Additional implementation is required to integrate Instagram APIs and handle aut
 The app retrieves user profile information from the [Cicero_V2](https://github.com/cicero78M/Cicero_V2) backend API.
 After a successful login, the token and user ID returned by `/api/auth/user-login`
 are used to request `/api/users/{userId}` to display the profile screen.
+The profile screen displays the following fields in order: Urutan, Client ID, Nama, Pangkat, NRP, Satfung, Jabatan, Username IG, Username TikTok and Status.

@@ -15,7 +15,6 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import org.json.JSONArray
 import org.json.JSONObject
-import java.time.LocalDate
 
 class DashboardFragment : Fragment(R.layout.fragment_dashboard) {
 
@@ -41,16 +40,49 @@ class DashboardFragment : Fragment(R.layout.fragment_dashboard) {
         recycler.adapter = adapter
 
         val token = arguments?.getString(ARG_TOKEN) ?: ""
-        if (token.isNotBlank()) {
-            fetchTodayPosts(token)
+        val userId = arguments?.getString(ARG_USER_ID) ?: ""
+        if (token.isNotBlank() && userId.isNotBlank()) {
+            fetchClientAndPosts(userId, token)
         }
     }
 
-    private fun fetchTodayPosts(token: String) {
+    private fun fetchClientAndPosts(userId: String, token: String) {
         CoroutineScope(Dispatchers.IO).launch {
             val client = OkHttpClient()
-            val today = LocalDate.now().toString()
-            val url = "https://papiqo.com/api/insta/db-posts?date=$today"
+            val req = Request.Builder()
+                .url("https://papiqo.com/api/users/$userId")
+                .header("Authorization", "Bearer $token")
+                .build()
+            try {
+                client.newCall(req).execute().use { resp ->
+                    val body = resp.body?.string()
+                    val clientId = if (resp.isSuccessful) {
+                        try {
+                            JSONObject(body ?: "{}")
+                                .optJSONObject("data")
+                                ?.optString("client_id") ?: ""
+                        } catch (_: Exception) { "" }
+                    } else ""
+                    withContext(Dispatchers.Main) {
+                        if (clientId.isNotBlank()) {
+                            fetchPosts(token, clientId)
+                        } else {
+                            Toast.makeText(requireContext(), "Gagal memuat data", Toast.LENGTH_SHORT).show()
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(requireContext(), "Gagal terhubung ke server", Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+    }
+
+    private fun fetchPosts(token: String, clientId: String) {
+        CoroutineScope(Dispatchers.IO).launch {
+            val client = OkHttpClient()
+            val url = "https://papiqo.com/api/insta/posts?client_id=$clientId"
             val req = Request.Builder()
                 .url(url)
                 .header("Authorization", "Bearer $token")
@@ -68,9 +100,10 @@ class DashboardFragment : Fragment(R.layout.fragment_dashboard) {
                                 val obj = arr.optJSONObject(i) ?: continue
                                 posts.add(
                                     InstaPost(
-                                        id = obj.optString("id"),
+                                        id = obj.optString("shortcode"),
                                         caption = obj.optString("caption"),
-                                        imageUrl = obj.optString("image_url"),
+                                        imageUrl = obj.optString("image_url")
+                                            .ifBlank { obj.optString("thumbnail_url") },
                                         createdAt = obj.optString("created_at")
                                     )
                                 )

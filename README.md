@@ -23,6 +23,7 @@ After a successful login, the token and user ID returned by `/api/auth/user-logi
 are used to request `/api/users/{userId}` to display the profile screen.
 The profile screen displays the following fields in order: Urutan, Client ID, Nama, Pangkat, NRP, Satfung, Jabatan, Username IG, Username TikTok and Status.
 After logging in the user is redirected to `DashboardActivity` where a bottom navigation bar lets them open the profile, Instagram content and link report pages.
+A logout button is provided at the bottom of the profile page.
 
 ## Documentation
 

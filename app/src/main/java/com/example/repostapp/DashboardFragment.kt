@@ -243,11 +243,20 @@ class DashboardFragment : Fragment(R.layout.fragment_dashboard) {
     private fun sharePost(post: InstaPost) {
         val fileName = post.id + if (post.isVideo) ".mp4" else ".jpg"
         val dir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
-        val file = java.io.File(dir, fileName)
+        val file = if (!post.localPath.isNullOrBlank()) {
+            java.io.File(post.localPath!!)
+        } else {
+            java.io.File(dir, fileName)
+        }
         val intent = Intent(Intent.ACTION_SEND)
         intent.type = if (post.isVideo) "video/*" else "image/*"
         if (file.exists()) {
-            intent.putExtra(Intent.EXTRA_STREAM, Uri.fromFile(file))
+            val uri = androidx.core.content.FileProvider.getUriForFile(
+                requireContext(),
+                requireContext().packageName + ".fileprovider",
+                file
+            )
+            intent.putExtra(Intent.EXTRA_STREAM, uri)
             intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
         } else {
             val url = if (post.isVideo) post.videoUrl else post.sourceUrl ?: post.imageUrl

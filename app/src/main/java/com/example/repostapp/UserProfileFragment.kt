@@ -83,11 +83,11 @@ class UserProfileFragment : Fragment(R.layout.activity_profile) {
                             rootView.findViewById<TextView>(R.id.text_tiktok).text =
                                 (data?.optString("tiktok") ?: "")
                             val statusText = data?.optString("status") ?: ""
-                            rootView.findViewById<TextView>(R.id.text_status).text = statusText
 
                             val avatarUrl = data?.optString("profile_pic_url") ?: ""
+                            val fullAvatarUrl = if (avatarUrl.startsWith("http")) avatarUrl else "https://papiqo.com" + avatarUrl
                             Glide.with(this@UserProfileFragment)
-                                .load(avatarUrl)
+                                .load(fullAvatarUrl)
                                 .placeholder(R.drawable.profile_avatar_placeholder)
                                 .error(R.drawable.profile_avatar_placeholder)
                                 .into(rootView.findViewById(R.id.image_avatar))

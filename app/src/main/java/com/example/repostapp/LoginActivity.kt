@@ -44,7 +44,7 @@ class LoginActivity : AppCompatActivity() {
             }
             val body = json.toString().toRequestBody("application/json".toMediaType())
             val request = Request.Builder()
-                .url("http://103.182.52.127/api/auth/user-login")
+                .url("https://papiqo.com/api/auth/user-login")
                 .post(body)
                 .build()
 
@@ -73,7 +73,11 @@ class LoginActivity : AppCompatActivity() {
                 }
             } catch (e: Exception) {
                 withContext(Dispatchers.Main) {
-                    Toast.makeText(this@LoginActivity, "Terjadi kesalahan", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(
+                        this@LoginActivity,
+                        "Gagal terhubung ke server",
+                        Toast.LENGTH_SHORT
+                    ).show()
                 }
             }
         }

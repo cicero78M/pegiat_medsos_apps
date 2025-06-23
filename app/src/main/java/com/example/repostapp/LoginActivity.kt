@@ -20,6 +20,7 @@ import org.json.JSONObject
 class LoginActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        supportActionBar?.hide()
         setContentView(R.layout.activity_login)
         val nrpInput = findViewById<EditText>(R.id.input_nrp)
         val phoneInput = findViewById<EditText>(R.id.input_phone)

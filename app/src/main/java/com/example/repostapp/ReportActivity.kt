@@ -9,6 +9,16 @@ import android.widget.TextView
 import android.widget.Toast
 import android.net.Uri
 import androidx.appcompat.app.AppCompatActivity
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import okhttp3.RequestBody.Companion.toRequestBody
+import org.json.JSONArray
+import org.json.JSONObject
 
 class ReportActivity : AppCompatActivity() {
 
@@ -21,12 +31,18 @@ class ReportActivity : AppCompatActivity() {
     )
 
     private lateinit var platforms: List<Platform>
+    private lateinit var token: String
+    private lateinit var userId: String
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_report)
         supportActionBar?.setDisplayShowHomeEnabled(true)
         supportActionBar?.setLogo(R.mipmap.ic_launcher)
         supportActionBar?.setDisplayUseLogoEnabled(true)
+
+        val prefs = getSharedPreferences("auth", MODE_PRIVATE)
+        token = prefs.getString("token", "") ?: ""
+        userId = prefs.getString("userId", "") ?: ""
 
         platforms = listOf(
             Platform(
@@ -70,8 +86,7 @@ class ReportActivity : AppCompatActivity() {
 
         autoPasteFromClipboard()
         findViewById<Button>(R.id.button_send_report).setOnClickListener {
-            val msg = "Laporan terkirim"
-            Toast.makeText(this, msg, Toast.LENGTH_SHORT).show()
+            sendReport()
         }
     }
 
@@ -127,6 +142,127 @@ class ReportActivity : AppCompatActivity() {
             if (button.text != "Batalkan") {
                 textView.text = text.trim()
                 button.text = "Batalkan"
+            }
+        }
+    }
+
+    private fun extractShortcode(url: String): String? {
+        return try {
+            val uri = Uri.parse(url)
+            val segments = uri.pathSegments
+            val idx = segments.indexOfFirst {
+                it == "p" || it == "reel" || it == "reels" || it == "tv"
+            }
+            if (idx >= 0 && segments.size > idx + 1) segments[idx + 1] else null
+        } catch (_: Exception) {
+            null
+        }
+    }
+
+    private suspend fun isDuplicate(link: String): Boolean {
+        if (token.isBlank()) return false
+        val client = OkHttpClient()
+        val req = Request.Builder()
+            .url("https://papiqo.com/api/link-reports")
+            .header("Authorization", "Bearer $token")
+            .build()
+        return try {
+            client.newCall(req).execute().use { resp ->
+                if (!resp.isSuccessful) return false
+                val body = resp.body?.string()
+                val arr = try {
+                    JSONObject(body ?: "{}").optJSONArray("data") ?: JSONArray()
+                } catch (_: Exception) { JSONArray() }
+                for (i in 0 until arr.length()) {
+                    val obj = arr.optJSONObject(i) ?: continue
+                    val links = listOf(
+                        obj.optString("instagram_link"),
+                        obj.optString("facebook_link"),
+                        obj.optString("twitter_link"),
+                        obj.optString("tiktok_link"),
+                        obj.optString("youtube_link")
+                    )
+                    if (links.any { it.equals(link, true) }) return true
+                }
+                false
+            }
+        } catch (_: Exception) {
+            false
+        }
+    }
+
+    private fun resetField(platform: Platform) {
+        val textView = findViewById<TextView>(platform.textId)
+        val button = findViewById<Button>(platform.buttonId)
+        textView.text = platform.placeholder
+        button.text = platform.label
+    }
+
+    private fun sendReport() {
+        val links = mutableMapOf<String, String?>()
+        platforms.forEach { p ->
+            val text = findViewById<TextView>(p.textId).text.toString().trim()
+            links[p.name] = if (text.startsWith("http")) text else null
+        }
+
+        if (links["instagram"].isNullOrBlank() ||
+            links["facebook"].isNullOrBlank() ||
+            links["twitter"].isNullOrBlank()
+        ) {
+            Toast.makeText(this, "Lengkapi link Instagram, Facebook, dan Twitter", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        CoroutineScope(Dispatchers.IO).launch {
+            var valid = true
+            for (p in platforms) {
+                val link = links[p.name]
+                if (!link.isNullOrBlank() && isDuplicate(link)) {
+                    withContext(Dispatchers.Main) {
+                        resetField(p)
+                        Toast.makeText(this@ReportActivity, "Link ${p.name} sudah ada", Toast.LENGTH_SHORT).show()
+                    }
+                    links[p.name] = null
+                }
+            }
+
+            if (links["instagram"] == null || links["facebook"] == null || links["twitter"] == null) {
+                valid = false
+            }
+
+            if (valid) {
+                val shortcode = extractShortcode(links["instagram"]!!)
+                val json = JSONObject().apply {
+                    put("shortcode", shortcode ?: "")
+                    put("user_id", userId)
+                    put("instagram_link", links["instagram"])
+                    put("facebook_link", links["facebook"])
+                    put("twitter_link", links["twitter"])
+                    put("tiktok_link", links["tiktok"])
+                    put("youtube_link", links["youtube"])
+                }
+                val body = json.toString().toRequestBody("application/json".toMediaType())
+                val client = OkHttpClient()
+                val req = Request.Builder()
+                    .url("https://papiqo.com/api/link-reports")
+                    .header("Authorization", "Bearer $token")
+                    .post(body)
+                    .build()
+                val success = try {
+                    client.newCall(req).execute().use { it.isSuccessful }
+                } catch (_: Exception) { false }
+                withContext(Dispatchers.Main) {
+                    if (success) {
+                        Toast.makeText(this@ReportActivity, "Laporan terkirim", Toast.LENGTH_SHORT).show()
+                        finish()
+                    } else {
+                        Toast.makeText(this@ReportActivity, "Gagal mengirim laporan", Toast.LENGTH_SHORT).show()
+                    }
+                }
+            } else {
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(this@ReportActivity, "Periksa kembali link", Toast.LENGTH_SHORT).show()
+                }
             }
         }
     }

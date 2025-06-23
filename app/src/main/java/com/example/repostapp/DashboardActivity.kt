@@ -25,6 +25,7 @@ class DashboardActivity : AppCompatActivity() {
             override fun getItemCount() = fragments.size
             override fun createFragment(position: Int) = fragments[position]
         }
+        viewPager.isUserInputEnabled = false
 
         val bottomNav = findViewById<BottomNavigationView>(R.id.bottom_navigation)
         bottomNav.setOnItemSelectedListener { item ->

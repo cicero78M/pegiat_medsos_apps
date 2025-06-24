@@ -179,11 +179,30 @@ class DashboardFragment : Fragment(R.layout.fragment_dashboard) {
     }
 
     private fun handlePostClicked(post: InstaPost) {
-        if (!downloadedIds.contains(post.id)) {
-            requestStorageAndDownload(post)
-        } else {
+        val exists = checkIfFileExists(post)
+        if (exists) {
+            if (!downloadedIds.contains(post.id)) {
+                downloadedIds.add(post.id)
+                post.downloaded = true
+                val prefs = requireContext().getSharedPreferences("downloads", Context.MODE_PRIVATE)
+                prefs.edit().putStringSet("ids", downloadedIds).apply()
+                adapter.notifyDataSetChanged()
+            }
             showShareDialog(post)
+        } else {
+            requestStorageAndDownload(post)
         }
+    }
+
+    private fun checkIfFileExists(post: InstaPost): Boolean {
+        val fileName = post.id + if (post.isVideo) ".mp4" else ".jpg"
+        val dir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
+        val file = if (!post.localPath.isNullOrBlank()) {
+            java.io.File(post.localPath!!)
+        } else {
+            java.io.File(dir, fileName)
+        }
+        return file.exists()
     }
 
     private fun requestStorageAndDownload(post: InstaPost) {
@@ -200,6 +219,11 @@ class DashboardFragment : Fragment(R.layout.fragment_dashboard) {
         if (url.isNullOrBlank()) return
         val fileName = post.id + if (post.isVideo) ".mp4" else ".jpg"
         progressBar.visibility = View.VISIBLE
+        progressBar.isIndeterminate = true
+        requireActivity().window.setFlags(
+            android.view.WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE,
+            android.view.WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE
+        )
         CoroutineScope(Dispatchers.IO).launch {
             try {
                 val client = OkHttpClient()
@@ -232,12 +256,14 @@ class DashboardFragment : Fragment(R.layout.fragment_dashboard) {
                     prefs.edit().putStringSet("ids", downloadedIds).apply()
                     progressBar.visibility = View.GONE
                     progressBar.isIndeterminate = true
+                    requireActivity().window.clearFlags(android.view.WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE)
                     adapter.notifyDataSetChanged()
                 }
             } catch (_: Exception) {
                 withContext(Dispatchers.Main) {
                     progressBar.visibility = View.GONE
                     progressBar.isIndeterminate = true
+                    requireActivity().window.clearFlags(android.view.WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE)
                     Toast.makeText(requireContext(), "Gagal download", Toast.LENGTH_SHORT).show()
                 }
             }

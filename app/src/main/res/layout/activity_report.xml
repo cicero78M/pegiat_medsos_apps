@@ -9,22 +9,22 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
 
-        <!-- Instagram -->
         <ImageView
-            android:id="@+id/image_instagram"
+            android:id="@+id/image_preview"
             android:layout_width="match_parent"
             android:layout_height="180dp"
             android:scaleType="centerCrop"
             android:src="@android:drawable/ic_menu_gallery" />
 
         <TextView
-            android:id="@+id/caption_instagram"
+            android:id="@+id/caption_preview"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:maxLines="3"
             android:ellipsize="end"
-            android:text="Caption Instagram" />
+            android:text="Caption" />
 
+        <!-- Instagram link -->
         <TextView
             android:id="@+id/text_instagram"
             android:layout_width="match_parent"
@@ -38,27 +38,12 @@
             android:layout_height="wrap_content"
             android:text="Paste link Instagram" />
 
-        <!-- Facebook -->
-        <ImageView
-            android:id="@+id/image_facebook"
-            android:layout_width="match_parent"
-            android:layout_height="180dp"
-            android:layout_marginTop="24dp"
-            android:scaleType="centerCrop"
-            android:src="@android:drawable/ic_menu_gallery" />
-
-        <TextView
-            android:id="@+id/caption_facebook"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:maxLines="3"
-            android:ellipsize="end"
-            android:text="Caption Facebook" />
-
+        <!-- Facebook link -->
         <TextView
             android:id="@+id/text_facebook"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
             android:text="https://facebook.com/placeholder"
             android:paddingBottom="8dp" />
 
@@ -68,27 +53,12 @@
             android:layout_height="wrap_content"
             android:text="Paste link Facebook" />
 
-        <!-- Twitter -->
-        <ImageView
-            android:id="@+id/image_twitter"
-            android:layout_width="match_parent"
-            android:layout_height="180dp"
-            android:layout_marginTop="24dp"
-            android:scaleType="centerCrop"
-            android:src="@android:drawable/ic_menu_gallery" />
-
-        <TextView
-            android:id="@+id/caption_twitter"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:maxLines="3"
-            android:ellipsize="end"
-            android:text="Caption Twitter" />
-
+        <!-- Twitter link -->
         <TextView
             android:id="@+id/text_twitter"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
             android:text="https://twitter.com/placeholder"
             android:paddingBottom="8dp" />
 
@@ -98,27 +68,12 @@
             android:layout_height="wrap_content"
             android:text="Paste link Twitter" />
 
-        <!-- TikTok -->
-        <ImageView
-            android:id="@+id/image_tiktok"
-            android:layout_width="match_parent"
-            android:layout_height="180dp"
-            android:layout_marginTop="24dp"
-            android:scaleType="centerCrop"
-            android:src="@android:drawable/ic_menu_gallery" />
-
-        <TextView
-            android:id="@+id/caption_tiktok"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:maxLines="3"
-            android:ellipsize="end"
-            android:text="Caption TikTok" />
-
+        <!-- TikTok link -->
         <TextView
             android:id="@+id/text_tiktok"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
             android:text="https://www.tiktok.com/placeholder"
             android:paddingBottom="8dp" />
 
@@ -128,27 +83,12 @@
             android:layout_height="wrap_content"
             android:text="Paste link TikTok" />
 
-        <!-- YouTube -->
-        <ImageView
-            android:id="@+id/image_youtube"
-            android:layout_width="match_parent"
-            android:layout_height="180dp"
-            android:layout_marginTop="24dp"
-            android:scaleType="centerCrop"
-            android:src="@android:drawable/ic_menu_gallery" />
-
-        <TextView
-            android:id="@+id/caption_youtube"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:maxLines="3"
-            android:ellipsize="end"
-            android:text="Caption YouTube" />
-
+        <!-- YouTube link -->
         <TextView
             android:id="@+id/text_youtube"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
             android:text="https://youtu.be/placeholder"
             android:paddingBottom="8dp" />
 

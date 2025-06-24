@@ -303,7 +303,13 @@ class DashboardFragment : Fragment(R.layout.fragment_dashboard) {
             .setItems(options) { _, which ->
                 when (which) {
                     0 -> sharePost(post)
-                    1 -> startActivity(Intent(requireContext(), ReportActivity::class.java))
+                    1 -> {
+                        val intent = Intent(requireContext(), ReportActivity::class.java).apply {
+                            putExtra(ReportActivity.EXTRA_IMAGE_URL, post.imageUrl)
+                            putExtra(ReportActivity.EXTRA_CAPTION, post.caption)
+                        }
+                        startActivity(intent)
+                    }
                 }
             }
             .show()

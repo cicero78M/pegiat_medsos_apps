@@ -9,6 +9,8 @@ import android.widget.TextView
 import android.widget.Toast
 import android.net.Uri
 import androidx.appcompat.app.AppCompatActivity
+import android.widget.ImageView
+import com.bumptech.glide.Glide
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -21,6 +23,11 @@ import org.json.JSONArray
 import org.json.JSONObject
 
 class ReportActivity : AppCompatActivity() {
+
+    companion object {
+        const val EXTRA_IMAGE_URL = "image_url"
+        const val EXTRA_CAPTION = "caption"
+    }
 
     private data class Platform(
         val name: String,
@@ -43,6 +50,16 @@ class ReportActivity : AppCompatActivity() {
         val prefs = getSharedPreferences("auth", MODE_PRIVATE)
         token = prefs.getString("token", "") ?: ""
         userId = prefs.getString("userId", "") ?: ""
+
+        // Show preview if provided
+        intent.getStringExtra(EXTRA_IMAGE_URL)?.let { url ->
+            val imageView = findViewById<ImageView>(R.id.image_preview)
+            Glide.with(this).load(url).into(imageView)
+        }
+        intent.getStringExtra(EXTRA_CAPTION)?.let { caption ->
+            val captionView = findViewById<TextView>(R.id.caption_preview)
+            captionView.text = caption
+        }
 
         platforms = listOf(
             Platform(

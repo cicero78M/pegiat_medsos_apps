@@ -8,6 +8,7 @@ import android.widget.ImageView
 import android.content.Intent
 import androidx.core.content.edit
 import androidx.appcompat.app.AppCompatActivity
+import java.io.File
 import com.bumptech.glide.Glide
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -75,8 +76,10 @@ class UserProfileActivity : AppCompatActivity() {
 
                             val avatarUrl = data?.optString("profile_pic_url") ?: ""
                             val fullAvatarUrl = if (avatarUrl.startsWith("http")) avatarUrl else "https://papiqo.com" + avatarUrl
+                            val avatarFile = withContext(Dispatchers.IO) { downloadAvatarIfNeeded(fullAvatarUrl, userId) }
+                            val avatarSource = avatarFile ?: fullAvatarUrl
                             Glide.with(this@UserProfileActivity)
-                                .load(fullAvatarUrl)
+                                .load(avatarSource)
                                 .placeholder(R.drawable.profile_avatar_placeholder)
                                 .error(R.drawable.profile_avatar_placeholder)
                                 .into(findViewById(R.id.image_avatar))
@@ -146,6 +149,25 @@ class UserProfileActivity : AppCompatActivity() {
         try {
             client.newCall(req).execute().close()
         } catch (_: Exception) {
+        }
+    }
+
+    private fun downloadAvatarIfNeeded(url: String, userId: String): File? {
+        val file = File(filesDir, "avatar_${'$'}userId.jpg")
+        if (file.exists()) return file
+        return try {
+            val client = OkHttpClient()
+            val req = Request.Builder().url(url).build()
+            client.newCall(req).execute().use { resp ->
+                if (!resp.isSuccessful) return null
+                val body = resp.body ?: return null
+                file.outputStream().use { out ->
+                    body.byteStream().copyTo(out)
+                }
+            }
+            file
+        } catch (_: Exception) {
+            null
         }
     }
 }

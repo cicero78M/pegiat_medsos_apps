@@ -12,6 +12,7 @@ import androidx.core.content.edit
 import androidx.core.os.bundleOf
 import androidx.fragment.app.Fragment
 import com.bumptech.glide.Glide
+import java.io.File
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -86,8 +87,10 @@ class UserProfileFragment : Fragment(R.layout.activity_profile) {
 
                             val avatarUrl = data?.optString("profile_pic_url") ?: ""
                             val fullAvatarUrl = if (avatarUrl.startsWith("http")) avatarUrl else "https://papiqo.com" + avatarUrl
+                            val avatarFile = withContext(Dispatchers.IO) { downloadAvatarIfNeeded(fullAvatarUrl, userId) }
+                            val avatarSource = avatarFile ?: fullAvatarUrl
                             Glide.with(this@UserProfileFragment)
-                                .load(fullAvatarUrl)
+                                .load(avatarSource)
                                 .placeholder(R.drawable.profile_avatar_placeholder)
                                 .error(R.drawable.profile_avatar_placeholder)
                                 .into(rootView.findViewById(R.id.image_avatar))
@@ -157,6 +160,25 @@ class UserProfileFragment : Fragment(R.layout.activity_profile) {
         try {
             client.newCall(req).execute().close()
         } catch (_: Exception) {
+        }
+    }
+
+    private fun downloadAvatarIfNeeded(url: String, userId: String): File? {
+        val file = File(requireContext().filesDir, "avatar_${'$'}userId.jpg")
+        if (file.exists()) return file
+        return try {
+            val client = OkHttpClient()
+            val req = Request.Builder().url(url).build()
+            client.newCall(req).execute().use { resp ->
+                if (!resp.isSuccessful) return null
+                val body = resp.body ?: return null
+                file.outputStream().use { out ->
+                    body.byteStream().copyTo(out)
+                }
+            }
+            file
+        } catch (_: Exception) {
+            null
         }
     }
 }

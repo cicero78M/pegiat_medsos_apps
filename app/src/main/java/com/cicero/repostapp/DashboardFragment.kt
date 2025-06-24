@@ -196,17 +196,7 @@ class DashboardFragment : Fragment(R.layout.fragment_dashboard) {
         if (downloadedIds.contains(post.id)) {
             showShareDialog(post)
         } else {
-            if (!post.isVideo) {
-                requestStorageAndDownload(post)
-            } else {
-                androidx.appcompat.app.AlertDialog.Builder(requireContext())
-                    .setMessage("Download konten ini?")
-                    .setPositiveButton("Download") { _, _ ->
-                        requestStorageAndDownload(post)
-                    }
-                    .setNegativeButton("Batal", null)
-                    .show()
-            }
+            requestStorageAndDownload(post)
         }
     }
 

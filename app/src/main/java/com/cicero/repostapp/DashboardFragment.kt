@@ -11,6 +11,7 @@ import android.os.Environment
 import android.view.View
 import android.widget.ProgressBar
 import android.widget.Toast
+import android.util.Log
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.os.bundleOf
 import android.provider.Settings
@@ -277,7 +278,12 @@ class DashboardFragment : Fragment(R.layout.fragment_dashboard) {
                     requireActivity().window.clearFlags(android.view.WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE)
                     adapter.notifyDataSetChanged()
                 }
-            } catch (_: Exception) {
+            } catch (e: Exception) {
+                Log.e(
+                    "DashboardFragment",
+                    "Failed to download $url to $fileName: ${e.message}",
+                    e
+                )
                 withContext(Dispatchers.Main) {
                     progressBar.visibility = View.GONE
                     progressBar.isIndeterminate = true

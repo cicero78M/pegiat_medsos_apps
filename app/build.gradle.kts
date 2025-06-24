@@ -4,11 +4,11 @@ plugins {
 }
 
 android {
-    namespace = "com.example.repostapp"
+    namespace = "com.cicero.repostapp"
     compileSdk = 34
 
     defaultConfig {
-        applicationId = "com.example.repostapp"
+        applicationId = "com.cicero.repostapp"
         minSdk = 26
         targetSdk = 34
         versionCode = 1

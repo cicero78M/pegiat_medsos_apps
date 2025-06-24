@@ -180,8 +180,9 @@ class DashboardFragment : Fragment(R.layout.fragment_dashboard) {
 
     private fun handlePostClicked(post: InstaPost) {
         val exists = checkIfFileExists(post)
-        if (downloadedIds.contains(post.id) || exists) {
-            if (exists && !downloadedIds.contains(post.id)) {
+
+        if (exists) {
+            if (!downloadedIds.contains(post.id)) {
                 downloadedIds.add(post.id)
                 post.downloaded = true
                 val prefs = requireContext().getSharedPreferences("downloads", Context.MODE_PRIVATE)
@@ -189,14 +190,23 @@ class DashboardFragment : Fragment(R.layout.fragment_dashboard) {
                 adapter.notifyDataSetChanged()
             }
             showShareDialog(post)
+            return
+        }
+
+        if (downloadedIds.contains(post.id)) {
+            showShareDialog(post)
         } else {
-            androidx.appcompat.app.AlertDialog.Builder(requireContext())
-                .setMessage("Download konten ini?")
-                .setPositiveButton("Download") { _, _ ->
-                    requestStorageAndDownload(post)
-                }
-                .setNegativeButton("Batal", null)
-                .show()
+            if (!post.isVideo) {
+                requestStorageAndDownload(post)
+            } else {
+                androidx.appcompat.app.AlertDialog.Builder(requireContext())
+                    .setMessage("Download konten ini?")
+                    .setPositiveButton("Download") { _, _ ->
+                        requestStorageAndDownload(post)
+                    }
+                    .setNegativeButton("Batal", null)
+                    .show()
+            }
         }
     }
 
@@ -212,6 +222,18 @@ class DashboardFragment : Fragment(R.layout.fragment_dashboard) {
     }
 
     private fun requestStorageAndDownload(post: InstaPost) {
+        if (checkIfFileExists(post)) {
+            if (!downloadedIds.contains(post.id)) {
+                downloadedIds.add(post.id)
+                post.downloaded = true
+                val prefs = requireContext().getSharedPreferences("downloads", Context.MODE_PRIVATE)
+                prefs.edit().putStringSet("ids", downloadedIds).apply()
+                adapter.notifyDataSetChanged()
+            }
+            showShareDialog(post)
+            return
+        }
+
         val permission = Manifest.permission.WRITE_EXTERNAL_STORAGE
         if (androidx.core.content.ContextCompat.checkSelfPermission(requireContext(), permission) != android.content.pm.PackageManager.PERMISSION_GRANTED) {
             requestPermission.launch(permission)

@@ -62,8 +62,6 @@ class UserProfileActivity : AppCompatActivity() {
                             val avatarUrl = data?.optString("profile_pic_url") ?: ""
                             val fullAvatarUrl = if (avatarUrl.startsWith("http"))
                                 avatarUrl else "https://papiqo.com" + avatarUrl
-                            findViewById<TextView>(R.id.text_profile_url).text =
-                                fullAvatarUrl
                             findViewById<TextView>(R.id.text_name).text =
                                 (data?.optString("title") ?: "") + " " + (data?.optString("nama") ?: "")
                             findViewById<TextView>(R.id.text_nrp).text =
@@ -81,6 +79,7 @@ class UserProfileActivity : AppCompatActivity() {
                                 .load(fullAvatarUrl)
                                 .placeholder(R.drawable.profile_avatar_placeholder)
                                 .error(R.drawable.profile_avatar_placeholder)
+                                .circleCrop()
                                 .into(findViewById(R.id.image_avatar))
 
                             val statusImage = if (statusText.equals("true", true)) {
@@ -120,7 +119,6 @@ class UserProfileActivity : AppCompatActivity() {
                     (stats?.optInt("follower_count") ?: 0).toString()
                 findViewById<TextView>(R.id.stat_following).text =
                     (stats?.optInt("following_count") ?: 0).toString()
-                findViewById<TextView>(R.id.text_raw_data).text = raw ?: ""
             }
         }
     }

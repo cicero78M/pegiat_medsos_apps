@@ -331,6 +331,7 @@ class DashboardFragment : Fragment(R.layout.fragment_dashboard) {
                         val intent = Intent(requireContext(), ReportActivity::class.java).apply {
                             putExtra(ReportActivity.EXTRA_IMAGE_URL, post.imageUrl)
                             putExtra(ReportActivity.EXTRA_CAPTION, post.caption)
+                            putExtra(ReportActivity.EXTRA_SHORTCODE, post.id)
                         }
                         startActivity(intent)
                     }

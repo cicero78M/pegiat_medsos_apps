@@ -27,6 +27,7 @@ class ReportActivity : AppCompatActivity() {
     companion object {
         const val EXTRA_IMAGE_URL = "image_url"
         const val EXTRA_CAPTION = "caption"
+        const val EXTRA_SHORTCODE = "shortcode"
     }
 
     private data class Platform(
@@ -40,6 +41,7 @@ class ReportActivity : AppCompatActivity() {
     private lateinit var platforms: List<Platform>
     private lateinit var token: String
     private lateinit var userId: String
+    private var shortcode: String? = null
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_report)
@@ -60,6 +62,7 @@ class ReportActivity : AppCompatActivity() {
             val captionView = findViewById<TextView>(R.id.caption_preview)
             captionView.text = caption
         }
+        shortcode = intent.getStringExtra(EXTRA_SHORTCODE)
 
         platforms = listOf(
             Platform(
@@ -248,9 +251,9 @@ class ReportActivity : AppCompatActivity() {
             }
 
             if (valid) {
-                val shortcode = extractShortcode(links["instagram"]!!)
+                val shortcodeVal = shortcode ?: extractShortcode(links["instagram"]!!)
                 val json = JSONObject().apply {
-                    put("shortcode", shortcode ?: "")
+                    put("shortcode", shortcodeVal ?: "")
                     put("user_id", userId)
                     put("instagram_link", links["instagram"])
                     put("facebook_link", links["facebook"])

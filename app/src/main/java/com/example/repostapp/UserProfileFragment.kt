@@ -71,10 +71,11 @@ class UserProfileFragment : Fragment(R.layout.activity_profile) {
                             val insta = data?.optString("insta") ?: ""
                             rootView.findViewById<TextView>(R.id.text_username).text =
                                 "@" + insta
-                            val profileUrl = if (insta.isNotBlank())
-                                "https://instagram.com/${'$'}insta" else ""
+                            val avatarUrl = data?.optString("profile_pic_url") ?: ""
+                            val fullAvatarUrl = if (avatarUrl.startsWith("http"))
+                                avatarUrl else "https://papiqo.com" + avatarUrl
                             rootView.findViewById<TextView>(R.id.text_profile_url).text =
-                                profileUrl
+                                fullAvatarUrl
                             rootView.findViewById<TextView>(R.id.text_name).text =
                                 (data?.optString("title") ?: "") + " " + (data?.optString("nama") ?: "")
                             rootView.findViewById<TextView>(R.id.text_nrp).text =
@@ -88,9 +89,6 @@ class UserProfileFragment : Fragment(R.layout.activity_profile) {
                             rootView.findViewById<TextView>(R.id.text_tiktok).text =
                                 (data?.optString("tiktok") ?: "")
                             val statusText = data?.optString("status") ?: ""
-
-                            val avatarUrl = data?.optString("profile_pic_url") ?: ""
-                            val fullAvatarUrl = if (avatarUrl.startsWith("http")) avatarUrl else "https://papiqo.com" + avatarUrl
                             val avatarFile = withContext(Dispatchers.IO) { downloadAvatarIfNeeded(fullAvatarUrl, userId) }
                             val avatarSource = avatarFile ?: fullAvatarUrl
                             Glide.with(this@UserProfileFragment)

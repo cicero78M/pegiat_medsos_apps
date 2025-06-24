@@ -120,9 +120,12 @@ class UserProfileFragment : Fragment(R.layout.activity_profile) {
     private fun fetchStats(token: String, username: String, rootView: View) {
         if (username.isBlank()) return
         CoroutineScope(Dispatchers.IO).launch {
-            val stats = getStatsFromDb(token, username) ?: run {
+            var (stats, raw) = getStatsFromDb(token, username)
+            if (stats == null) {
                 fetchAndStoreStats(token, username)
-                getStatsFromDb(token, username)
+                val result = getStatsFromDb(token, username)
+                stats = result.first
+                raw = result.second
             }
             withContext(Dispatchers.Main) {
                 rootView.findViewById<TextView>(R.id.stat_posts).text =
@@ -131,11 +134,12 @@ class UserProfileFragment : Fragment(R.layout.activity_profile) {
                     (stats?.optInt("follower_count") ?: 0).toString()
                 rootView.findViewById<TextView>(R.id.stat_following).text =
                     (stats?.optInt("following_count") ?: 0).toString()
+                rootView.findViewById<TextView>(R.id.text_raw_data).text = raw ?: ""
             }
         }
     }
 
-    private suspend fun getStatsFromDb(token: String, username: String): JSONObject? {
+    private suspend fun getStatsFromDb(token: String, username: String): Pair<JSONObject?, String?> {
         val client = OkHttpClient()
         val req = Request.Builder()
             .url("https://papiqo.com/api/insta/profile?username=$username")
@@ -143,13 +147,13 @@ class UserProfileFragment : Fragment(R.layout.activity_profile) {
             .build()
         return try {
             client.newCall(req).execute().use { resp ->
-                if (!resp.isSuccessful) return null
+                if (!resp.isSuccessful) return Pair(null, null)
                 val body = resp.body?.string()
                 val obj = JSONObject(body ?: "{}")
-                obj.optJSONObject("data") ?: obj
+                Pair(obj.optJSONObject("data") ?: obj, body)
             }
         } catch (_: Exception) {
-            null
+            Pair(null, null)
         }
     }
 

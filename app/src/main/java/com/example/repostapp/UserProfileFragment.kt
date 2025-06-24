@@ -12,7 +12,6 @@ import androidx.core.content.edit
 import androidx.core.os.bundleOf
 import androidx.fragment.app.Fragment
 import com.bumptech.glide.Glide
-import java.io.File
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -89,10 +88,8 @@ class UserProfileFragment : Fragment(R.layout.activity_profile) {
                             rootView.findViewById<TextView>(R.id.text_tiktok).text =
                                 (data?.optString("tiktok") ?: "")
                             val statusText = data?.optString("status") ?: ""
-                            val avatarFile = withContext(Dispatchers.IO) { downloadAvatarIfNeeded(fullAvatarUrl, userId) }
-                            val avatarSource = avatarFile ?: fullAvatarUrl
                             Glide.with(this@UserProfileFragment)
-                                .load(avatarSource)
+                                .load(fullAvatarUrl)
                                 .placeholder(R.drawable.profile_avatar_placeholder)
                                 .error(R.drawable.profile_avatar_placeholder)
                                 .into(rootView.findViewById(R.id.image_avatar))
@@ -169,22 +166,4 @@ class UserProfileFragment : Fragment(R.layout.activity_profile) {
         }
     }
 
-    private fun downloadAvatarIfNeeded(url: String, userId: String): File? {
-        val file = File(requireContext().filesDir, "avatar_${'$'}userId.jpg")
-        if (file.exists()) return file
-        return try {
-            val client = OkHttpClient()
-            val req = Request.Builder().url(url).build()
-            client.newCall(req).execute().use { resp ->
-                if (!resp.isSuccessful) return null
-                val body = resp.body ?: return null
-                file.outputStream().use { out ->
-                    body.byteStream().copyTo(out)
-                }
-            }
-            file
-        } catch (_: Exception) {
-            null
-        }
-    }
 }

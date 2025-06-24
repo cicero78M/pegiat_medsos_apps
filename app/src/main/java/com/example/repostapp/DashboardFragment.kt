@@ -180,8 +180,8 @@ class DashboardFragment : Fragment(R.layout.fragment_dashboard) {
 
     private fun handlePostClicked(post: InstaPost) {
         val exists = checkIfFileExists(post)
-        if (exists) {
-            if (!downloadedIds.contains(post.id)) {
+        if (downloadedIds.contains(post.id) || exists) {
+            if (exists && !downloadedIds.contains(post.id)) {
                 downloadedIds.add(post.id)
                 post.downloaded = true
                 val prefs = requireContext().getSharedPreferences("downloads", Context.MODE_PRIVATE)
@@ -190,7 +190,13 @@ class DashboardFragment : Fragment(R.layout.fragment_dashboard) {
             }
             showShareDialog(post)
         } else {
-            requestStorageAndDownload(post)
+            androidx.appcompat.app.AlertDialog.Builder(requireContext())
+                .setMessage("Download konten ini?")
+                .setPositiveButton("Download") { _, _ ->
+                    requestStorageAndDownload(post)
+                }
+                .setNegativeButton("Batal", null)
+                .show()
         }
     }
 

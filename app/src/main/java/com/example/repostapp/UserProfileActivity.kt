@@ -22,7 +22,7 @@ class UserProfileActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_profile)
         supportActionBar?.setDisplayShowHomeEnabled(true)
-        supportActionBar?.setLogo(R.mipmap.ic_launcher)
+        supportActionBar?.setLogo(R.mipmap.ic_launcher_round)
         supportActionBar?.setDisplayUseLogoEnabled(true)
         val userId = intent.getStringExtra("userId") ?: ""
         val token = intent.getStringExtra("token") ?: ""

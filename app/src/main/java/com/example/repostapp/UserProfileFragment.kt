@@ -71,6 +71,10 @@ class UserProfileFragment : Fragment(R.layout.activity_profile) {
                             val insta = data?.optString("insta") ?: ""
                             rootView.findViewById<TextView>(R.id.text_username).text =
                                 "@" + insta
+                            val profileUrl = if (insta.isNotBlank())
+                                "https://instagram.com/${'$'}insta" else ""
+                            rootView.findViewById<TextView>(R.id.text_profile_url).text =
+                                profileUrl
                             rootView.findViewById<TextView>(R.id.text_name).text =
                                 (data?.optString("title") ?: "") + " " + (data?.optString("nama") ?: "")
                             rootView.findViewById<TextView>(R.id.text_nrp).text =

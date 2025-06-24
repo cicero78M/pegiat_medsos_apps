@@ -27,7 +27,7 @@
             android:layout_height="24dp"
             android:layout_gravity="end|top"
             android:padding="4dp"
-            android:src="@android:drawable/checkbox_on_background"
+            android:src="@android:drawable/stat_sys_download_done"
             android:visibility="gone" />
     </FrameLayout>
 

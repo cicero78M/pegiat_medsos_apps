@@ -12,7 +12,7 @@ class DashboardActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_dashboard)
         supportActionBar?.setDisplayShowHomeEnabled(true)
-        supportActionBar?.setLogo(R.mipmap.ic_launcher)
+        supportActionBar?.setLogo(R.mipmap.ic_launcher_round)
         supportActionBar?.setDisplayUseLogoEnabled(true)
 
         val token = intent.getStringExtra("token")

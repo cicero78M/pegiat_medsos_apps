@@ -37,7 +37,7 @@ class ReportActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_report)
         supportActionBar?.setDisplayShowHomeEnabled(true)
-        supportActionBar?.setLogo(R.mipmap.ic_launcher)
+        supportActionBar?.setLogo(R.mipmap.ic_launcher_round)
         supportActionBar?.setDisplayUseLogoEnabled(true)
 
         val prefs = getSharedPreferences("auth", MODE_PRIVATE)

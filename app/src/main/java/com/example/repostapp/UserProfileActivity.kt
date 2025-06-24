@@ -60,6 +60,10 @@ class UserProfileActivity : AppCompatActivity() {
                             val insta = data?.optString("insta") ?: ""
                             findViewById<TextView>(R.id.text_username).text =
                                 "@" + insta
+                            val profileUrl = if (insta.isNotBlank())
+                                "https://instagram.com/${'$'}insta" else ""
+                            findViewById<TextView>(R.id.text_profile_url).text =
+                                profileUrl
                             findViewById<TextView>(R.id.text_name).text =
                                 (data?.optString("title") ?: "") + " " + (data?.optString("nama") ?: "")
                             findViewById<TextView>(R.id.text_nrp).text =

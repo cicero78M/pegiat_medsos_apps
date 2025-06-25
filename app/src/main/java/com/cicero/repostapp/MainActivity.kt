@@ -1,13 +1,8 @@
 package com.cicero.repostapp
 
-import android.Manifest
 import android.content.Intent
-import android.net.Uri
 import android.os.Bundle
-import android.provider.Settings
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.content.ContextCompat
 import android.widget.Button
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -18,12 +13,6 @@ import okhttp3.Request
 
 class MainActivity : AppCompatActivity() {
 
-    private val requestPermission =
-        registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
-            if (!granted) {
-                openStoragePermissionSettings()
-            }
-        }
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -31,7 +20,6 @@ class MainActivity : AppCompatActivity() {
         supportActionBar?.setLogo(R.mipmap.ic_launcher_round)
         supportActionBar?.setDisplayUseLogoEnabled(true)
 
-        checkStoragePermission()
 
         val prefs = getSharedPreferences("auth", MODE_PRIVATE)
         val token = prefs.getString("token", null)
@@ -75,19 +63,5 @@ class MainActivity : AppCompatActivity() {
         finish()
     }
 
-    private fun checkStoragePermission() {
-        val permission = Manifest.permission.WRITE_EXTERNAL_STORAGE
-        if (ContextCompat.checkSelfPermission(this, permission) !=
-            android.content.pm.PackageManager.PERMISSION_GRANTED) {
-            requestPermission.launch(permission)
-        }
-    }
-
-    private fun openStoragePermissionSettings() {
-        val intent = Intent(
-            Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
-            Uri.fromParts("package", packageName, null)
-        )
-        startActivity(intent)
-    }
+    // No external storage permission required when using app-specific storage
 }

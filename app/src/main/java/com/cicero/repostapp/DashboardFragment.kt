@@ -7,7 +7,6 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
-import android.os.Environment
 import android.view.View
 import android.widget.ProgressBar
 import android.widget.Toast
@@ -47,13 +46,6 @@ class DashboardFragment : Fragment(R.layout.fragment_dashboard) {
     private val downloadedIds = mutableSetOf<String>()
     private val reportedIds = mutableSetOf<String>()
 
-    private val requestPermission =
-        registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
-            if (!granted) {
-                Toast.makeText(requireContext(), "Izin penyimpanan diperlukan", Toast.LENGTH_SHORT).show()
-                openStoragePermissionSettings()
-            }
-        }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -216,7 +208,7 @@ class DashboardFragment : Fragment(R.layout.fragment_dashboard) {
     }
 
     private fun ensureDownloadDir(onReady: () -> Unit) {
-        val dir = java.io.File(Environment.getExternalStorageDirectory(), "CiceroReposterApp")
+        val dir = java.io.File(requireContext().getExternalFilesDir(null), "CiceroReposterApp")
         if (dir.exists()) {
             onReady()
             return
@@ -238,7 +230,7 @@ class DashboardFragment : Fragment(R.layout.fragment_dashboard) {
 
     private fun checkIfFileExists(post: InstaPost): Boolean {
         val fileName = post.id + if (post.isVideo) ".mp4" else ".jpg"
-        val dir = java.io.File(Environment.getExternalStorageDirectory(), "CiceroReposterApp")
+        val dir = java.io.File(requireContext().getExternalFilesDir(null), "CiceroReposterApp")
         val file = if (!post.localPath.isNullOrBlank()) {
             java.io.File(post.localPath!!)
         } else {
@@ -260,11 +252,6 @@ class DashboardFragment : Fragment(R.layout.fragment_dashboard) {
             return
         }
 
-        val permission = Manifest.permission.WRITE_EXTERNAL_STORAGE
-        if (androidx.core.content.ContextCompat.checkSelfPermission(requireContext(), permission) != android.content.pm.PackageManager.PERMISSION_GRANTED) {
-            requestPermission.launch(permission)
-            return
-        }
         downloadPost(post)
     }
 
@@ -292,7 +279,7 @@ class DashboardFragment : Fragment(R.layout.fragment_dashboard) {
                         throw java.io.IOException("HTTP ${resp.code} ${resp.message}")
                     }
                     val body = resp.body ?: return@use
-                    val dir = java.io.File(Environment.getExternalStorageDirectory(), "CiceroReposterApp")
+                    val dir = java.io.File(requireContext().getExternalFilesDir(null), "CiceroReposterApp")
                     if (!dir.exists()) {
                         dir.mkdirs()
                     }
@@ -343,7 +330,7 @@ class DashboardFragment : Fragment(R.layout.fragment_dashboard) {
 
     private fun sharePost(post: InstaPost) {
         val fileName = post.id + if (post.isVideo) ".mp4" else ".jpg"
-        val dir = java.io.File(Environment.getExternalStorageDirectory(), "CiceroReposterApp")
+        val dir = java.io.File(requireContext().getExternalFilesDir(null), "CiceroReposterApp")
         if (!dir.exists()) {
             dir.mkdirs()
         }
@@ -408,14 +395,6 @@ class DashboardFragment : Fragment(R.layout.fragment_dashboard) {
         } catch (_: Exception) {
             startActivity(Intent.createChooser(intent, "Share via"))
         }
-    }
-
-    private fun openStoragePermissionSettings() {
-        val intent = Intent(
-            Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
-            Uri.fromParts("package", requireContext().packageName, null)
-        )
-        startActivity(intent)
     }
 
     private suspend fun fetchReportedShortcodes(token: String): Set<String> {

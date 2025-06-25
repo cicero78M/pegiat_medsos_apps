@@ -68,7 +68,7 @@ class DashboardFragment : Fragment(R.layout.fragment_dashboard) {
             progressBar.visibility = View.VISIBLE
             CoroutineScope(Dispatchers.IO).launch {
                 reportedIds.clear()
-                reportedIds.addAll(fetchReportedShortcodes(token))
+                reportedIds.addAll(fetchReportedShortcodes(token, userId))
                 withContext(Dispatchers.Main) {
                     fetchClientAndPosts(userId, token)
                 }
@@ -397,8 +397,8 @@ class DashboardFragment : Fragment(R.layout.fragment_dashboard) {
         }
     }
 
-    private suspend fun fetchReportedShortcodes(token: String): Set<String> {
-        if (token.isBlank()) return emptySet()
+    private suspend fun fetchReportedShortcodes(token: String, userId: String): Set<String> {
+        if (token.isBlank() || userId.isBlank()) return emptySet()
         val client = OkHttpClient()
         val req = Request.Builder()
             .url("https://papiqo.com/api/link-reports")
@@ -415,7 +415,8 @@ class DashboardFragment : Fragment(R.layout.fragment_dashboard) {
                 for (i in 0 until arr.length()) {
                     val obj = arr.optJSONObject(i) ?: continue
                     val sc = obj.optString("shortcode")
-                    if (sc.isNotBlank()) set.add(sc)
+                    val uid = obj.optString("user_id")
+                    if (sc.isNotBlank() && uid == userId) set.add(sc)
                 }
                 set
             }

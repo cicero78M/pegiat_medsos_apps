@@ -188,6 +188,12 @@ class DashboardFragment : Fragment(R.layout.fragment_dashboard) {
     }
 
     private fun handlePostClicked(post: InstaPost) {
+        ensureDownloadDir {
+            proceedWithPost(post)
+        }
+    }
+
+    private fun proceedWithPost(post: InstaPost) {
         val exists = checkIfFileExists(post)
 
         if (exists) {
@@ -209,12 +215,30 @@ class DashboardFragment : Fragment(R.layout.fragment_dashboard) {
         }
     }
 
+    private fun ensureDownloadDir(onReady: () -> Unit) {
+        val dir = java.io.File(Environment.getExternalStorageDirectory(), "CiceroReposterApp")
+        if (dir.exists()) {
+            onReady()
+            return
+        }
+
+        androidx.appcompat.app.AlertDialog.Builder(requireContext())
+            .setMessage("Folder CiceroReposterApp tidak ditemukan. Klik OK untuk membuat folder.")
+            .setPositiveButton("OK") { _, _ ->
+                dir.mkdirs()
+                if (!dir.exists()) {
+                    Toast.makeText(requireContext(), "Gagal membuat folder", Toast.LENGTH_SHORT).show()
+                } else {
+                    onReady()
+                }
+            }
+            .setNegativeButton("Batal", null)
+            .show()
+    }
+
     private fun checkIfFileExists(post: InstaPost): Boolean {
         val fileName = post.id + if (post.isVideo) ".mp4" else ".jpg"
         val dir = java.io.File(Environment.getExternalStorageDirectory(), "CiceroReposterApp")
-        if (!dir.exists()) {
-            dir.mkdirs()
-        }
         val file = if (!post.localPath.isNullOrBlank()) {
             java.io.File(post.localPath!!)
         } else {

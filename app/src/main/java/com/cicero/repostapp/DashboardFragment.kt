@@ -330,9 +330,13 @@ class DashboardFragment : Fragment(R.layout.fragment_dashboard) {
     }
 
     private fun showShareDialog(post: InstaPost) {
-        val options = arrayOf("Share", "Lapor")
+        val opts = if (post.reported) {
+            arrayOf("Share", "Kirim Link", "Laporan WhatsApp")
+        } else {
+            arrayOf("Share", "Kirim Link")
+        }
         androidx.appcompat.app.AlertDialog.Builder(requireContext())
-            .setItems(options) { _, which ->
+            .setItems(opts) { _, which ->
                 when (which) {
                     0 -> sharePost(post)
                     1 -> {
@@ -343,9 +347,25 @@ class DashboardFragment : Fragment(R.layout.fragment_dashboard) {
                         }
                         startActivity(intent)
                     }
+                    2 -> if (post.reported) {
+                        shareShortcodeViaWhatsApp(post.id)
+                    }
                 }
             }
             .show()
+    }
+
+    private fun shareShortcodeViaWhatsApp(shortcode: String) {
+        val intent = Intent(Intent.ACTION_SEND).apply {
+            type = "text/plain"
+            putExtra(Intent.EXTRA_TEXT, "https://instagram.com/p/$shortcode")
+            setPackage("com.whatsapp")
+        }
+        try {
+            startActivity(intent)
+        } catch (_: Exception) {
+            startActivity(Intent.createChooser(intent, "Share via"))
+        }
     }
 
     private fun openStoragePermissionSettings() {

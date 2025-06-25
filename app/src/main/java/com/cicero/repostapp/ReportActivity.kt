@@ -274,6 +274,7 @@ class ReportActivity : AppCompatActivity() {
                 withContext(Dispatchers.Main) {
                     if (success) {
                         Toast.makeText(this@ReportActivity, "Laporan terkirim", Toast.LENGTH_SHORT).show()
+                        shareViaWhatsApp(shortcodeVal ?: "", links)
                         finish()
                     } else {
                         Toast.makeText(this@ReportActivity, "Gagal mengirim laporan", Toast.LENGTH_SHORT).show()
@@ -284,6 +285,41 @@ class ReportActivity : AppCompatActivity() {
                     Toast.makeText(this@ReportActivity, "Periksa kembali link", Toast.LENGTH_SHORT).show()
                 }
             }
+        }
+    }
+
+    private fun shareViaWhatsApp(shortcode: String, links: Map<String, String?>) {
+        val locale = java.util.Locale("id", "ID")
+        val today = java.time.LocalDate.now()
+        val day = today.format(java.time.format.DateTimeFormatter.ofPattern("EEEE", locale))
+        val dateStr = today.format(java.time.format.DateTimeFormatter.ofPattern("dd MMMM yyyy", locale))
+        val message = """
+            Mohon ijin, Mengirimkan Laporan repost konten,
+
+            Hari : $day,
+            Tanggal : $dateStr
+
+            dari Source Link Konten Instagram berikut :
+            https://instagram.com/p/$shortcode
+
+            Laporan Link Pelaksanaan Sebagai Berikut :
+            1. ${links["instagram"] ?: "-"},
+            2. ${links["facebook"] ?: "-"},
+            3. ${links["twitter"] ?: "-"},
+            4. ${links["tiktok"] ?: "-"},
+            5. ${links["youtube"] ?: "-"},
+
+            DUMM.
+        """.trimIndent()
+        val intent = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
+            type = "text/plain"
+            putExtra(android.content.Intent.EXTRA_TEXT, message)
+            setPackage("com.whatsapp")
+        }
+        try {
+            startActivity(intent)
+        } catch (_: Exception) {
+            startActivity(android.content.Intent.createChooser(intent, "Share via"))
         }
     }
 }

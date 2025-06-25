@@ -45,6 +45,8 @@ class DashboardFragment : Fragment(R.layout.fragment_dashboard) {
     private lateinit var emptyView: android.widget.TextView
     private val downloadedIds = mutableSetOf<String>()
     private val reportedIds = mutableSetOf<String>()
+    private var token: String = ""
+    private var userId: String = ""
 
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -62,8 +64,8 @@ class DashboardFragment : Fragment(R.layout.fragment_dashboard) {
         recycler.layoutManager = LinearLayoutManager(requireContext())
         recycler.adapter = adapter
 
-        val token = arguments?.getString(ARG_TOKEN) ?: ""
-        val userId = arguments?.getString(ARG_USER_ID) ?: ""
+        token = arguments?.getString(ARG_TOKEN) ?: ""
+        userId = arguments?.getString(ARG_USER_ID) ?: ""
         if (token.isNotBlank() && userId.isNotBlank()) {
             progressBar.visibility = View.VISIBLE
             CoroutineScope(Dispatchers.IO).launch {
@@ -377,7 +379,7 @@ class DashboardFragment : Fragment(R.layout.fragment_dashboard) {
                         startActivity(intent)
                     }
                     2 -> if (post.reported) {
-                        shareShortcodeViaWhatsApp(post.id)
+                        shareReportViaWhatsApp(post.id)
                     }
                 }
             }
@@ -388,6 +390,89 @@ class DashboardFragment : Fragment(R.layout.fragment_dashboard) {
         val intent = Intent(Intent.ACTION_SEND).apply {
             type = "text/plain"
             putExtra(Intent.EXTRA_TEXT, "https://instagram.com/p/$shortcode")
+            setPackage("com.whatsapp")
+        }
+        try {
+            startActivity(intent)
+        } catch (_: Exception) {
+            startActivity(Intent.createChooser(intent, "Share via"))
+        }
+    }
+
+    private fun shareReportViaWhatsApp(shortcode: String) {
+        CoroutineScope(Dispatchers.IO).launch {
+            val links = getExistingReport(shortcode)
+            if (links != null) {
+                withContext(Dispatchers.Main) {
+                    shareViaWhatsApp(shortcode, links)
+                }
+            } else {
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(requireContext(), "Gagal mengambil laporan", Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+    }
+
+    private suspend fun getExistingReport(sc: String): Map<String, String?>? {
+        if (token.isBlank()) return null
+        val client = OkHttpClient()
+        val req = Request.Builder()
+            .url("https://papiqo.com/api/link-reports")
+            .header("Authorization", "Bearer $token")
+            .build()
+        return try {
+            client.newCall(req).execute().use { resp ->
+                if (!resp.isSuccessful) return null
+                val body = resp.body?.string()
+                val arr = try {
+                    JSONObject(body ?: "{}").optJSONArray("data") ?: JSONArray()
+                } catch (_: Exception) { JSONArray() }
+                for (i in 0 until arr.length()) {
+                    val o = arr.optJSONObject(i) ?: continue
+                    if (o.optString("shortcode") == sc && o.optString("user_id") == userId) {
+                        return mapOf(
+                            "instagram" to o.optString("instagram_link").takeIf { it.isNotBlank() },
+                            "facebook" to o.optString("facebook_link").takeIf { it.isNotBlank() },
+                            "twitter" to o.optString("twitter_link").takeIf { it.isNotBlank() },
+                            "tiktok" to o.optString("tiktok_link").takeIf { it.isNotBlank() },
+                            "youtube" to o.optString("youtube_link").takeIf { it.isNotBlank() }
+                        )
+                    }
+                }
+                null
+            }
+        } catch (_: Exception) {
+            null
+        }
+    }
+
+    private fun shareViaWhatsApp(shortcode: String, links: Map<String, String?>) {
+        val locale = java.util.Locale("id", "ID")
+        val today = java.time.LocalDate.now()
+        val day = today.format(java.time.format.DateTimeFormatter.ofPattern("EEEE", locale))
+        val dateStr = today.format(java.time.format.DateTimeFormatter.ofPattern("dd MMMM yyyy", locale))
+        val message = """
+            Mohon ijin, Mengirimkan Laporan repost konten,
+
+            Hari : $day,
+            Tanggal : $dateStr
+
+            dari Source Link Konten Instagram berikut :
+            https://instagram.com/p/$shortcode
+
+            Laporan Link Pelaksanaan Sebagai Berikut :
+            1. ${links["instagram"] ?: "-"},
+            2. ${links["facebook"] ?: "-"},
+            3. ${links["twitter"] ?: "-"},
+            4. ${links["tiktok"] ?: "-"},
+            5. ${links["youtube"] ?: "-"},
+
+            DUMM.
+        """.trimIndent()
+        val intent = Intent(Intent.ACTION_SEND).apply {
+            type = "text/plain"
+            putExtra(Intent.EXTRA_TEXT, message)
             setPackage("com.whatsapp")
         }
         try {

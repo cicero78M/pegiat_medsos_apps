@@ -23,4 +23,4 @@ If the directory does not yet exist you will be prompted to create it before the
 download proceeds.
 The dialog lets you share the file, **Kirim Link** to open the reporting form,
 and when a post already shows a check mark you will also see **Laporan WhatsApp**
-to directly forward the Instagram link via WhatsApp.
+which now sends the full report message retrieved from the backend via WhatsApp.

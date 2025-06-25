@@ -256,6 +256,14 @@ class DashboardFragment : Fragment(R.layout.fragment_dashboard) {
                 val client = OkHttpClient()
                 val req = Request.Builder().url(url).build()
                 client.newCall(req).execute().use { resp ->
+                    if (!resp.isSuccessful) {
+                        val errBody = resp.body?.string()
+                        Log.e(
+                            "DashboardFragment",
+                            "HTTP ${resp.code} ${resp.message} when downloading $url. Body: $errBody"
+                        )
+                        throw java.io.IOException("HTTP ${resp.code} ${resp.message}")
+                    }
                     val body = resp.body ?: return@use
                     val dir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
                     val file = java.io.File(dir, fileName)
@@ -296,7 +304,8 @@ class DashboardFragment : Fragment(R.layout.fragment_dashboard) {
                     progressBar.visibility = View.GONE
                     progressBar.isIndeterminate = true
                     requireActivity().window.clearFlags(android.view.WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE)
-                    Toast.makeText(requireContext(), "Gagal download", Toast.LENGTH_SHORT).show()
+                    val msg = "Gagal download: ${e.message}"
+                    Toast.makeText(requireContext(), msg, Toast.LENGTH_LONG).show()
                 }
             }
         }

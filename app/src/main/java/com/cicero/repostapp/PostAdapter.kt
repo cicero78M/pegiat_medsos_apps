@@ -17,7 +17,8 @@ data class InstaPost(
     val videoUrl: String? = null,
     val sourceUrl: String? = null,
     var downloaded: Boolean = false,
-    var localPath: String? = null
+    var localPath: String? = null,
+    var reported: Boolean = false
 )
 
 class PostAdapter(
@@ -49,6 +50,7 @@ class PostAdapter(
         private val captionText: TextView = itemView.findViewById(R.id.text_caption)
         private val imageView: ImageView = itemView.findViewById(R.id.image_post)
         private val downloadedIcon: ImageView = itemView.findViewById(R.id.icon_downloaded)
+        private val reportedIcon: ImageView = itemView.findViewById(R.id.icon_reported)
 
         fun bind(post: InstaPost) {
             captionText.text = post.caption ?: ""
@@ -59,6 +61,7 @@ class PostAdapter(
                 imageView.setImageDrawable(null)
             }
             downloadedIcon.visibility = if (post.downloaded) View.VISIBLE else View.GONE
+            reportedIcon.visibility = if (post.reported) View.VISIBLE else View.GONE
         }
     }
 }

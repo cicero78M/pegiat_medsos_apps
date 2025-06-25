@@ -45,6 +45,7 @@ class DashboardFragment : Fragment(R.layout.fragment_dashboard) {
     private lateinit var progressBar: ProgressBar
     private lateinit var emptyView: android.widget.TextView
     private val downloadedIds = mutableSetOf<String>()
+    private val reportedIds = mutableSetOf<String>()
 
     private val requestPermission =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
@@ -73,7 +74,13 @@ class DashboardFragment : Fragment(R.layout.fragment_dashboard) {
         val userId = arguments?.getString(ARG_USER_ID) ?: ""
         if (token.isNotBlank() && userId.isNotBlank()) {
             progressBar.visibility = View.VISIBLE
-            fetchClientAndPosts(userId, token)
+            CoroutineScope(Dispatchers.IO).launch {
+                reportedIds.clear()
+                reportedIds.addAll(fetchReportedShortcodes(token))
+                withContext(Dispatchers.Main) {
+                    fetchClientAndPosts(userId, token)
+                }
+            }
         }
     }
 
@@ -156,7 +163,8 @@ class DashboardFragment : Fragment(R.layout.fragment_dashboard) {
                                             isVideo = obj.optBoolean("is_video"),
                                             videoUrl = obj.optString("video_url"),
                                             sourceUrl = obj.optString("source_url"),
-                                            downloaded = downloadedIds.contains(id)
+                                            downloaded = downloadedIds.contains(id),
+                                            reported = reportedIds.contains(id)
                                         )
                                     )
                                 }
@@ -346,6 +354,33 @@ class DashboardFragment : Fragment(R.layout.fragment_dashboard) {
             Uri.fromParts("package", requireContext().packageName, null)
         )
         startActivity(intent)
+    }
+
+    private suspend fun fetchReportedShortcodes(token: String): Set<String> {
+        if (token.isBlank()) return emptySet()
+        val client = OkHttpClient()
+        val req = Request.Builder()
+            .url("https://papiqo.com/api/link-reports")
+            .header("Authorization", "Bearer $token")
+            .build()
+        return try {
+            client.newCall(req).execute().use { resp ->
+                if (!resp.isSuccessful) return emptySet()
+                val body = resp.body?.string()
+                val arr = try {
+                    JSONObject(body ?: "{}").optJSONArray("data") ?: JSONArray()
+                } catch (_: Exception) { JSONArray() }
+                val set = mutableSetOf<String>()
+                for (i in 0 until arr.length()) {
+                    val obj = arr.optJSONObject(i) ?: continue
+                    val sc = obj.optString("shortcode")
+                    if (sc.isNotBlank()) set.add(sc)
+                }
+                set
+            }
+        } catch (_: Exception) {
+            emptySet()
+        }
     }
 }
 

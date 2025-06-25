@@ -18,7 +18,7 @@ and the user identifier. These values are saved in `SharedPreferences` under the
 
 After a successful login the dashboard fetches Instagram posts via
 `/api/insta/posts?client_id=<id>` and displays today's content. Tapping a post
-will download it to the public *Downloads* directory and open a share dialog.
+will download it to a public directory named **CiceroReposterApp** and open a share dialog.
 The dialog lets you share the file, **Kirim Link** to open the reporting form,
 and when a post already shows a check mark you will also see **Laporan WhatsApp**
 to directly forward the Instagram link via WhatsApp.

@@ -211,7 +211,10 @@ class DashboardFragment : Fragment(R.layout.fragment_dashboard) {
 
     private fun checkIfFileExists(post: InstaPost): Boolean {
         val fileName = post.id + if (post.isVideo) ".mp4" else ".jpg"
-        val dir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
+        val dir = java.io.File(Environment.getExternalStorageDirectory(), "CiceroReposterApp")
+        if (!dir.exists()) {
+            dir.mkdirs()
+        }
         val file = if (!post.localPath.isNullOrBlank()) {
             java.io.File(post.localPath!!)
         } else {
@@ -265,7 +268,10 @@ class DashboardFragment : Fragment(R.layout.fragment_dashboard) {
                         throw java.io.IOException("HTTP ${resp.code} ${resp.message}")
                     }
                     val body = resp.body ?: return@use
-                    val dir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
+                    val dir = java.io.File(Environment.getExternalStorageDirectory(), "CiceroReposterApp")
+                    if (!dir.exists()) {
+                        dir.mkdirs()
+                    }
                     val file = java.io.File(dir, fileName)
                     file.outputStream().use { out ->
                         val total = body.contentLength()
@@ -313,7 +319,10 @@ class DashboardFragment : Fragment(R.layout.fragment_dashboard) {
 
     private fun sharePost(post: InstaPost) {
         val fileName = post.id + if (post.isVideo) ".mp4" else ".jpg"
-        val dir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
+        val dir = java.io.File(Environment.getExternalStorageDirectory(), "CiceroReposterApp")
+        if (!dir.exists()) {
+            dir.mkdirs()
+        }
         val file = if (!post.localPath.isNullOrBlank()) {
             java.io.File(post.localPath!!)
         } else {

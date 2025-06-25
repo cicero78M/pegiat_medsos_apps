@@ -70,35 +70,35 @@ class ReportActivity : AppCompatActivity() {
                 R.id.text_instagram,
                 R.id.button_paste_instagram,
                 "Paste link Instagram",
-                "https://instagram.com/placeholder"
+                ""
             ),
             Platform(
                 "facebook",
                 R.id.text_facebook,
                 R.id.button_paste_facebook,
                 "Paste link Facebook",
-                "https://facebook.com/placeholder"
+                ""
             ),
             Platform(
                 "twitter",
                 R.id.text_twitter,
                 R.id.button_paste_twitter,
                 "Paste link Twitter",
-                "https://twitter.com/placeholder"
+                ""
             ),
             Platform(
                 "tiktok",
                 R.id.text_tiktok,
                 R.id.button_paste_tiktok,
                 "Paste link TikTok",
-                "https://www.tiktok.com/placeholder"
+                ""
             ),
             Platform(
                 "youtube",
                 R.id.text_youtube,
                 R.id.button_paste_youtube,
                 "Paste link YouTube",
-                "https://youtu.be/placeholder"
+                ""
             )
         )
 

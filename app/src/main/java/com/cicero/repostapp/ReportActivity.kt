@@ -105,6 +105,9 @@ class ReportActivity : AppCompatActivity() {
         platforms.forEach { setupPasteButton(it) }
 
         autoPasteFromClipboard()
+        if (!shortcode.isNullOrBlank()) {
+            loadExistingReport()
+        }
         findViewById<Button>(R.id.button_send_report).setOnClickListener {
             sendReport()
         }
@@ -163,6 +166,59 @@ class ReportActivity : AppCompatActivity() {
                 textView.text = text.trim()
                 button.text = "Batalkan"
             }
+        }
+    }
+
+    private fun loadExistingReport() {
+        CoroutineScope(Dispatchers.IO).launch {
+            val obj = getExistingReport(shortcode!!)
+            if (obj != null) {
+                withContext(Dispatchers.Main) {
+                    platforms.forEach { p ->
+                        val link = obj.optString("${p.name}_link").takeIf { it.isNotBlank() }
+                        fillField(p, link)
+                    }
+                }
+            }
+        }
+    }
+
+    private suspend fun getExistingReport(sc: String): JSONObject? {
+        if (token.isBlank()) return null
+        val client = OkHttpClient()
+        val req = Request.Builder()
+            .url("https://papiqo.com/api/link-reports")
+            .header("Authorization", "Bearer $token")
+            .build()
+        return try {
+            client.newCall(req).execute().use { resp ->
+                if (!resp.isSuccessful) return null
+                val body = resp.body?.string()
+                val arr = try {
+                    JSONObject(body ?: "{}").optJSONArray("data") ?: JSONArray()
+                } catch (_: Exception) { JSONArray() }
+                for (i in 0 until arr.length()) {
+                    val o = arr.optJSONObject(i) ?: continue
+                    if (o.optString("shortcode") == sc && o.optString("user_id") == userId) {
+                        return o
+                    }
+                }
+                null
+            }
+        } catch (_: Exception) {
+            null
+        }
+    }
+
+    private fun fillField(platform: Platform, link: String?) {
+        val textView = findViewById<TextView>(platform.textId)
+        val button = findViewById<Button>(platform.buttonId)
+        if (link.isNullOrBlank()) {
+            textView.text = platform.placeholder
+            button.text = platform.label
+        } else {
+            textView.text = link
+            button.text = "Batalkan"
         }
     }
 

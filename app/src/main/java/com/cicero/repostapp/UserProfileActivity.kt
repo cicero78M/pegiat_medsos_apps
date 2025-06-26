@@ -1,5 +1,3 @@
-@file:Suppress("ASSIGNED_BUT_NEVER_ACCESSED_VARIABLE")
-
 package com.cicero.repostapp
 
 import android.annotation.SuppressLint
@@ -111,7 +109,7 @@ class UserProfileActivity : AppCompatActivity() {
     private fun fetchStats(token: String, username: String) {
         if (username.isBlank()) return
         CoroutineScope(Dispatchers.IO).launch {
-            var (stats, raw) = getStatsFromDb(token, username)
+            var (stats, _) = getStatsFromDb(token, username)
             if (stats == null) {
                 fetchAndStoreStats(token, username)
                 val result = getStatsFromDb(token, username)

@@ -32,10 +32,6 @@ android {
     }
 }
 
-repositories {
-    mavenCentral()
-}
-
 dependencies {
     implementation("androidx.core:core-ktx:1.16.0")
     implementation("androidx.appcompat:appcompat:1.6.1")
@@ -47,6 +43,4 @@ dependencies {
     implementation("androidx.recyclerview:recyclerview:1.4.0")
     implementation("androidx.constraintlayout:constraintlayout:2.1.4")
     implementation("com.github.bumptech.glide:glide:4.16.0")
-    implementation("org.brunocvcunha:instagram4j:1.11")
-    implementation("org.apache.httpcomponents:httpclient:4.5.13")
 }

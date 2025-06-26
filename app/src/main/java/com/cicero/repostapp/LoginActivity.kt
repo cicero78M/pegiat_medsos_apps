@@ -24,6 +24,13 @@ class LoginActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         supportActionBar?.hide()
         setContentView(R.layout.activity_login)
+
+        val authPrefs = getSharedPreferences("auth", MODE_PRIVATE)
+        val savedToken = authPrefs.getString("token", null)
+        val savedUser = authPrefs.getString("userId", null)
+        if (!savedToken.isNullOrBlank() && !savedUser.isNullOrBlank()) {
+            validateToken(savedToken, savedUser)
+        }
         val nrpInput = findViewById<EditText>(R.id.input_nrp)
         val passwordInput = findViewById<EditText>(R.id.input_password)
         val showPasswordBox = findViewById<CheckBox>(R.id.checkbox_show_password)
@@ -133,5 +140,34 @@ class LoginActivity : AppCompatActivity() {
                 }
             }
         }
+    }
+
+    private fun validateToken(token: String, userId: String) {
+        CoroutineScope(Dispatchers.IO).launch {
+            val client = OkHttpClient()
+            val request = Request.Builder()
+                .url("https://papiqo.com/api/users/$userId")
+                .header("Authorization", "Bearer $token")
+                .build()
+            try {
+                client.newCall(request).execute().use { resp ->
+                    withContext(Dispatchers.Main) {
+                        if (resp.isSuccessful) {
+                            navigateToDashboard(token, userId)
+                        }
+                    }
+                }
+            } catch (_: Exception) {
+            }
+        }
+    }
+
+    private fun navigateToDashboard(token: String, userId: String) {
+        val intent = Intent(this, DashboardActivity::class.java).apply {
+            putExtra("token", token)
+            putExtra("userId", userId)
+        }
+        startActivity(intent)
+        finish()
     }
 }

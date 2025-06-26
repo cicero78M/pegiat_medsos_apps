@@ -10,10 +10,12 @@ and allow reporting of content links.
    JWT token. When valid it opens `DashboardActivity`, otherwise it forwards the
    user to `MainActivity`.
 2. **MainActivity** – A landing page with a brief explanation and a **Login**
-   button.
+   button. It also validates a saved token so the dashboard opens immediately
+   when the session is still active.
 3. **LoginActivity** – Presents a simple login form (NRP and phone number).
    On success it stores the token and user ID in `SharedPreferences` and opens
-   the dashboard.
+   the dashboard. The activity likewise validates an existing token on startup
+   to skip the form for returning users.
 4. **DashboardActivity** – Hosts a `ViewPager2` with a bottom navigation bar.
    It shows two fragments:
    - `UserProfileFragment` – displays user information retrieved from the

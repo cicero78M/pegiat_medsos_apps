@@ -12,12 +12,15 @@ This document describes how the application handles user authentication when a l
 ## 2. Landing Page
 
 - **MainActivity** displays a short introduction and a **Login** button.
+  It also checks if a saved token is still valid and opens the
+  dashboard directly when the session is active.
 
 ## 3. Login Screen
 
 - **LoginActivity** contains a form for NRP and phone number (as password).
-- Input is validated locally (non-empty fields) and a request is sent over HTTPS to `/api/auth/user-login`.
-- On success, the JWT token and user ID are stored securely and the dashboard is opened.
+  - Input is validated locally (non-empty fields) and a request is sent over HTTPS to `/api/auth/user-login`.
+  - On success, the JWT token and user ID are stored securely and the dashboard is opened.
+  - When the activity starts it also validates any stored token so returning users skip the form entirely.
 - Errors are shown as toast messages, such as "NRP dan password wajib diisi" or "Gagal terhubung ke server".
 
 ## 4. Session Management

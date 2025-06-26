@@ -22,6 +22,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import okhttp3.OkHttpClient
 import okhttp3.Request
 import org.json.JSONArray
 import org.json.JSONObject
@@ -79,7 +80,7 @@ class DashboardFragment : Fragment(R.layout.fragment_dashboard) {
 
     private fun fetchClientAndPosts(userId: String, token: String) {
         CoroutineScope(Dispatchers.IO).launch {
-            val client = OkHttpProvider.getClient(requireContext())
+            val client = OkHttpClient()
             val req = Request.Builder()
                 .url("https://papiqo.com/api/users/$userId")
                 .header("Authorization", "Bearer $token")
@@ -114,7 +115,7 @@ class DashboardFragment : Fragment(R.layout.fragment_dashboard) {
 
     private fun fetchPosts(token: String, clientId: String) {
         CoroutineScope(Dispatchers.IO).launch {
-            val client = OkHttpProvider.getClient(requireContext())
+            val client = OkHttpClient()
             val url = "https://papiqo.com/api/insta/posts?client_id=$clientId"
             val req = Request.Builder()
                 .url(url)
@@ -268,7 +269,7 @@ class DashboardFragment : Fragment(R.layout.fragment_dashboard) {
         )
         CoroutineScope(Dispatchers.IO).launch {
             try {
-                val client = OkHttpProvider.getClient(requireContext())
+                val client = OkHttpClient()
                 val req = Request.Builder().url(url).build()
                 client.newCall(req).execute().use { resp ->
                     if (!resp.isSuccessful) {
@@ -415,7 +416,7 @@ class DashboardFragment : Fragment(R.layout.fragment_dashboard) {
 
     private suspend fun getExistingReport(sc: String): Map<String, String?>? {
         if (token.isBlank()) return null
-        val client = OkHttpProvider.getClient(requireContext())
+        val client = OkHttpClient()
         val req = Request.Builder()
             .url("https://papiqo.com/api/link-reports")
             .header("Authorization", "Bearer $token")
@@ -483,7 +484,7 @@ class DashboardFragment : Fragment(R.layout.fragment_dashboard) {
 
     private suspend fun fetchReportedShortcodes(token: String, userId: String): Set<String> {
         if (token.isBlank() || userId.isBlank()) return emptySet()
-        val client = OkHttpProvider.getClient(requireContext())
+        val client = OkHttpClient()
         val req = Request.Builder()
             .url("https://papiqo.com/api/link-reports")
             .header("Authorization", "Bearer $token")

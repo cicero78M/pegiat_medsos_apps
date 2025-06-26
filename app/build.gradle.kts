@@ -10,7 +10,7 @@ android {
     defaultConfig {
         applicationId = "com.cicero.repostapp"
         minSdk = 26
-        targetSdk = 29
+        targetSdk = 34
         versionCode = 1
         versionName = "1.0"
     }
@@ -33,7 +33,7 @@ android {
 }
 
 dependencies {
-    implementation("androidx.core:core-ktx:1.16.0")
+    implementation("androidx.core:core-ktx:1.13.1")
     implementation("androidx.appcompat:appcompat:1.6.1")
     implementation("com.google.android.material:material:1.11.0")
     implementation("com.squareup.okhttp3:okhttp:4.12.0")

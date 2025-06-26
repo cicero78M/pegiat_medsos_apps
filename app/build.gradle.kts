@@ -5,7 +5,7 @@ plugins {
 
 android {
     namespace = "com.cicero.repostapp"
-    compileSdk = 34
+    compileSdk = 35
 
     defaultConfig {
         applicationId = "com.cicero.repostapp"
@@ -13,7 +13,7 @@ android {
         //noinspection EditedTargetSdkVersion
         targetSdk = 34
         versionCode = 1
-        versionName = "1.3"
+        versionName = "1.4"
     }
 
     buildTypes {

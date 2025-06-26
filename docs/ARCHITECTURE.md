@@ -17,10 +17,11 @@ and allow reporting of content links.
    the dashboard. The activity likewise validates an existing token on startup
    to skip the form for returning users.
 4. **DashboardActivity** – Hosts a `ViewPager2` with a bottom navigation bar.
-   It shows two fragments:
+   It shows three fragments:
    - `UserProfileFragment` – displays user information retrieved from the
      backend API.
    - `DashboardFragment` – lists Instagram posts fetched for the logged in user.
+   - `InstaFragment` – lets the user log in to Instagram.
 5. **ReportActivity** – A standalone screen to paste links from various social
    media platforms for reporting purposes.
 

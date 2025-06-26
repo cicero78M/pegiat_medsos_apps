@@ -1,9 +1,12 @@
 # Cicero Reposter
 
-This project contains a minimal Android application skeleton. The app includes several activities:
+This project contains a minimal Android application skeleton. The app includes
+several activities:
 
-- `MainActivity` as a landing page. It checks for a saved JWT token and
-  immediately opens the dashboard when the token is valid.
+- `SplashActivity` shows the app logo and validates any saved JWT token before
+  continuing to the next screen.
+- `MainActivity` acts as a landing page with a short introduction and a **Login**
+  button.
 - `LoginActivity` for user authentication
 - `UserProfileActivity` to show user details
 - `DashboardActivity` to display Instagram posts fetched from official accounts

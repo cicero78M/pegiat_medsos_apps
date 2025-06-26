@@ -10,22 +10,9 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.io.File
-import java.io.FileOutputStream
-import java.io.ObjectOutputStream
 import org.brunocvcunha.instagram4j.Instagram4j
 
 class InstaFragment : Fragment(R.layout.fragment_insta) {
-
-    private fun saveSession(insta: Instagram4j) {
-        try {
-            val file = File(requireContext().filesDir, "insta_session.ser")
-            ObjectOutputStream(FileOutputStream(file)).use { out ->
-                out.writeObject(insta)
-            }
-        } catch (_: Exception) {
-        }
-    }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -51,7 +38,6 @@ class InstaFragment : Fragment(R.layout.fragment_insta) {
                             result.two_factor_info != null -> handleTwoFactor(insta, result)
                             result.challenge != null -> showCheckpoint(result.challenge.api_path)
                             else -> withContext(Dispatchers.Main) {
-                                saveSession(insta)
                                 Toast.makeText(requireContext(), "Login berhasil", Toast.LENGTH_SHORT).show()
                             }
                         }
@@ -81,7 +67,6 @@ class InstaFragment : Fragment(R.layout.fragment_insta) {
                         try {
                             insta.finishTwoFactorLogin(input.text.toString(), result.two_factor_info.two_factor_identifier)
                             withContext(Dispatchers.Main) {
-                                saveSession(insta)
                                 Toast.makeText(requireContext(), "Login berhasil", Toast.LENGTH_SHORT).show()
                             }
                         } catch (_: Exception) {

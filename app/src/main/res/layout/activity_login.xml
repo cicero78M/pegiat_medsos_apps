@@ -72,6 +72,19 @@
                             android:inputType="textPassword" />
                     </com.google.android.material.textfield.TextInputLayout>
 
+                    <CheckBox
+                        android:id="@+id/checkbox_show_password"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:text="Show Password" />
+
+                    <CheckBox
+                        android:id="@+id/checkbox_save_login"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Save Login" />
+
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/button_login"
                         android:layout_width="match_parent"

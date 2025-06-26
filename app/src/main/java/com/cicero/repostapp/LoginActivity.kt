@@ -2,7 +2,9 @@ package com.cicero.repostapp
 
 import android.content.Intent
 import android.os.Bundle
+import android.text.InputType
 import android.widget.Button
+import android.widget.CheckBox
 import android.widget.EditText
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
@@ -24,20 +26,41 @@ class LoginActivity : AppCompatActivity() {
         setContentView(R.layout.activity_login)
         val nrpInput = findViewById<EditText>(R.id.input_nrp)
         val passwordInput = findViewById<EditText>(R.id.input_password)
+        val showPasswordBox = findViewById<CheckBox>(R.id.checkbox_show_password)
+        val saveLoginBox = findViewById<CheckBox>(R.id.checkbox_save_login)
         val loginButton = findViewById<Button>(R.id.button_login)
+
+        val loginPrefs = getSharedPreferences("login", MODE_PRIVATE)
+        val savedNrp = loginPrefs.getString("nrp", "")
+        val savedPass = loginPrefs.getString("password", "")
+        if (!savedNrp.isNullOrBlank() && !savedPass.isNullOrBlank()) {
+            nrpInput.setText(savedNrp)
+            passwordInput.setText(savedPass)
+            saveLoginBox.isChecked = true
+        }
+
+        showPasswordBox.setOnCheckedChangeListener { _, checked ->
+            if (checked) {
+                passwordInput.inputType = InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD
+            } else {
+                passwordInput.inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_PASSWORD
+            }
+            passwordInput.setSelection(passwordInput.text?.length ?: 0)
+        }
 
         loginButton.setOnClickListener {
             val nrp = nrpInput.text.toString().trim()
             val phone = passwordInput.text.toString().trim()
+            val save = saveLoginBox.isChecked
             if (nrp.isBlank() || phone.isBlank()) {
                 Toast.makeText(this, "NRP dan password wajib diisi", Toast.LENGTH_SHORT).show()
             } else {
-                login(nrp, phone)
+                login(nrp, phone, save)
             }
         }
     }
 
-    private fun login(nrp: String, phone: String) {
+    private fun login(nrp: String, phone: String, saveLogin: Boolean) {
         CoroutineScope(Dispatchers.IO).launch {
             val client = OkHttpClient()
             val json = JSONObject().apply {
@@ -78,6 +101,15 @@ class LoginActivity : AppCompatActivity() {
                             prefs.edit {
                                 putString("token", token)
                                 putString("userId", userId)
+                            }
+                            val loginPrefs = getSharedPreferences("login", MODE_PRIVATE)
+                            if (saveLogin) {
+                                loginPrefs.edit {
+                                    putString("nrp", nrp)
+                                    putString("password", phone)
+                                }
+                            } else {
+                                loginPrefs.edit { clear() }
                             }
 
                             val intent = Intent(this@LoginActivity, DashboardActivity::class.java).apply {

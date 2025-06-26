@@ -14,6 +14,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import org.json.JSONObject
@@ -68,7 +69,7 @@ class LoginActivity : AppCompatActivity() {
 
     private fun login(nrp: String, phone: String, saveLogin: Boolean) {
         CoroutineScope(Dispatchers.IO).launch {
-            val client = OkHttpProvider.getClient(this@LoginActivity)
+            val client = OkHttpClient()
             val json = JSONObject().apply {
                 put("nrp", nrp)
                 put("whatsapp", phone)
@@ -143,7 +144,7 @@ class LoginActivity : AppCompatActivity() {
 
     private fun validateToken(token: String, userId: String) {
         CoroutineScope(Dispatchers.IO).launch {
-            val client = OkHttpProvider.getClient(this@LoginActivity)
+            val client = OkHttpClient()
             val request = Request.Builder()
                 .url("https://papiqo.com/api/users/$userId")
                 .header("Authorization", "Bearer $token")

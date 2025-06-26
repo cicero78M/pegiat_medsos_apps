@@ -8,6 +8,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import okhttp3.OkHttpClient
 import okhttp3.Request
 
 class MainActivity : AppCompatActivity() {
@@ -34,7 +35,7 @@ class MainActivity : AppCompatActivity() {
     // No external storage permission required when using app-specific storage
     private fun validateToken(token: String, userId: String) {
         CoroutineScope(Dispatchers.IO).launch {
-            val client = OkHttpProvider.getClient(this@MainActivity)
+            val client = OkHttpClient()
             val request = Request.Builder()
                 .url("https://papiqo.com/api/users/$userId")
                 .header("Authorization", "Bearer $token")

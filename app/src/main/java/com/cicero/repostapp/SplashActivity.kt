@@ -7,6 +7,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import okhttp3.OkHttpClient
 import okhttp3.Request
 
 class SplashActivity : AppCompatActivity() {
@@ -28,7 +29,7 @@ class SplashActivity : AppCompatActivity() {
 
     private fun validateToken(token: String, userId: String) {
         CoroutineScope(Dispatchers.IO).launch {
-            val client = OkHttpProvider.getClient(this@SplashActivity)
+            val client = OkHttpClient()
             val request = Request.Builder()
                 .url("https://papiqo.com/api/users/$userId")
                 .header("Authorization", "Bearer $token")

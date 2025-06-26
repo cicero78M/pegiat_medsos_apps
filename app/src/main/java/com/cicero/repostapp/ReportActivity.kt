@@ -16,6 +16,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import org.json.JSONArray
@@ -184,7 +185,7 @@ class ReportActivity : AppCompatActivity() {
 
     private suspend fun getExistingReport(sc: String): JSONObject? {
         if (token.isBlank()) return null
-        val client = OkHttpProvider.getClient(this@ReportActivity)
+        val client = OkHttpClient()
         val req = Request.Builder()
             .url("https://papiqo.com/api/link-reports")
             .header("Authorization", "Bearer $token")
@@ -236,7 +237,7 @@ class ReportActivity : AppCompatActivity() {
 
     private suspend fun isDuplicate(link: String): Boolean {
         if (token.isBlank()) return false
-        val client = OkHttpProvider.getClient(this@ReportActivity)
+        val client = OkHttpClient()
         val req = Request.Builder()
             .url("https://papiqo.com/api/link-reports")
             .header("Authorization", "Bearer $token")
@@ -317,7 +318,7 @@ class ReportActivity : AppCompatActivity() {
                     put("youtube_link", links["youtube"])
                 }
                 val body = json.toString().toRequestBody("application/json".toMediaType())
-                val client = OkHttpProvider.getClient(this@ReportActivity)
+                val client = OkHttpClient()
                 val req = Request.Builder()
                     .url("https://papiqo.com/api/link-reports")
                     .header("Authorization", "Bearer $token")

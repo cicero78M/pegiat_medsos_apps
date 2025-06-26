@@ -16,6 +16,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import okhttp3.OkHttpClient
 import okhttp3.Request
 import org.json.JSONObject
 
@@ -50,7 +51,7 @@ class UserProfileFragment : Fragment(R.layout.activity_profile) {
 
     private fun fetchProfile(userId: String, token: String, rootView: View) {
         CoroutineScope(Dispatchers.IO).launch {
-            val client = OkHttpProvider.getClient(requireContext())
+            val client = OkHttpClient()
             val request = Request.Builder()
                 .url("https://papiqo.com/api/users/$userId")
                 .header("Authorization", "Bearer $token")
@@ -134,7 +135,7 @@ class UserProfileFragment : Fragment(R.layout.activity_profile) {
     }
 
     private suspend fun getStatsFromDb(token: String, username: String): Pair<JSONObject?, String?> {
-        val client = OkHttpProvider.getClient(requireContext())
+        val client = OkHttpClient()
         val req = Request.Builder()
             .url("https://papiqo.com/api/insta/profile?username=$username")
             .header("Authorization", "Bearer $token")
@@ -152,7 +153,7 @@ class UserProfileFragment : Fragment(R.layout.activity_profile) {
     }
 
     private suspend fun fetchAndStoreStats(token: String, username: String) {
-        val client = OkHttpProvider.getClient(requireContext())
+        val client = OkHttpClient()
         val req = Request.Builder()
             .url("https://papiqo.com/api/insta/rapid-profile?username=$username")
             .header("Authorization", "Bearer $token")

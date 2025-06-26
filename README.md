@@ -25,7 +25,7 @@ The app retrieves user profile information from the [Cicero_V2](https://github.c
 After a successful login, the token and user ID returned by `/api/auth/user-login`
 are used to request `/api/users/{userId}` to display the profile screen.
 The profile screen displays @username followed by rank and name, the user's NRP and Instagram statistics (post, follower and following counts). These stats are loaded from the backend and will be fetched on demand if missing. The screen also lists the fields Client ID, Satfung, Jabatan, Username TikTok and Status.
-After logging in the user is redirected to `DashboardActivity` where a bottom navigation bar lets them open the profile, Instagram content, an Instagram login page and link report pages.
+After logging in the user is redirected to `DashboardActivity` where a bottom navigation bar lets them open the profile, Instagram content and link report pages.
 A logout button is provided at the bottom of the profile page.
 
 ## Documentation

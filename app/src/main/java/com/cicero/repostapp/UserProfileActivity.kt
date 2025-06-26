@@ -1,5 +1,8 @@
+@file:Suppress("ASSIGNED_BUT_NEVER_ACCESSED_VARIABLE")
+
 package com.cicero.repostapp
 
+import android.annotation.SuppressLint
 import android.os.Bundle
 import android.widget.TextView
 import android.widget.Toast
@@ -38,6 +41,7 @@ class UserProfileActivity : AppCompatActivity() {
         }
     }
 
+    @SuppressLint("SetTextI18n")
     private fun fetchProfile(userId: String, token: String) {
         CoroutineScope(Dispatchers.IO).launch {
             val client = OkHttpClient()
@@ -58,10 +62,7 @@ class UserProfileActivity : AppCompatActivity() {
                             }
                             val insta = data?.optString("insta") ?: ""
                             findViewById<TextView>(R.id.text_username).text =
-                                "@" + insta
-                            val avatarUrl = data?.optString("profile_pic_url") ?: ""
-                            val fullAvatarUrl = if (avatarUrl.startsWith("http"))
-                                avatarUrl else "https://papiqo.com" + avatarUrl
+                                "@$insta"
                             findViewById<TextView>(R.id.text_name).text =
                                 (data?.optString("title") ?: "") + " " + (data?.optString("nama") ?: "")
                             findViewById<TextView>(R.id.text_nrp).text =
@@ -75,6 +76,11 @@ class UserProfileActivity : AppCompatActivity() {
                             findViewById<TextView>(R.id.text_tiktok).text =
                                 (data?.optString("tiktok") ?: "")
                             val statusText = data?.optString("status") ?: ""
+                            val avatarUrl = data?.optString("profile_pic_url") ?: ""
+                            val fullAvatarUrl = if (avatarUrl.startsWith("http"))
+                                avatarUrl else "https://papiqo.com$avatarUrl"
+
+
                             Glide.with(this@UserProfileActivity)
                                 .load(fullAvatarUrl)
                                 .placeholder(R.drawable.profile_avatar_placeholder)
@@ -110,7 +116,6 @@ class UserProfileActivity : AppCompatActivity() {
                 fetchAndStoreStats(token, username)
                 val result = getStatsFromDb(token, username)
                 stats = result.first
-                raw = result.second
             }
             withContext(Dispatchers.Main) {
                 findViewById<TextView>(R.id.stat_posts).text =
@@ -123,7 +128,7 @@ class UserProfileActivity : AppCompatActivity() {
         }
     }
 
-    private suspend fun getStatsFromDb(token: String, username: String): Pair<JSONObject?, String?> {
+    private fun getStatsFromDb(token: String, username: String): Pair<JSONObject?, String?> {
         val client = OkHttpClient()
         val req = Request.Builder()
             .url("https://papiqo.com/api/insta/profile?username=$username")
@@ -141,7 +146,7 @@ class UserProfileActivity : AppCompatActivity() {
         }
     }
 
-    private suspend fun fetchAndStoreStats(token: String, username: String) {
+    private fun fetchAndStoreStats(token: String, username: String) {
         val client = OkHttpClient()
         val req = Request.Builder()
             .url("https://papiqo.com/api/insta/rapid-profile?username=$username")

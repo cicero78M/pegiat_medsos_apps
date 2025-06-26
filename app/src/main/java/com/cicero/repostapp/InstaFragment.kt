@@ -4,6 +4,7 @@ import android.os.Bundle
 import android.view.View
 import android.widget.EditText
 import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -31,9 +32,18 @@ class InstaFragment : Fragment(R.layout.fragment_insta) {
                             .password(password)
                             .build()
                         insta.setup()
-                        insta.login()
+
+                        val result = insta.login()
+                        when {
+                            result.two_factor_info != null -> handleTwoFactor(insta, result)
+                            result.challenge != null -> showCheckpoint(result.challenge.api_path)
+                            else -> withContext(Dispatchers.Main) {
+                                Toast.makeText(requireContext(), "Login berhasil", Toast.LENGTH_SHORT).show()
+                            }
+                        }
+                    } catch (e: java.io.IOException) {
                         withContext(Dispatchers.Main) {
-                            Toast.makeText(requireContext(), "Login berhasil", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(requireContext(), "Gagal terhubung ke server", Toast.LENGTH_SHORT).show()
                         }
                     } catch (e: Exception) {
                         withContext(Dispatchers.Main) {
@@ -42,6 +52,38 @@ class InstaFragment : Fragment(R.layout.fragment_insta) {
                     }
                 }
             }
+        }
+    }
+
+    private suspend fun handleTwoFactor(insta: Instagram4j, result: org.brunocvcunha.instagram4j.requests.payload.InstagramLoginResult) {
+        withContext(Dispatchers.Main) {
+            val input = EditText(requireContext())
+            AlertDialog.Builder(requireContext())
+                .setTitle("Two Factor Authentication")
+                .setMessage("Masukkan kode verifikasi")
+                .setView(input)
+                .setPositiveButton("Verifikasi") { _, _ ->
+                    CoroutineScope(Dispatchers.IO).launch {
+                        try {
+                            insta.finishTwoFactorLogin(input.text.toString(), result.two_factor_info.two_factor_identifier)
+                            withContext(Dispatchers.Main) {
+                                Toast.makeText(requireContext(), "Login berhasil", Toast.LENGTH_SHORT).show()
+                            }
+                        } catch (_: Exception) {
+                            withContext(Dispatchers.Main) {
+                                Toast.makeText(requireContext(), "Kode verifikasi salah", Toast.LENGTH_SHORT).show()
+                            }
+                        }
+                    }
+                }
+                .setNegativeButton("Batal", null)
+                .show()
+        }
+    }
+
+    private suspend fun showCheckpoint(url: String?) {
+        withContext(Dispatchers.Main) {
+            Toast.makeText(requireContext(), "Login membutuhkan checkpoint", Toast.LENGTH_LONG).show()
         }
     }
 }

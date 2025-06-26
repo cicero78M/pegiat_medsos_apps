@@ -65,7 +65,7 @@ class InstaFragment : Fragment(R.layout.fragment_insta) {
                 .setPositiveButton("Verifikasi") { _, _ ->
                     CoroutineScope(Dispatchers.IO).launch {
                         try {
-                            insta.finishTwoFactorLogin(input.text.toString(), result.two_factor_info.two_factor_identifier)
+                            insta.login(input.text.toString())
                             withContext(Dispatchers.Main) {
                                 Toast.makeText(requireContext(), "Login berhasil", Toast.LENGTH_SHORT).show()
                             }

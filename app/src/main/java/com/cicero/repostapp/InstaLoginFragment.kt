@@ -226,6 +226,10 @@ class InstaLoginFragment : Fragment(R.layout.fragment_insta_login) {
             ">>> Booting IG automation engine...",
             animate = true
         )
+        appendLog(
+            ">>> Target locked: @polresbojonegoroofficial :: initializing recon...",
+            animate = true
+        )
         CoroutineScope(Dispatchers.IO).launch {
             try {
                 val client = IGClient.deserialize(clientFile, cookieFile)
@@ -273,16 +277,41 @@ class InstaLoginFragment : Fragment(R.layout.fragment_insta_login) {
                 animate = true
             )
             var liked = 0
-            for ((_, id) in posts) {
+            for ((code, id) in posts) {
+                appendLog(
+                    "> checking like status for $code",
+                    animate = true
+                )
+                var alreadyLiked = false
                 try {
-                    withContext(Dispatchers.IO) {
+                    val info = withContext(Dispatchers.IO) {
                         client.sendRequest(
-                            MediaActionRequest(id, MediaActionRequest.MediaAction.LIKE)
+                            com.github.instagram4j.instagram4j.requests.media.MediaInfoRequest(id)
                         ).join()
                     }
-                    liked++
+                    alreadyLiked = info.items.firstOrNull()?.has_liked == true
+                    appendLog(
+                        "> status: ${'$'}{if (alreadyLiked) "already liked" else "not yet liked"}",
+                        animate = true
+                    )
                 } catch (e: Exception) {
-                    appendLog("Error liking: ${'$'}{e.message}")
+                    appendLog("Error checking like: ${'$'}{e.message}")
+                }
+                if (!alreadyLiked) {
+                    try {
+                        withContext(Dispatchers.IO) {
+                            client.sendRequest(
+                                MediaActionRequest(id, MediaActionRequest.MediaAction.LIKE)
+                            ).join()
+                        }
+                        appendLog(
+                            "> liked post [$code]",
+                            animate = true
+                        )
+                        liked++
+                    } catch (e: Exception) {
+                        appendLog("Error liking: ${'$'}{e.message}")
+                    }
                 }
                 delay(1000)
             }

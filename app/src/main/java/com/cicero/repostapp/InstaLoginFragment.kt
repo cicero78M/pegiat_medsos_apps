@@ -127,7 +127,9 @@ class InstaLoginFragment : Fragment(R.layout.fragment_insta_login) {
                 val posts = client.actions().timeline().feed()
                     .stream()
                     .flatMap { it.feed_items.stream() }
-                    .mapNotNull { it.media }
+                    .map { it.media }
+                    .filter { it != null }
+                    .map { media -> media!! }
                     .limit(12)
                     .map { media ->
                         InstaPost(
@@ -137,7 +139,7 @@ class InstaLoginFragment : Fragment(R.layout.fragment_insta_login) {
                             createdAt = java.time.Instant.ofEpochSecond(media.taken_at).toString()
                         )
                     }
-                    .toList()
+                    .collect(java.util.stream.Collectors.toList())
                 withContext(Dispatchers.Main) {
                     adapter.setData(posts)
                 }

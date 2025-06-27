@@ -189,14 +189,27 @@ class InstaLoginFragment : Fragment(R.layout.fragment_insta_login) {
         }
     }
 
-    private fun appendLog(text: String, appendToFile: Boolean = true) {
+    private fun appendLog(
+        text: String,
+        appendToFile: Boolean = true,
+        animate: Boolean = false
+    ) {
         val tv = TextView(requireContext()).apply {
-            this.typeface = android.graphics.Typeface.MONOSPACE
-            this.setTextColor(android.graphics.Color.WHITE)
-            this.text = text
+            typeface = android.graphics.Typeface.MONOSPACE
+            setTextColor(android.graphics.Color.parseColor("#00FF00"))
         }
         logContainer.addView(tv)
-        logScroll.post { logScroll.fullScroll(View.FOCUS_DOWN) }
+        CoroutineScope(Dispatchers.Main).launch {
+            if (animate) {
+                for (c in text) {
+                    tv.append(c.toString())
+                    delay(30)
+                }
+            } else {
+                tv.text = text
+            }
+            logScroll.fullScroll(View.FOCUS_DOWN)
+        }
         if (appendToFile) {
             currentUsername?.let { user ->
                 try {
@@ -209,7 +222,10 @@ class InstaLoginFragment : Fragment(R.layout.fragment_insta_login) {
     }
 
     private fun fetchTodayPosts() {
-        appendLog("Start")
+        appendLog(
+            ">>> Booting IG automation engine...",
+            animate = true
+        )
         CoroutineScope(Dispatchers.IO).launch {
             try {
                 val client = IGClient.deserialize(clientFile, cookieFile)
@@ -231,7 +247,9 @@ class InstaLoginFragment : Fragment(R.layout.fragment_insta_login) {
                     launchLogAndLikes(client, posts)
                 }
             } catch (e: Exception) {
-                withContext(Dispatchers.Main) { appendLog("Error: ${e.message}") }
+                withContext(Dispatchers.Main) {
+                    appendLog("Error: ${e.message}")
+                }
             }
         }
     }
@@ -239,12 +257,21 @@ class InstaLoginFragment : Fragment(R.layout.fragment_insta_login) {
     private fun launchLogAndLikes(client: IGClient, posts: List<Pair<String, String>>) {
         CoroutineScope(Dispatchers.Main).launch {
             for ((code, _) in posts) {
-                appendLog("https://instagram.com/p/$code")
-                delay(1000)
+                appendLog(
+                    "> found post: https://instagram.com/p/$code",
+                    animate = true
+                )
+                delay(500)
             }
-            appendLog("Selesai")
-            delay(5000)
-            appendLog("mulai melaksanakan likes")
+            appendLog(
+                ">>> Scrape complete. Preparing like sequence...",
+                animate = true
+            )
+            delay(2000)
+            appendLog(
+                ">>> Executing like routine",
+                animate = true
+            )
             var liked = 0
             for ((_, id) in posts) {
                 try {
@@ -255,11 +282,14 @@ class InstaLoginFragment : Fragment(R.layout.fragment_insta_login) {
                     }
                     liked++
                 } catch (e: Exception) {
-                    appendLog("Error like: ${'$'}{e.message}")
+                    appendLog("Error liking: ${'$'}{e.message}")
                 }
-                delay(10000)
+                delay(1000)
             }
-            appendLog("selesai melaksanakan ${'$'}liked likes")
+            appendLog(
+                ">>> Like routine finished. ${'$'}liked posts liked.",
+                animate = true
+            )
         }
     }
 

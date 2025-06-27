@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:padding="16dp"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <EditText
+        android:id="@+id/input_username"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Username" />
+
+    <EditText
+        android:id="@+id/input_password"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Password"
+        android:inputType="textPassword"
+        android:layout_marginTop="8dp" />
+
+    <Button
+        android:id="@+id/button_login_insta"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Login"
+        android:layout_marginTop="16dp" />
+</LinearLayout>

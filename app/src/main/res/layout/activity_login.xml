@@ -19,9 +19,9 @@
 
             <ImageView
                 android:id="@+id/logo"
-                android:layout_width="80dp"
-                android:layout_height="80dp"
-                android:src="@mipmap/ic_launcher_round" />
+                android:layout_width="240dp"
+                android:layout_height="240dp"
+                android:src="@mipmap/ic_launcher_foreground" />
 
             <TextView
                 android:id="@+id/title"

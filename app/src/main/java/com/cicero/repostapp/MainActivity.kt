@@ -17,7 +17,7 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         supportActionBar?.setDisplayShowHomeEnabled(true)
-        supportActionBar?.setLogo(R.mipmap.ic_launcher_round)
+        supportActionBar?.setLogo(R.mipmap.ic_launcher_foreground)
         supportActionBar?.setDisplayUseLogoEnabled(true)
 
         val prefs = getSharedPreferences("auth", MODE_PRIVATE)

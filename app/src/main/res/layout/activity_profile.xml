@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
@@ -13,37 +14,42 @@
             android:layout_width="0dp"
             android:layout_height="200dp"
             android:scaleType="centerCrop"
-            android:src="@drawable/profile_cover_placeholder"
+            android:src="@drawable/cicero_banner"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
+            app:layout_constraintTop_toTopOf="parent"
+            android:contentDescription="@string/todo" />
 
         <ImageView
             android:id="@+id/image_avatar"
             android:layout_width="110dp"
             android:layout_height="110dp"
             android:layout_marginTop="-55dp"
+            android:background="@drawable/avatar_background"
+            android:contentDescription="@string/todo"
             android:scaleType="centerCrop"
             android:src="@drawable/profile_avatar_placeholder"
-            android:background="@drawable/avatar_background"
-            app:layout_constraintTop_toBottomOf="@id/image_cover"
+            app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent" />
+            app:layout_constraintTop_toBottomOf="@id/image_cover"
+            tools:ignore="ImageContrastCheck" />
 
         <ImageView
             android:id="@+id/image_status"
             android:layout_width="24dp"
             android:layout_height="24dp"
             android:layout_margin="4dp"
+            android:contentDescription="TODO"
             android:src="@drawable/ic_status_true"
             app:layout_constraintBottom_toBottomOf="@id/image_avatar"
-            app:layout_constraintEnd_toEndOf="@id/image_avatar" />
+            app:layout_constraintEnd_toEndOf="@id/image_avatar"
+            tools:ignore="ContentDescription,HardcodedText,ImageContrastCheck" />
 
         <TextView
             android:id="@+id/text_username"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="@username"
+            android:text="@string/username"
             android:textStyle="bold"
             android:textSize="18sp"
             app:layout_constraintTop_toBottomOf="@id/image_avatar"
@@ -55,7 +61,7 @@
             android:id="@+id/text_name"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Nama"
+            android:text="@string/nama"
             android:textStyle="bold"
             android:textSize="20sp"
             app:layout_constraintTop_toBottomOf="@id/text_username"
@@ -66,7 +72,7 @@
             android:id="@+id/text_nrp"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="NRP"
+            android:text="@string/nrp"
             android:textSize="16sp"
             app:layout_constraintTop_toBottomOf="@id/text_name"
             app:layout_constraintStart_toStartOf="parent"
@@ -80,7 +86,8 @@
             android:orientation="horizontal"
             app:layout_constraintTop_toBottomOf="@id/text_nrp"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent">
+            app:layout_constraintEnd_toEndOf="parent"
+            android:baselineAligned="false">
 
             <LinearLayout
                 android:layout_width="0dp"
@@ -93,14 +100,14 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:gravity="center"
-                    android:text="0"
+                    android:text="@string/_0"
                     android:textSize="18sp"
                     android:textStyle="bold" />
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:gravity="center"
-                    android:text="Posts"
+                    android:text="@string/posts"
                     android:textSize="12sp" />
             </LinearLayout>
 
@@ -115,14 +122,14 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:gravity="center"
-                    android:text="0"
+                    android:text="@string/_0"
                     android:textSize="18sp"
                     android:textStyle="bold" />
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:gravity="center"
-                    android:text="Followers"
+                    android:text="@string/followers"
                     android:textSize="12sp" />
             </LinearLayout>
 
@@ -137,14 +144,14 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:gravity="center"
-                    android:text="0"
+                    android:text="@string/_0"
                     android:textSize="18sp"
                     android:textStyle="bold" />
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:gravity="center"
-                    android:text="Following"
+                    android:text="@string/following"
                     android:textSize="12sp" />
             </LinearLayout>
         </LinearLayout>
@@ -167,11 +174,11 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:text="Client ID" />
+                    android:text="@string/client_id" />
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text=":" />
+                    android:text="@string/colons" />
                 <TextView
                     android:id="@+id/text_client_id"
                     android:layout_width="0dp"
@@ -187,11 +194,11 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:text="Satfung" />
+                    android:text="@string/satfung" />
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text=":" />
+                    android:text="@string/colons" />
                 <TextView
                     android:id="@+id/text_satfung"
                     android:layout_width="0dp"
@@ -207,11 +214,11 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:text="Jabatan" />
+                    android:text="@string/jabatan" />
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text=":" />
+                    android:text="@string/colons" />
                 <TextView
                     android:id="@+id/text_jabatan"
                     android:layout_width="0dp"
@@ -227,11 +234,11 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:text="Username TikTok" />
+                    android:text="@string/username_tiktok" />
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text=":" />
+                    android:text="@string/colons" />
                 <TextView
                     android:id="@+id/text_tiktok"
                     android:layout_width="0dp"
@@ -245,7 +252,7 @@
             android:id="@+id/button_logout"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Logout"
+            android:text="@string/logout"
             android:layout_marginTop="24dp"
             app:layout_constraintTop_toBottomOf="@id/info_container"
             app:layout_constraintStart_toStartOf="parent"

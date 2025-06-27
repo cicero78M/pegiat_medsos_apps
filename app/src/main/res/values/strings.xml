@@ -1,3 +1,19 @@
 <resources>
     <string name="app_name">Cicero Reposter</string>
+    <string name="posts">Posts</string>
+    <string name="followers">Followers</string>
+    <string name="following">Following</string>
+    <string name="client_id">Client ID</string>
+    <string name="colons">:</string>
+    <string name="satfung">Satfung</string>
+    <string name="jabatan">Jabatan</string>
+    <string name="username_tiktok">Username TikTok</string>
+    <string name="logout">Logout</string>
+    <string name="todo">TODO</string>
+    <string name="_0">0</string>
+    <string name="nama">Nama</string>
+    <string name="nrp">NRP</string>
+    <string name="username">\@username</string>
+    <string name="fitur_unggulan">Fitur Unggulan</string>
+    <string name="login_aman_autentikasi_dengan_token_terenkripsi">Login Aman - Autentikasi dengan token terenkripsi</string>
 </resources>

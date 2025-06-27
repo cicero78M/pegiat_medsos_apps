@@ -129,10 +129,15 @@ class InstaLoginFragment : Fragment(R.layout.fragment_insta_login) {
                     .flatMap { it.feed_items.stream() }
                     .limit(12)
                     .map { media ->
+                        val imageUrl = (media as? com.github.instagram4j.instagram4j.models.media.ImageMedia)
+                            ?.image_versions2
+                            ?.candidates
+                            ?.firstOrNull()
+                            ?.url
                         InstaPost(
                             id = media.code,
                             caption = media.caption?.text,
-                            imageUrl = media.image_versions2?.candidates?.firstOrNull()?.url,
+                            imageUrl = imageUrl,
                             createdAt = java.time.Instant.ofEpochSecond(media.taken_at).toString()
                         )
                     }

@@ -289,7 +289,7 @@ class InstaLoginFragment : Fragment(R.layout.fragment_insta_login) {
                             com.github.instagram4j.instagram4j.requests.media.MediaInfoRequest(id)
                         ).join()
                     }
-                    alreadyLiked = info.items.firstOrNull()?.has_liked == true
+                    alreadyLiked = info.items.firstOrNull()?.isHas_liked == true
                     appendLog(
                         "> status: ${'$'}{if (alreadyLiked) "already liked" else "not yet liked"}",
                         animate = true

@@ -1,5 +1,6 @@
 package com.cicero.repostapp
 
+import android.annotation.SuppressLint
 import android.os.Bundle
 import android.view.View
 import android.widget.TextView
@@ -49,6 +50,7 @@ class UserProfileFragment : Fragment(R.layout.activity_profile) {
         }
     }
 
+    @SuppressLint("SetTextI18n")
     private fun fetchProfile(userId: String, token: String, rootView: View) {
         CoroutineScope(Dispatchers.IO).launch {
             val client = OkHttpClient()
@@ -69,10 +71,7 @@ class UserProfileFragment : Fragment(R.layout.activity_profile) {
                             }
                             val insta = data?.optString("insta") ?: ""
                             rootView.findViewById<TextView>(R.id.text_username).text =
-                                "@" + insta
-                            val avatarUrl = data?.optString("profile_pic_url") ?: ""
-                            val fullAvatarUrl = if (avatarUrl.startsWith("http"))
-                                avatarUrl else "https://papiqo.com" + avatarUrl
+                                "@$insta"
                             rootView.findViewById<TextView>(R.id.text_name).text =
                                 (data?.optString("title") ?: "") + " " + (data?.optString("nama") ?: "")
                             rootView.findViewById<TextView>(R.id.text_nrp).text =
@@ -86,12 +85,7 @@ class UserProfileFragment : Fragment(R.layout.activity_profile) {
                             rootView.findViewById<TextView>(R.id.text_tiktok).text =
                                 (data?.optString("tiktok") ?: "")
                             val statusText = data?.optString("status") ?: ""
-                            Glide.with(this@UserProfileFragment)
-                                .load(fullAvatarUrl)
-                                .placeholder(R.drawable.profile_avatar_placeholder)
-                                .error(R.drawable.profile_avatar_placeholder)
-                                .circleCrop()
-                                .into(rootView.findViewById(R.id.image_avatar))
+
 
                             val statusImage = if (statusText.equals("true", true)) {
                                 R.drawable.ic_status_true
@@ -116,12 +110,11 @@ class UserProfileFragment : Fragment(R.layout.activity_profile) {
     private fun fetchStats(token: String, username: String, rootView: View) {
         if (username.isBlank()) return
         CoroutineScope(Dispatchers.IO).launch {
-            var (stats, raw) = getStatsFromDb(token, username)
+            var (stats, _) = getStatsFromDb(token, username)
             if (stats == null) {
                 fetchAndStoreStats(token, username)
                 val result = getStatsFromDb(token, username)
                 stats = result.first
-                raw = result.second
             }
             withContext(Dispatchers.Main) {
                 rootView.findViewById<TextView>(R.id.stat_posts).text =
@@ -130,11 +123,22 @@ class UserProfileFragment : Fragment(R.layout.activity_profile) {
                     (stats?.optInt("follower_count") ?: 0).toString()
                 rootView.findViewById<TextView>(R.id.stat_following).text =
                     (stats?.optInt("following_count") ?: 0).toString()
+                val avatarUrl = stats?.optString("profile_pic_url") ?: ""
+                val fullAvatarUrl = if (avatarUrl.startsWith("http"))
+                    avatarUrl else "https://papiqo.com$avatarUrl"
+
+                Glide.with(this@UserProfileFragment)
+                    .load(fullAvatarUrl)
+                    .placeholder(R.drawable.profile_avatar_placeholder)
+                    .error(R.drawable.profile_avatar_placeholder)
+                    .circleCrop()
+                    .into(rootView.findViewById(R.id.image_avatar))
+
             }
         }
     }
 
-    private suspend fun getStatsFromDb(token: String, username: String): Pair<JSONObject?, String?> {
+    private fun getStatsFromDb(token: String, username: String): Pair<JSONObject?, String?> {
         val client = OkHttpClient()
         val req = Request.Builder()
             .url("https://papiqo.com/api/insta/profile?username=$username")
@@ -152,7 +156,7 @@ class UserProfileFragment : Fragment(R.layout.activity_profile) {
         }
     }
 
-    private suspend fun fetchAndStoreStats(token: String, username: String) {
+    private fun fetchAndStoreStats(token: String, username: String) {
         val client = OkHttpClient()
         val req = Request.Builder()
             .url("https://papiqo.com/api/insta/rapid-profile?username=$username")

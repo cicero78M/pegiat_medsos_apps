@@ -10,7 +10,6 @@
         android:theme="@style/Theme.CiceroReposter">
         <activity android:name=".ReportActivity" />
         <activity android:name=".DashboardActivity" />
-        <activity android:name=".UserProfileActivity" />
         <activity android:name=".LoginActivity" />
         <activity
             android:name=".SplashActivity"

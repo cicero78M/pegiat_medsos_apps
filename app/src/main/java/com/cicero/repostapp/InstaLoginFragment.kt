@@ -13,6 +13,7 @@ import androidx.fragment.app.Fragment
 import com.bumptech.glide.Glide
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.suspendCancellableCoroutine
@@ -21,6 +22,7 @@ import com.github.instagram4j.instagram4j.IGClient
 import com.github.instagram4j.instagram4j.IGClient.Builder.LoginHandler
 import com.github.instagram4j.instagram4j.utils.IGChallengeUtils
 import com.github.instagram4j.instagram4j.exceptions.IGLoginException
+import com.github.instagram4j.instagram4j.requests.media.MediaActionRequest
 import java.io.File
 import java.util.concurrent.Callable
 
@@ -191,21 +193,47 @@ class InstaLoginFragment : Fragment(R.layout.fragment_insta_login) {
                 val resp = client.sendRequest(req).join()
                 val today = java.time.LocalDate.now()
                 val zone = java.time.ZoneId.systemDefault()
-                val urls = mutableListOf<String>()
+                val posts = mutableListOf<Pair<String, String>>()
                 for (item in resp.items) {
                     val date = java.time.Instant.ofEpochSecond(item.taken_at)
                         .atZone(zone).toLocalDate()
                     if (date == today) {
-                        urls.add("https://instagram.com/p/${item.code}")
+                        posts.add(item.code to item.id)
                     }
                 }
                 withContext(Dispatchers.Main) {
-                    urls.forEach { appendLog(it) }
-                    appendLog("Selesai")
+                    launchLogAndLikes(client, posts)
                 }
             } catch (e: Exception) {
                 withContext(Dispatchers.Main) { appendLog("Error: ${e.message}") }
             }
+        }
+    }
+
+    private fun launchLogAndLikes(client: IGClient, posts: List<Pair<String, String>>) {
+        CoroutineScope(Dispatchers.Main).launch {
+            for ((code, _) in posts) {
+                appendLog("https://instagram.com/p/$code")
+                delay(1000)
+            }
+            appendLog("Selesai")
+            delay(5000)
+            appendLog("mulai melaksanakan likes")
+            var liked = 0
+            for ((_, id) in posts) {
+                try {
+                    withContext(Dispatchers.IO) {
+                        client.sendRequest(
+                            MediaActionRequest(id, MediaActionRequest.MediaAction.LIKE)
+                        ).join()
+                    }
+                    liked++
+                } catch (e: Exception) {
+                    appendLog("Error like: ${'$'}{e.message}")
+                }
+                delay(10000)
+            }
+            appendLog("selesai melaksanakan ${'$'}liked likes")
         }
     }
 

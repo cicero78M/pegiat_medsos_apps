@@ -41,6 +41,7 @@ class InstaLoginFragment : Fragment(R.layout.fragment_insta_login) {
     private lateinit var followingView: TextView
     private val clientFile: File by lazy { File(requireContext().filesDir, "igclient.ser") }
     private val cookieFile: File by lazy { File(requireContext().filesDir, "igcookie.ser") }
+    private var currentUsername: String? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -156,6 +157,8 @@ class InstaLoginFragment : Fragment(R.layout.fragment_insta_login) {
         bioView.text = info?.biography ?: ""
         loginContainer.visibility = View.GONE
         profileContainer.visibility = View.VISIBLE
+        currentUsername = info?.username
+        currentUsername?.let { loadSavedLogs(it) }
     }
 
     private fun restoreSession() {
@@ -172,7 +175,21 @@ class InstaLoginFragment : Fragment(R.layout.fragment_insta_login) {
         }
     }
 
-    private fun appendLog(text: String) {
+    private fun getLogFileForUser(user: String): File {
+        return File(requireContext().filesDir, "instalog_${user}.txt")
+    }
+
+    private fun loadSavedLogs(user: String) {
+        logContainer.removeAllViews()
+        val file = getLogFileForUser(user)
+        if (file.exists()) {
+            file.forEachLine { line ->
+                appendLog(line, appendToFile = false)
+            }
+        }
+    }
+
+    private fun appendLog(text: String, appendToFile: Boolean = true) {
         val tv = TextView(requireContext()).apply {
             this.typeface = android.graphics.Typeface.MONOSPACE
             this.setTextColor(android.graphics.Color.WHITE)
@@ -180,6 +197,15 @@ class InstaLoginFragment : Fragment(R.layout.fragment_insta_login) {
         }
         logContainer.addView(tv)
         logScroll.post { logScroll.fullScroll(View.FOCUS_DOWN) }
+        if (appendToFile) {
+            currentUsername?.let { user ->
+                try {
+                    getLogFileForUser(user).appendText(text + "\n")
+                } catch (_: Exception) {
+                    // ignore I/O errors
+                }
+            }
+        }
     }
 
     private fun fetchTodayPosts() {
@@ -246,6 +272,7 @@ class InstaLoginFragment : Fragment(R.layout.fragment_insta_login) {
         return if (item.itemId == R.id.action_logout) {
             profileContainer.visibility = View.GONE
             loginContainer.visibility = View.VISIBLE
+            currentUsername = null
             true
         } else {
             super.onOptionsItemSelected(item)

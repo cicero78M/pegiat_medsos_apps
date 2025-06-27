@@ -80,6 +80,8 @@
                                               <map>
                                                 <entry key="color" value="000000" />
                                                 <entry key="imagePath" value="D:\Unduhan\logoCicero-removebg-preview.png" />
+                                                <entry key="scalingPercent" value="70" />
+                                                <entry key="trimmed" value="true" />
                                               </map>
                                             </option>
                                           </PersistentState>
@@ -107,6 +109,12 @@
                                           </PersistentState>
                                         </value>
                                       </entry>
+                                    </map>
+                                  </option>
+                                  <option name="values">
+                                    <map>
+                                      <entry key="generateWebpIcons" value="false" />
+                                      <entry key="legacyIconShape" value="CIRCLE" />
                                     </map>
                                   </option>
                                 </PersistentState>

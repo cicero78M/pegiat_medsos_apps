@@ -23,7 +23,7 @@ class UserProfileActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_profile)
         supportActionBar?.setDisplayShowHomeEnabled(true)
-        supportActionBar?.setLogo(R.mipmap.ic_launcher_round)
+        supportActionBar?.setLogo(R.mipmap.ic_launcher)
         supportActionBar?.setDisplayUseLogoEnabled(true)
         val userId = intent.getStringExtra("userId") ?: ""
         val token = intent.getStringExtra("token") ?: ""
@@ -74,17 +74,7 @@ class UserProfileActivity : AppCompatActivity() {
                             findViewById<TextView>(R.id.text_tiktok).text =
                                 (data?.optString("tiktok") ?: "")
                             val statusText = data?.optString("status") ?: ""
-                            val avatarUrl = data?.optString("profile_pic_url") ?: ""
-                            val fullAvatarUrl = if (avatarUrl.startsWith("http"))
-                                avatarUrl else "https://papiqo.com$avatarUrl"
 
-
-                            Glide.with(this@UserProfileActivity)
-                                .load(fullAvatarUrl)
-                                .placeholder(R.drawable.profile_avatar_placeholder)
-                                .error(R.drawable.profile_avatar_placeholder)
-                                .circleCrop()
-                                .into(findViewById(R.id.image_avatar))
 
                             val statusImage = if (statusText.equals("true", true)) {
                                 R.drawable.ic_status_true
@@ -122,6 +112,16 @@ class UserProfileActivity : AppCompatActivity() {
                     (stats?.optInt("follower_count") ?: 0).toString()
                 findViewById<TextView>(R.id.stat_following).text =
                     (stats?.optInt("following_count") ?: 0).toString()
+                val avatarUrl = stats?.optString("profile_pic_url") ?: ""
+                val fullAvatarUrl = if (avatarUrl.startsWith("http"))
+                    avatarUrl else "https://papiqo.com$avatarUrl"
+                Glide.with(this@UserProfileActivity)
+                    .load(fullAvatarUrl)
+                    .placeholder(R.drawable.profile_avatar_placeholder)
+                    .error(R.drawable.profile_avatar_placeholder)
+                    .circleCrop()
+                    .into(findViewById(R.id.image_avatar))
+
             }
         }
     }

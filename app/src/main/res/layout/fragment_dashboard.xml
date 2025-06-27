@@ -12,7 +12,7 @@
         android:id="@+id/text_empty"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Akun Resmi Belum Upload Konten Hari ini"
+        android:text="Tidak ada konten"
         android:textAppearance="?attr/textAppearanceBody1"
         android:layout_gravity="center"
         android:visibility="gone" />

@@ -10,8 +10,6 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
-import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -36,8 +34,6 @@ class InstaLoginFragment : Fragment(R.layout.fragment_insta_login) {
     private lateinit var postsView: TextView
     private lateinit var followersView: TextView
     private lateinit var followingView: TextView
-    private lateinit var postsContainer: RecyclerView
-    private lateinit var adapter: PostAdapter
     private val clientFile: File by lazy { File(requireContext().filesDir, "igclient.ser") }
     private val cookieFile: File by lazy { File(requireContext().filesDir, "igcookie.ser") }
 
@@ -58,10 +54,6 @@ class InstaLoginFragment : Fragment(R.layout.fragment_insta_login) {
         postsView = profileContainer.findViewById(R.id.stat_posts)
         followersView = profileContainer.findViewById(R.id.stat_followers)
         followingView = profileContainer.findViewById(R.id.stat_following)
-        postsContainer = profileContainer.findViewById(R.id.recent_posts_container)
-        postsContainer.layoutManager = LinearLayoutManager(requireContext())
-        adapter = PostAdapter(mutableListOf()) {}
-        postsContainer.adapter = adapter
         profileContainer.findViewById<View>(R.id.text_nrp).visibility = View.GONE
         profileContainer.findViewById<View>(R.id.info_container).visibility = View.GONE
         profileContainer.findViewById<Button>(R.id.button_logout).visibility = View.GONE
@@ -116,37 +108,6 @@ class InstaLoginFragment : Fragment(R.layout.fragment_insta_login) {
         }
     }
 
-    private fun fetchRecentPosts(client: IGClient) {
-        CoroutineScope(Dispatchers.IO).launch {
-            try {
-                val posts = client.actions().timeline().feed()
-                    .stream()
-                    .flatMap { it.feed_items.stream() }
-                    .limit(12)
-                    .map { media ->
-                        val imageUrl = (media as? com.github.instagram4j.instagram4j.models.media.ImageMedia)
-                            ?.image_versions2
-                            ?.candidates
-                            ?.firstOrNull()
-                            ?.url
-                        InstaPost(
-                            id = media.code,
-                            caption = media.caption?.text,
-                            imageUrl = imageUrl,
-                            createdAt = java.time.Instant.ofEpochSecond(media.taken_at).toString()
-                        )
-                    }
-                    .collect(java.util.stream.Collectors.toList())
-                withContext(Dispatchers.Main) {
-                    adapter.setData(posts)
-                }
-            } catch (_: Exception) {
-                withContext(Dispatchers.Main) {
-                    Toast.makeText(requireContext(), "Gagal mengambil konten", Toast.LENGTH_SHORT).show()
-                }
-            }
-        }
-    }
 
     private suspend fun promptCode(): String = withContext(Dispatchers.Main) {
         suspendCancellableCoroutine { cont ->
@@ -181,7 +142,6 @@ class InstaLoginFragment : Fragment(R.layout.fragment_insta_login) {
             avatarView.setImageDrawable(null)
         }
         bioView.text = info?.biography ?: ""
-        fetchRecentPosts(client)
         loginContainer.visibility = View.GONE
         profileContainer.visibility = View.VISIBLE
     }

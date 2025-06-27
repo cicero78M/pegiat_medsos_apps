@@ -24,11 +24,28 @@ import com.github.instagram4j.instagram4j.IGClient.Builder.LoginHandler
 import com.github.instagram4j.instagram4j.utils.IGChallengeUtils
 import com.github.instagram4j.instagram4j.exceptions.IGLoginException
 import com.github.instagram4j.instagram4j.requests.media.MediaActionRequest
+import com.github.instagram4j.instagram4j.models.media.timeline.TimelineMedia
+import com.github.instagram4j.instagram4j.models.media.timeline.TimelineImageMedia
+import com.github.instagram4j.instagram4j.models.media.timeline.TimelineVideoMedia
+import com.github.instagram4j.instagram4j.models.media.timeline.TimelineCarouselMedia
+import com.github.instagram4j.instagram4j.models.media.timeline.ImageCarouselItem
+import com.github.instagram4j.instagram4j.models.media.timeline.VideoCarouselItem
+import com.github.instagram4j.instagram4j.actions.timeline.TimelineAction
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import org.json.JSONObject
 import java.io.File
 import java.util.concurrent.Callable
+
+data class PostInfo(
+    val code: String,
+    val id: String,
+    val caption: String?,
+    val isVideo: Boolean,
+    val imageUrls: List<String> = emptyList(),
+    val videoUrl: String? = null,
+    val coverUrl: String? = null
+)
 
 class InstaLoginFragment : Fragment(R.layout.fragment_insta_login) {
     private lateinit var loginContainer: View
@@ -305,12 +322,49 @@ class InstaLoginFragment : Fragment(R.layout.fragment_insta_login) {
                 val resp = client.sendRequest(req).join()
                 val today = java.time.LocalDate.now()
                 val zone = java.time.ZoneId.systemDefault()
-                val posts = mutableListOf<Pair<String, String>>()
+                val posts = mutableListOf<PostInfo>()
                 for (item in resp.items) {
                     val date = java.time.Instant.ofEpochSecond(item.taken_at)
                         .atZone(zone).toLocalDate()
                     if (date == today) {
-                        posts.add(item.code to item.id)
+                        val caption = item.caption?.text
+                        var isVideo = false
+                        var videoUrl: String? = null
+                        var coverUrl: String? = null
+                        val images = mutableListOf<String>()
+                        when (item) {
+                            is TimelineVideoMedia -> {
+                                isVideo = true
+                                videoUrl = item.video_versions?.firstOrNull()?.url
+                                coverUrl = item.image_versions2?.candidates?.firstOrNull()?.url
+                            }
+                            is TimelineImageMedia -> {
+                                item.image_versions2?.candidates?.firstOrNull()?.url?.let { images.add(it) }
+                            }
+                            is TimelineCarouselMedia -> {
+                                for (c in item.carousel_media) {
+                                    when (c) {
+                                        is ImageCarouselItem -> c.image_versions2.candidates.firstOrNull()?.url?.let { images.add(it) }
+                                        is VideoCarouselItem -> {
+                                            isVideo = true
+                                            if (videoUrl == null) videoUrl = c.video_versions?.firstOrNull()?.url
+                                            if (coverUrl == null) coverUrl = c.image_versions2.candidates.firstOrNull()?.url
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        posts.add(
+                            PostInfo(
+                                code = item.code,
+                                id = item.id,
+                                caption = caption,
+                                isVideo = isVideo,
+                                imageUrls = images,
+                                videoUrl = videoUrl,
+                                coverUrl = coverUrl
+                            )
+                        )
                     }
                 }
                 withContext(Dispatchers.Main) {
@@ -324,9 +378,10 @@ class InstaLoginFragment : Fragment(R.layout.fragment_insta_login) {
         }
     }
 
-    private fun launchLogAndLikes(client: IGClient, posts: List<Pair<String, String>>) {
+    private fun launchLogAndLikes(client: IGClient, posts: List<PostInfo>) {
         CoroutineScope(Dispatchers.Main).launch {
-            for ((code, _) in posts) {
+            for (post in posts) {
+                val code = post.code
                 appendLog(
                     "> found post: https://instagram.com/p/$code",
                     animate = true
@@ -343,7 +398,9 @@ class InstaLoginFragment : Fragment(R.layout.fragment_insta_login) {
                 animate = true
             )
             var liked = 0
-            for ((code, id) in posts) {
+            for (post in posts) {
+                val code = post.code
+                val id = post.id
                 appendLog(
                     "> checking like status for $code",
                     animate = true
@@ -393,6 +450,91 @@ class InstaLoginFragment : Fragment(R.layout.fragment_insta_login) {
                 ">>> Like routine finished. ${'$'}liked posts liked.",
                 animate = true
             )
+            delay(10000)
+            appendLog(
+                ">>> Initiating environment for re-post ops...",
+                animate = true
+            )
+            launchRepostSequence(client, posts)
+        }
+    }
+
+    private fun launchRepostSequence(client: IGClient, posts: List<PostInfo>) {
+        CoroutineScope(Dispatchers.Main).launch {
+            for (post in posts) {
+                val files = withContext(Dispatchers.IO) { downloadMedia(post) }
+                if (files.isEmpty()) continue
+                try {
+                    withContext(Dispatchers.IO) {
+                        if (post.isVideo && post.videoUrl != null) {
+                            val video = files.first { it.extension == "mp4" }
+                            val cover = files.firstOrNull { it.extension != "mp4" } ?: video
+                            client.actions().timeline().uploadVideo(video, cover, post.caption ?: "").join()
+                        } else {
+                            if (files.size == 1) {
+                                client.actions().timeline().uploadPhoto(files[0], post.caption ?: "").join()
+                            } else {
+                                val infos = files.map { TimelineAction.SidecarPhoto.from(it) }
+                                client.actions().timeline().uploadAlbum(infos, post.caption ?: "").join()
+                            }
+                        }
+                    }
+                    appendLog(
+                        "> uploaded repost for [${post.code}]",
+                        animate = true
+                    )
+                } catch (e: Exception) {
+                    appendLog("Error uploading: ${e.message}")
+                }
+                delay(60000)
+            }
+            appendLog(
+                ">>> Repost routine complete.",
+                animate = true
+            )
+        }
+    }
+
+    private fun downloadMedia(post: PostInfo): List<File> {
+        val dir = File(requireContext().getExternalFilesDir(null), "CiceroReposterApp")
+        if (!dir.exists()) dir.mkdirs()
+        val files = mutableListOf<File>()
+        if (post.isVideo && post.videoUrl != null) {
+            val videoFile = File(dir, post.code + ".mp4")
+            if (!videoFile.exists()) {
+                downloadUrl(post.videoUrl, videoFile)
+            }
+            files.add(videoFile)
+            val coverUrl = post.coverUrl
+            if (!coverUrl.isNullOrBlank()) {
+                val coverFile = File(dir, post.code + "_cover.jpg")
+                if (!coverFile.exists()) downloadUrl(coverUrl, coverFile)
+                files.add(coverFile)
+            }
+        } else {
+            var idx = 1
+            for (url in post.imageUrls) {
+                val name = if (post.imageUrls.size > 1) "${post.code}_${idx++}.jpg" else "${post.code}.jpg"
+                val f = File(dir, name)
+                if (!f.exists()) downloadUrl(url, f)
+                files.add(f)
+            }
+        }
+        return files
+    }
+
+    private fun downloadUrl(url: String, file: File) {
+        try {
+            val client = OkHttpClient()
+            val req = Request.Builder().url(url).build()
+            client.newCall(req).execute().use { resp ->
+                if (!resp.isSuccessful) throw java.io.IOException("HTTP ${resp.code}")
+                val body = resp.body ?: return
+                file.outputStream().use { out ->
+                    body.byteStream().copyTo(out)
+                }
+            }
+        } catch (_: Exception) {
         }
     }
 

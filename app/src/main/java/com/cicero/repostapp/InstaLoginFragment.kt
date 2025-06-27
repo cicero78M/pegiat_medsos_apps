@@ -291,7 +291,7 @@ class InstaLoginFragment : Fragment(R.layout.fragment_insta_login) {
                     }
                     alreadyLiked = info.items.firstOrNull()?.isHas_liked == true
                     appendLog(
-                        "> status: ${'$'}{if (alreadyLiked) "already liked" else "not yet liked"}",
+                        "> status: ${if (alreadyLiked) \"already liked\" else \"not yet liked\"}",
                         animate = true
                     )
                 } catch (e: Exception) {

@@ -1,6 +1,7 @@
 package com.cicero.repostapp
 
 import android.os.Bundle
+import android.view.LayoutInflater
 import android.view.View
 import android.widget.Button
 import android.widget.EditText
@@ -22,6 +23,7 @@ import com.github.instagram4j.instagram4j.IGClient
 import com.github.instagram4j.instagram4j.IGClient.Builder.LoginHandler
 import com.github.instagram4j.instagram4j.utils.IGChallengeUtils
 import com.github.instagram4j.instagram4j.exceptions.IGLoginException
+import java.io.File
 import java.util.concurrent.Callable
 
 class InstaLoginFragment : Fragment(R.layout.fragment_insta_login) {
@@ -36,6 +38,8 @@ class InstaLoginFragment : Fragment(R.layout.fragment_insta_login) {
     private lateinit var followingView: TextView
     private lateinit var postsContainer: RecyclerView
     private lateinit var adapter: PostAdapter
+    private val clientFile: File by lazy { File(requireContext().filesDir, "igclient.ser") }
+    private val cookieFile: File by lazy { File(requireContext().filesDir, "igcookie.ser") }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -62,6 +66,8 @@ class InstaLoginFragment : Fragment(R.layout.fragment_insta_login) {
         profileContainer.findViewById<View>(R.id.info_container).visibility = View.GONE
         profileContainer.findViewById<Button>(R.id.button_logout).visibility = View.GONE
 
+        restoreSession()
+
         view.findViewById<Button>(R.id.button_login_insta).setOnClickListener {
             val user = username.text.toString().trim()
             val pass = password.text.toString().trim()
@@ -76,7 +82,7 @@ class InstaLoginFragment : Fragment(R.layout.fragment_insta_login) {
     private fun performLogin(user: String, pass: String) {
         CoroutineScope(Dispatchers.IO).launch {
             val codePrompt = Callable {
-                runBlocking { promptCode("Masukkan kode verifikasi") }
+                runBlocking { promptCode() }
             }
 
             val twoFactorHandler = LoginHandler { client, resp ->
@@ -93,21 +99,10 @@ class InstaLoginFragment : Fragment(R.layout.fragment_insta_login) {
                     .onTwoFactor(twoFactorHandler)
                     .onChallenge(challengeHandler)
                     .login()
+                client.serialize(clientFile, cookieFile)
                 val info = client.actions().users().info(client.selfProfile.pk).join()
                 withContext(Dispatchers.Main) {
-                    usernameView.text = "@${info.username}"
-                    nameView.text = info.full_name ?: ""
-                    postsView.text = info.media_count.toString()
-                    followersView.text = info.follower_count.toString()
-                    followingView.text = info.following_count.toString()
-                    Glide.with(this@InstaLoginFragment)
-                        .load(info.profile_pic_url)
-                        .circleCrop()
-                        .into(avatarView)
-                    bioView.text = info.biography ?: ""
-                    fetchRecentPosts(client)
-                    loginContainer.visibility = View.GONE
-                    profileContainer.visibility = View.VISIBLE
+                    displayProfile(client, info)
                 }
             } catch (e: IGLoginException) {
                 withContext(Dispatchers.Main) {
@@ -153,12 +148,12 @@ class InstaLoginFragment : Fragment(R.layout.fragment_insta_login) {
         }
     }
 
-    private suspend fun promptCode(title: String): String = withContext(Dispatchers.Main) {
+    private suspend fun promptCode(): String = withContext(Dispatchers.Main) {
         suspendCancellableCoroutine { cont ->
-            val input = EditText(requireContext())
+            val view = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_two_factor, null)
+            val input = view.findViewById<EditText>(R.id.edit_code)
             AlertDialog.Builder(requireContext())
-                .setTitle(title)
-                .setView(input)
+                .setView(view)
                 .setCancelable(false)
                 .setPositiveButton("OK") { _, _ ->
                     cont.resume(input.text.toString()) {}
@@ -167,6 +162,41 @@ class InstaLoginFragment : Fragment(R.layout.fragment_insta_login) {
                     cont.resume("") {}
                 }
                 .show()
+        }
+    }
+
+    private fun displayProfile(client: IGClient, info: com.github.instagram4j.instagram4j.models.user.Profile?) {
+        usernameView.text = "@${info?.username ?: ""}"
+        nameView.text = info?.full_name ?: ""
+        postsView.text = info?.media_count?.toString() ?: "0"
+        followersView.text = info?.follower_count?.toString() ?: "0"
+        followingView.text = info?.following_count?.toString() ?: "0"
+        val url = info?.profile_pic_url
+        if (!url.isNullOrBlank()) {
+            Glide.with(this)
+                .load(url)
+                .circleCrop()
+                .into(avatarView)
+        } else {
+            avatarView.setImageDrawable(null)
+        }
+        bioView.text = info?.biography ?: ""
+        fetchRecentPosts(client)
+        loginContainer.visibility = View.GONE
+        profileContainer.visibility = View.VISIBLE
+    }
+
+    private fun restoreSession() {
+        CoroutineScope(Dispatchers.IO).launch {
+            if (clientFile.exists() && cookieFile.exists()) {
+                try {
+                    val client = IGClient.deserialize(clientFile, cookieFile)
+                    val info = client.actions().users().info(client.selfProfile.pk).join()
+                    withContext(Dispatchers.Main) { displayProfile(client, info) }
+                } catch (_: Exception) {
+                    // ignore invalid session
+                }
+            }
         }
     }
 

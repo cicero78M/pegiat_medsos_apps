@@ -55,7 +55,7 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:text="@string/login_aman_autentikasi_dengan_token_terenkripsi" />
+                    android:text="Authentikasi - Registrasi Akun via WA Bot" />
             </LinearLayout>
 
             <LinearLayout
@@ -91,7 +91,7 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:text="Laporan Link - Kirim link ke tim pemantau" />
+                    android:text="Laporan Link - Copy, Paste, Kirim" />
             </LinearLayout>
 
         </LinearLayout>

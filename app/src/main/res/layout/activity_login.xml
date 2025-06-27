@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@drawable/login_background">
@@ -21,7 +22,9 @@
                 android:id="@+id/logo"
                 android:layout_width="240dp"
                 android:layout_height="240dp"
-                android:src="@mipmap/ic_launcher_foreground" />
+                android:contentDescription="@string/todo"
+                android:src="@mipmap/ic_launcher_foreground"
+                tools:ignore="ImageContrastCheck" />
 
             <TextView
                 android:id="@+id/title"
@@ -49,19 +52,20 @@
                     <com.google.android.material.textfield.TextInputLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:hint="NRP"
+                        android:hint="@string/nrp"
                         app:startIconDrawable="@android:drawable/ic_menu_myplaces">
 
                         <com.google.android.material.textfield.TextInputEditText
                             android:id="@+id/input_nrp"
                             android:layout_width="match_parent"
-                            android:layout_height="wrap_content" />
+                            android:layout_height="wrap_content"
+                            tools:ignore="TextContrastCheck,VisualLintTextFieldSize" />
                     </com.google.android.material.textfield.TextInputLayout>
 
                     <com.google.android.material.textfield.TextInputLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:hint="Password"
+                        android:hint="@string/password"
                         android:layout_marginTop="16dp"
                         app:startIconDrawable="@android:drawable/ic_lock_lock">
 
@@ -69,7 +73,8 @@
                             android:id="@+id/input_password"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:inputType="textPassword" />
+                            android:inputType="textPassword"
+                            tools:ignore="TextContrastCheck,VisualLintTextFieldSize" />
                     </com.google.android.material.textfield.TextInputLayout>
 
                     <CheckBox
@@ -77,20 +82,21 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="8dp"
-                        android:text="Show Password" />
+                        android:text="@string/show_password" />
 
                     <CheckBox
                         android:id="@+id/checkbox_save_login"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Save Login" />
+                        android:text="@string/save_login" />
 
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/button_login"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="Login"
-                        android:layout_marginTop="24dp" />
+                        android:text="@string/login"
+                        android:layout_marginTop="24dp"
+                        tools:ignore="VisualLintButtonSize" />
 
                 </LinearLayout>
 

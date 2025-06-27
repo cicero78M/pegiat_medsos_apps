@@ -1,6 +1,7 @@
 package com.cicero.repostapp
 
 import android.os.Bundle
+import android.content.Context
 import android.view.LayoutInflater
 import android.view.View
 import android.widget.Button
@@ -23,6 +24,9 @@ import com.github.instagram4j.instagram4j.IGClient.Builder.LoginHandler
 import com.github.instagram4j.instagram4j.utils.IGChallengeUtils
 import com.github.instagram4j.instagram4j.exceptions.IGLoginException
 import com.github.instagram4j.instagram4j.requests.media.MediaActionRequest
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import org.json.JSONObject
 import java.io.File
 import java.util.concurrent.Callable
 
@@ -42,6 +46,9 @@ class InstaLoginFragment : Fragment(R.layout.fragment_insta_login) {
     private val clientFile: File by lazy { File(requireContext().filesDir, "igclient.ser") }
     private val cookieFile: File by lazy { File(requireContext().filesDir, "igcookie.ser") }
     private var currentUsername: String? = null
+    private var token: String = ""
+    private var userId: String = ""
+    private var targetUsername: String = "polresbojonegoroofficial"
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -68,6 +75,11 @@ class InstaLoginFragment : Fragment(R.layout.fragment_insta_login) {
         startButton = view.findViewById(R.id.button_start)
         logContainer = view.findViewById(R.id.log_container)
         logScroll = view.findViewById(R.id.log_scroll)
+
+        val authPrefs = requireContext().getSharedPreferences("auth", Context.MODE_PRIVATE)
+        token = authPrefs.getString("token", "") ?: ""
+        userId = authPrefs.getString("userId", "") ?: ""
+        fetchTargetAccount()
 
         startButton.setOnClickListener { fetchTodayPosts() }
 
@@ -221,19 +233,73 @@ class InstaLoginFragment : Fragment(R.layout.fragment_insta_login) {
         }
     }
 
+    private fun fetchTargetAccount() {
+        if (token.isBlank() || userId.isBlank()) return
+        CoroutineScope(Dispatchers.IO).launch {
+            val client = OkHttpClient()
+            val userReq = Request.Builder()
+                .url("https://papiqo.com/api/users/$userId")
+                .header("Authorization", "Bearer $token")
+                .build()
+            try {
+                client.newCall(userReq).execute().use { resp ->
+                    val body = resp.body?.string()
+                    val clientId = if (resp.isSuccessful) {
+                        try {
+                            JSONObject(body ?: "{}")
+                                .optJSONObject("data")
+                                ?.optString("client_id") ?: ""
+                        } catch (_: Exception) { "" }
+                    } else ""
+                    if (clientId.isNotBlank()) {
+                        val insta = fetchClientInsta(client, clientId)
+                        if (!insta.isNullOrBlank()) {
+                            withContext(Dispatchers.Main) { targetUsername = insta }
+                        }
+                    }
+                }
+            } catch (_: Exception) {
+            }
+        }
+    }
+
+    private suspend fun fetchClientInsta(client: OkHttpClient, clientId: String): String? {
+        val req = Request.Builder()
+            .url("https://papiqo.com/api/clients/$clientId")
+            .header("Authorization", "Bearer $token")
+            .build()
+        return try {
+            client.newCall(req).execute().use { resp ->
+                if (!resp.isSuccessful) return null
+                val body = resp.body?.string()
+                try {
+                    JSONObject(body ?: "{}")
+                        .optJSONObject("data")
+                        ?.optString("client_insta")
+                        ?.takeIf { it.isNotBlank() }
+                        ?: JSONObject(body ?: "{}").optString("client_insta")
+                } catch (_: Exception) {
+                    null
+                }
+            }
+        } catch (_: Exception) {
+            null
+        }
+    }
+
     private fun fetchTodayPosts() {
         appendLog(
             ">>> Booting IG automation engine...",
             animate = true
         )
         appendLog(
-            ">>> Target locked: @polresbojonegoroofficial :: initializing recon...",
+            ">>> Target locked: @$targetUsername :: initializing recon...",
             animate = true
         )
         CoroutineScope(Dispatchers.IO).launch {
             try {
                 val client = IGClient.deserialize(clientFile, cookieFile)
-                val userAction = client.actions().users().findByUsername("polresbojonegoroofficial").join()
+                val userAction = client.actions().users().findByUsername(targetUsername).join()
                 val user = userAction.user
                 val req = com.github.instagram4j.instagram4j.requests.feed.FeedUserRequest(user.pk)
                 val resp = client.sendRequest(req).join()

@@ -1,9 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:orientation="vertical"
-    android:padding="16dp"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
+
+    <LinearLayout
+        android:id="@+id/login_container"
+        android:orientation="vertical"
+        android:padding="16dp"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
 
     <EditText
         android:id="@+id/input_username"
@@ -19,10 +24,18 @@
         android:inputType="textPassword"
         android:layout_marginTop="8dp" />
 
-    <Button
-        android:id="@+id/button_login_insta"
+        <Button
+            android:id="@+id/button_login_insta"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Login"
+            android:layout_marginTop="16dp" />
+    </LinearLayout>
+
+    <include
+        android:id="@+id/profile_container"
+        layout="@layout/activity_profile"
+        android:visibility="gone"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Login"
-        android:layout_marginTop="16dp" />
-</LinearLayout>
+        android:layout_height="match_parent" />
+</FrameLayout>

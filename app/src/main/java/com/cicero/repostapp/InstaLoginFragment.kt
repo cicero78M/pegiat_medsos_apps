@@ -48,7 +48,7 @@ class InstaLoginFragment : Fragment(R.layout.fragment_insta_login) {
     private var currentUsername: String? = null
     private var token: String = ""
     private var userId: String = ""
-    private var targetUsername: String = "polresbojonegoroofficial"
+    private var targetUsername: String = "polres_ponorogo"
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

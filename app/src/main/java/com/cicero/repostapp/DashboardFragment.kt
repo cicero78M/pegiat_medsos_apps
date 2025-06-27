@@ -79,13 +79,44 @@ class DashboardFragment : Fragment(R.layout.fragment_dashboard) {
     }
 
     private fun fetchClientAndPosts(userId: String, token: String) {
-        fetchPostsByUsername(token, "polresbojonegoroofficial")
-    }
-
-    private fun fetchPostsByUsername(token: String, username: String) {
         CoroutineScope(Dispatchers.IO).launch {
             val client = OkHttpClient()
-            val url = "https://papiqo.com/api/insta/posts?username=$username"
+            val req = Request.Builder()
+                .url("https://papiqo.com/api/users/$userId")
+                .header("Authorization", "Bearer $token")
+                .build()
+            try {
+                client.newCall(req).execute().use { resp ->
+                    val body = resp.body?.string()
+                    val clientId = if (resp.isSuccessful) {
+                        try {
+                            JSONObject(body ?: "{}")
+                                .optJSONObject("data")
+                                ?.optString("client_id") ?: ""
+                        } catch (_: Exception) { "" }
+                    } else ""
+                    withContext(Dispatchers.Main) {
+                        if (clientId.isNotBlank()) {
+                            fetchPosts(token, clientId)
+                        } else {
+                            progressBar.visibility = View.GONE
+                            Toast.makeText(requireContext(), "Gagal memuat data", Toast.LENGTH_SHORT).show()
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                withContext(Dispatchers.Main) {
+                    progressBar.visibility = View.GONE
+                    Toast.makeText(requireContext(), "Gagal terhubung ke server", Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+    }
+
+    private fun fetchPosts(token: String, clientId: String) {
+        CoroutineScope(Dispatchers.IO).launch {
+            val client = OkHttpClient()
+            val url = "https://papiqo.com/api/insta/posts?client_id=$clientId"
             val req = Request.Builder()
                 .url(url)
                 .header("Authorization", "Bearer $token")
@@ -100,25 +131,37 @@ class DashboardFragment : Fragment(R.layout.fragment_dashboard) {
                                 JSONObject(body ?: "{}").optJSONArray("data")
                             } catch (_: Exception) { JSONArray() }
                             val posts = mutableListOf<InstaPost>()
+                            val formatter = java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
+                            val today = java.time.LocalDate.now()
                             for (i in 0 until arr.length()) {
                                 val obj = arr.optJSONObject(i) ?: continue
                                 val created = obj.optString("created_at")
-                                val id = obj.optString("shortcode")
-                                posts.add(
-                                    InstaPost(
-                                        id = id,
-                                        caption = obj.optString("caption"),
-                                        imageUrl = obj.optString("image_url")
-                                            .ifBlank { obj.optString("thumbnail_url") },
-                                        createdAt = created,
-                                        isVideo = obj.optBoolean("is_video"),
-                                        videoUrl = obj.optString("video_url"),
-                                        sourceUrl = obj.optString("source_url"),
-                                        downloaded = downloadedIds.contains(id),
-                                        reported = reportedIds.contains(id)
+                                val createdDate = try {
+                                    if (created.contains("T")) {
+                                        java.time.OffsetDateTime.parse(created)
+                                            .atZoneSameInstant(java.time.ZoneId.systemDefault())
+                                            .toLocalDate()
+                                    } else {
+                                        java.time.LocalDateTime.parse(created, formatter).toLocalDate()
+                                    }
+                                } catch (_: Exception) { null }
+                                if (createdDate == today) {
+                                    val id = obj.optString("shortcode")
+                                    posts.add(
+                                        InstaPost(
+                                            id = id,
+                                            caption = obj.optString("caption"),
+                                            imageUrl = obj.optString("image_url")
+                                                .ifBlank { obj.optString("thumbnail_url") },
+                                            createdAt = created,
+                                            isVideo = obj.optBoolean("is_video"),
+                                            videoUrl = obj.optString("video_url"),
+                                            sourceUrl = obj.optString("source_url"),
+                                            downloaded = downloadedIds.contains(id),
+                                            reported = reportedIds.contains(id)
+                                        )
                                     )
-                                )
-                                if (posts.size >= 12) break
+                                }
                             }
                             adapter.setData(posts)
                             emptyView.visibility = if (posts.isEmpty()) View.VISIBLE else View.GONE
@@ -137,7 +180,6 @@ class DashboardFragment : Fragment(R.layout.fragment_dashboard) {
             }
         }
     }
-
 
     private fun handlePostClicked(post: InstaPost) {
         ensureDownloadDir {

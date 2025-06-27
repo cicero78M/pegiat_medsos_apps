@@ -3,7 +3,9 @@ package com.cicero.repostapp
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ImageView
 import android.widget.TextView
+import com.bumptech.glide.Glide
 import androidx.recyclerview.widget.RecyclerView
 
 data class InstaPost(
@@ -46,11 +48,20 @@ class PostAdapter(
 
     class PostViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         private val captionText: TextView = itemView.findViewById(R.id.text_caption)
-        private val linkText: TextView = itemView.findViewById(R.id.text_link)
+        private val imageView: ImageView = itemView.findViewById(R.id.image_post)
+        private val downloadedIcon: ImageView = itemView.findViewById(R.id.icon_downloaded)
+        private val reportedIcon: ImageView = itemView.findViewById(R.id.icon_reported)
 
         fun bind(post: InstaPost) {
             captionText.text = post.caption ?: ""
-            linkText.text = "https://instagram.com/p/${post.id}"
+            val url = post.imageUrl
+            if (url != null && url.isNotBlank()) {
+                Glide.with(itemView).load(url).into(imageView)
+            } else {
+                imageView.setImageDrawable(null)
+            }
+            downloadedIcon.visibility = if (post.downloaded) View.VISIBLE else View.GONE
+            reportedIcon.visibility = if (post.reported) View.VISIBLE else View.GONE
         }
     }
 }

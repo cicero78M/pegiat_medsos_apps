@@ -165,7 +165,7 @@ class InstaLoginFragment : Fragment(R.layout.fragment_insta_login) {
         }
     }
 
-    private fun displayProfile(client: IGClient, info: com.github.instagram4j.instagram4j.models.user.Profile?) {
+    private fun displayProfile(client: IGClient, info: com.github.instagram4j.instagram4j.models.user.User?) {
         usernameView.text = "@${info?.username ?: ""}"
         nameView.text = info?.full_name ?: ""
         postsView.text = info?.media_count?.toString() ?: "0"

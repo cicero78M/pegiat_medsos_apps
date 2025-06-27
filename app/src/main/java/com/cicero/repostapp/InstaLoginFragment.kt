@@ -282,21 +282,29 @@ class InstaLoginFragment : Fragment(R.layout.fragment_insta_login) {
                     "> checking like status for $code",
                     animate = true
                 )
+
                 var alreadyLiked = false
+
                 try {
                     val info = withContext(Dispatchers.IO) {
                         client.sendRequest(
                             com.github.instagram4j.instagram4j.requests.media.MediaInfoRequest(id)
                         ).join()
                     }
-                    alreadyLiked = info.items.firstOrNull()?.isHas_liked == true
+                    val alreadyLiked = info.items.firstOrNull()?.isHas_liked == true
+                    val statusText = if (alreadyLiked) "already liked" else "not yet liked"
+
                     appendLog(
-                        "> status: ${if (alreadyLiked) \"already liked\" else \"not yet liked\"}",
+                        "> status: $statusText",
                         animate = true
                     )
                 } catch (e: Exception) {
-                    appendLog("Error checking like: ${'$'}{e.message}")
+                    appendLog(
+                        "Error checking like: ${e.message}",
+                        animate = true
+                    )
                 }
+
                 if (!alreadyLiked) {
                     try {
                         withContext(Dispatchers.IO) {

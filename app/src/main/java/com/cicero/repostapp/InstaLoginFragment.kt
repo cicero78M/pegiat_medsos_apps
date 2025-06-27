@@ -9,6 +9,8 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -28,9 +30,17 @@ class InstaLoginFragment : Fragment(R.layout.fragment_insta_login) {
     private lateinit var avatarView: ImageView
     private lateinit var usernameView: TextView
     private lateinit var nameView: TextView
+    private lateinit var bioView: TextView
     private lateinit var postsView: TextView
     private lateinit var followersView: TextView
     private lateinit var followingView: TextView
+    private lateinit var postsContainer: RecyclerView
+    private lateinit var adapter: PostAdapter
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setHasOptionsMenu(true)
+    }
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         val username = view.findViewById<EditText>(R.id.input_username)
@@ -40,16 +50,17 @@ class InstaLoginFragment : Fragment(R.layout.fragment_insta_login) {
         avatarView = profileContainer.findViewById(R.id.image_avatar)
         usernameView = profileContainer.findViewById(R.id.text_username)
         nameView = profileContainer.findViewById(R.id.text_name)
+        bioView = profileContainer.findViewById(R.id.text_bio)
         postsView = profileContainer.findViewById(R.id.stat_posts)
         followersView = profileContainer.findViewById(R.id.stat_followers)
         followingView = profileContainer.findViewById(R.id.stat_following)
+        postsContainer = profileContainer.findViewById(R.id.recent_posts_container)
+        postsContainer.layoutManager = LinearLayoutManager(requireContext())
+        adapter = PostAdapter(mutableListOf()) {}
+        postsContainer.adapter = adapter
         profileContainer.findViewById<View>(R.id.text_nrp).visibility = View.GONE
         profileContainer.findViewById<View>(R.id.info_container).visibility = View.GONE
-
-        profileContainer.findViewById<Button>(R.id.button_logout).setOnClickListener {
-            profileContainer.visibility = View.GONE
-            loginContainer.visibility = View.VISIBLE
-        }
+        profileContainer.findViewById<Button>(R.id.button_logout).visibility = View.GONE
 
         view.findViewById<Button>(R.id.button_login_insta).setOnClickListener {
             val user = username.text.toString().trim()
@@ -93,6 +104,8 @@ class InstaLoginFragment : Fragment(R.layout.fragment_insta_login) {
                         .load(info.profile_pic_url)
                         .circleCrop()
                         .into(avatarView)
+                    bioView.text = info.biography ?: ""
+                    fetchRecentPosts(client)
                     loginContainer.visibility = View.GONE
                     profileContainer.visibility = View.VISIBLE
                 }
@@ -103,6 +116,34 @@ class InstaLoginFragment : Fragment(R.layout.fragment_insta_login) {
             } catch (e: Exception) {
                 withContext(Dispatchers.Main) {
                     Toast.makeText(requireContext(), "Error: ${e.localizedMessage}", Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+    }
+
+    private fun fetchRecentPosts(client: IGClient) {
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                val posts = client.actions().timeline().feed()
+                    .stream()
+                    .flatMap { it.feed_items.stream() }
+                    .mapNotNull { it.media }
+                    .limit(12)
+                    .map { media ->
+                        InstaPost(
+                            id = media.code,
+                            caption = media.caption?.text,
+                            imageUrl = media.image_versions2?.candidates?.firstOrNull()?.url,
+                            createdAt = java.time.Instant.ofEpochSecond(media.taken_at).toString()
+                        )
+                    }
+                    .toList()
+                withContext(Dispatchers.Main) {
+                    adapter.setData(posts)
+                }
+            } catch (_: Exception) {
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(requireContext(), "Gagal mengambil konten", Toast.LENGTH_SHORT).show()
                 }
             }
         }
@@ -122,6 +163,21 @@ class InstaLoginFragment : Fragment(R.layout.fragment_insta_login) {
                     cont.resume("") {}
                 }
                 .show()
+        }
+    }
+
+    override fun onCreateOptionsMenu(menu: android.view.Menu, inflater: android.view.MenuInflater) {
+        super.onCreateOptionsMenu(menu, inflater)
+        inflater.inflate(R.menu.menu_insta_profile, menu)
+    }
+
+    override fun onOptionsItemSelected(item: android.view.MenuItem): Boolean {
+        return if (item.itemId == R.id.action_logout) {
+            profileContainer.visibility = View.GONE
+            loginContainer.visibility = View.VISIBLE
+            true
+        } else {
+            super.onOptionsItemSelected(item)
         }
     }
 }

@@ -43,6 +43,8 @@ class InstaLoginFragment : Fragment(R.layout.fragment_insta_login) {
         postsView = profileContainer.findViewById(R.id.stat_posts)
         followersView = profileContainer.findViewById(R.id.stat_followers)
         followingView = profileContainer.findViewById(R.id.stat_following)
+        profileContainer.findViewById<View>(R.id.text_nrp).visibility = View.GONE
+        profileContainer.findViewById<View>(R.id.info_container).visibility = View.GONE
 
         profileContainer.findViewById<Button>(R.id.button_logout).setOnClickListener {
             profileContainer.visibility = View.GONE

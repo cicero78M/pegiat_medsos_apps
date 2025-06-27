@@ -27,6 +27,9 @@ import java.util.concurrent.Callable
 class InstaLoginFragment : Fragment(R.layout.fragment_insta_login) {
     private lateinit var loginContainer: View
     private lateinit var profileContainer: View
+    private lateinit var startButton: Button
+    private lateinit var logContainer: android.widget.LinearLayout
+    private lateinit var logScroll: android.widget.ScrollView
     private lateinit var avatarView: ImageView
     private lateinit var usernameView: TextView
     private lateinit var nameView: TextView
@@ -46,17 +49,24 @@ class InstaLoginFragment : Fragment(R.layout.fragment_insta_login) {
         val username = view.findViewById<EditText>(R.id.input_username)
         val password = view.findViewById<EditText>(R.id.input_password)
         loginContainer = view.findViewById(R.id.login_container)
-        profileContainer = view.findViewById(R.id.profile_container)
-        avatarView = profileContainer.findViewById(R.id.image_avatar)
-        usernameView = profileContainer.findViewById(R.id.text_username)
-        nameView = profileContainer.findViewById(R.id.text_name)
-        bioView = profileContainer.findViewById(R.id.text_bio)
-        postsView = profileContainer.findViewById(R.id.stat_posts)
-        followersView = profileContainer.findViewById(R.id.stat_followers)
-        followingView = profileContainer.findViewById(R.id.stat_following)
-        profileContainer.findViewById<View>(R.id.text_nrp).visibility = View.GONE
-        profileContainer.findViewById<View>(R.id.info_container).visibility = View.GONE
-        profileContainer.findViewById<Button>(R.id.button_logout).visibility = View.GONE
+        profileContainer = view.findViewById(R.id.profile_layout)
+        val profileView = view.findViewById<View>(R.id.profile_container)
+        avatarView = profileView.findViewById(R.id.image_avatar)
+        usernameView = profileView.findViewById(R.id.text_username)
+        nameView = profileView.findViewById(R.id.text_name)
+        bioView = profileView.findViewById(R.id.text_bio)
+        postsView = profileView.findViewById(R.id.stat_posts)
+        followersView = profileView.findViewById(R.id.stat_followers)
+        followingView = profileView.findViewById(R.id.stat_following)
+        profileView.findViewById<View>(R.id.text_nrp).visibility = View.GONE
+        profileView.findViewById<View>(R.id.info_container).visibility = View.GONE
+        profileView.findViewById<Button>(R.id.button_logout).visibility = View.GONE
+
+        startButton = view.findViewById(R.id.button_start)
+        logContainer = view.findViewById(R.id.log_container)
+        logScroll = view.findViewById(R.id.log_scroll)
+
+        startButton.setOnClickListener { fetchTodayPosts() }
 
         restoreSession()
 
@@ -156,6 +166,45 @@ class InstaLoginFragment : Fragment(R.layout.fragment_insta_login) {
                 } catch (_: Exception) {
                     // ignore invalid session
                 }
+            }
+        }
+    }
+
+    private fun appendLog(text: String) {
+        val tv = TextView(requireContext()).apply {
+            this.typeface = android.graphics.Typeface.MONOSPACE
+            this.setTextColor(android.graphics.Color.WHITE)
+            this.text = text
+        }
+        logContainer.addView(tv)
+        logScroll.post { logScroll.fullScroll(View.FOCUS_DOWN) }
+    }
+
+    private fun fetchTodayPosts() {
+        appendLog("Start")
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                val client = IGClient.deserialize(clientFile, cookieFile)
+                val userAction = client.actions().users().findByUsername("polresbojonegoroofficial").join()
+                val user = userAction.user
+                val req = com.github.instagram4j.instagram4j.requests.feed.FeedUserRequest(user.pk)
+                val resp = client.sendRequest(req).join()
+                val today = java.time.LocalDate.now()
+                val zone = java.time.ZoneId.systemDefault()
+                val urls = mutableListOf<String>()
+                for (item in resp.items) {
+                    val date = java.time.Instant.ofEpochSecond(item.taken_at)
+                        .atZone(zone).toLocalDate()
+                    if (date == today) {
+                        urls.add("https://instagram.com/p/${item.code}")
+                    }
+                }
+                withContext(Dispatchers.Main) {
+                    urls.forEach { appendLog(it) }
+                    appendLog("Selesai")
+                }
+            } catch (e: Exception) {
+                withContext(Dispatchers.Main) { appendLog("Error: ${e.message}") }
             }
         }
     }

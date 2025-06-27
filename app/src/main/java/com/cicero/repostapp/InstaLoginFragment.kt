@@ -127,9 +127,6 @@ class InstaLoginFragment : Fragment(R.layout.fragment_insta_login) {
                 val posts = client.actions().timeline().feed()
                     .stream()
                     .flatMap { it.feed_items.stream() }
-                    .map { it.media }
-                    .filter { it != null }
-                    .map { media -> media!! }
                     .limit(12)
                     .map { media ->
                         InstaPost(

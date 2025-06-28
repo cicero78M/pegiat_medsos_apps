@@ -2,6 +2,7 @@ package com.cicero.repostapp
 
 import android.os.Bundle
 import android.content.Context
+import android.os.Build
 import android.view.LayoutInflater
 import android.view.View
 import android.widget.Button
@@ -9,6 +10,7 @@ import android.widget.EditText
 import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
+import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
 import com.bumptech.glide.Glide
@@ -21,10 +23,7 @@ import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
 import com.cicero.repostapp.PremiumRegistrationActivity
 import okhttp3.MediaType.Companion.toMediaType
-import okhttp3.OkHttpClient
-import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
-import org.json.JSONObject
 import com.github.instagram4j.instagram4j.IGClient
 import com.github.instagram4j.instagram4j.IGClient.Builder.LoginHandler
 import com.github.instagram4j.instagram4j.utils.IGChallengeUtils
@@ -131,6 +130,7 @@ class InstaLoginFragment : Fragment(R.layout.fragment_insta_login) {
         }
     }
 
+    @RequiresApi(Build.VERSION_CODES.N)
     private fun performLogin(user: String, pass: String) {
         CoroutineScope(Dispatchers.IO).launch {
             val codePrompt = Callable {

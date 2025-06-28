@@ -29,4 +29,5 @@
     <string name="subscription_confirm_info">Jika sudah melakukan transfer, tekan tombol di bawah untuk mengirim konfirmasi.</string>
     <string name="confirm">Konfirmasi</string>
     <string name="cancel">Batal</string>
+    <string name="active_subscription_status">Status Subscription anda saat ini aktif sampai dengan tanggal %1$s</string>
 </resources>

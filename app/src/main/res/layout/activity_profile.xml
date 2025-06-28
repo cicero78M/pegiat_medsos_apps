@@ -45,6 +45,16 @@
             app:layout_constraintEnd_toEndOf="@id/image_avatar"
             tools:ignore="ContentDescription,HardcodedText,ImageContrastCheck" />
 
+        <ImageView
+            android:id="@+id/image_badge"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:layout_margin="4dp"
+            android:src="@drawable/ic_badge_basic"
+            android:contentDescription="@string/todo"
+            app:layout_constraintBottom_toBottomOf="@id/image_avatar"
+            app:layout_constraintEnd_toStartOf="@id/image_status" />
+
         <TextView
             android:id="@+id/text_username"
             android:layout_width="wrap_content"

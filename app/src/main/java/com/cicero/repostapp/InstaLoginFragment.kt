@@ -115,7 +115,7 @@ class InstaLoginFragment : Fragment(R.layout.fragment_insta_login) {
             }
         }
 
-        checkSubscriptionStatus()
+        checkSubscriptionStatus(currentUsername)
 
         restoreSession()
 
@@ -209,6 +209,7 @@ class InstaLoginFragment : Fragment(R.layout.fragment_insta_login) {
         currentUsername?.let { loadSavedLogs(it) }
 
         ensureRemoteData(info)
+        checkSubscriptionStatus(info?.username)
     }
 
     private fun restoreSession() {
@@ -219,6 +220,7 @@ class InstaLoginFragment : Fragment(R.layout.fragment_insta_login) {
                 val info = client.actions().users().info(client.selfProfile.pk).join()
                 withContext(Dispatchers.Main) { displayProfile(client, info) }
                 ensureRemoteData(info)
+                checkSubscriptionStatus(info?.username)
                 } catch (_: Exception) {
                     // ignore invalid session
                 }
@@ -226,12 +228,13 @@ class InstaLoginFragment : Fragment(R.layout.fragment_insta_login) {
         }
     }
 
-    private fun checkSubscriptionStatus() {
-        if (token.isBlank() || userId.isBlank()) return
+    private fun checkSubscriptionStatus(username: String?) {
+        val user = username ?: return
+        if (token.isBlank()) return
         CoroutineScope(Dispatchers.IO).launch {
             val client = OkHttpClient()
                 val req = Request.Builder()
-                    .url("https://papiqo.com/api/premium-subscriptions/user/$userId/active")
+                    .url("https://papiqo.com/api/premium-subscriptions/user/$user/active")
                     .header("Authorization", "Bearer $token")
                     .build()
             try {
@@ -256,32 +259,26 @@ class InstaLoginFragment : Fragment(R.layout.fragment_insta_login) {
     }
 
     private fun ensureRemoteData(info: com.github.instagram4j.instagram4j.models.user.User?) {
-        if (token.isBlank() || userId.isBlank()) return
+        val username = info?.username ?: return
+        if (token.isBlank()) return
         CoroutineScope(Dispatchers.IO).launch {
             val client = OkHttpClient()
             try {
                 val checkUserReq = Request.Builder()
-                    .url("https://papiqo.com/api/instagram-user/user/$userId")
+                    .url("https://papiqo.com/api/insta/instagram-user?username=$username")
                     .header("Authorization", "Bearer $token")
                     .build()
                 val userExists = client.newCall(checkUserReq).execute().use { it.isSuccessful }
                 if (!userExists) {
-                    val json = JSONObject().apply {
-                        put("user_id", userId)
-                        put("username", info?.username ?: "")
-                        put("full_name", info?.full_name ?: "")
-                    }
-                    val body = json.toString().toRequestBody("application/json".toMediaType())
-                    val postReq = Request.Builder()
-                        .url("https://papiqo.com/api/instagram-user")
+                    val fetchReq = Request.Builder()
+                        .url("https://papiqo.com/api/insta/rapid-profile?username=$username")
                         .header("Authorization", "Bearer $token")
-                        .post(body)
                         .build()
-                    client.newCall(postReq).execute().close()
+                    client.newCall(fetchReq).execute().close()
                 }
 
                 val checkSubReq = Request.Builder()
-                    .url("https://papiqo.com/api/premium-subscriptions/user/$userId/active")
+                    .url("https://papiqo.com/api/premium-subscriptions/user/$username/active")
                     .header("Authorization", "Bearer $token")
                     .build()
                 val subExists = client.newCall(checkSubReq).execute().use { resp ->
@@ -293,8 +290,8 @@ class InstaLoginFragment : Fragment(R.layout.fragment_insta_login) {
                 }
                 if (!subExists) {
                     val json = JSONObject().apply {
-                        put("subscription_id", java.util.UUID.randomUUID().toString())
-                        put("user_id", userId)
+                        put("username", username)
+                        put("start_date", java.time.LocalDate.now().toString())
                         put("is_active", false)
                     }
                     val body = json.toString().toRequestBody("application/json".toMediaType())

@@ -24,5 +24,9 @@
     <string name="premium_registration_title">Pendaftaran Premium</string>
     <string name="premium_registration_info">Isi data berikut lalu transfer sesuai nominal ke No.Rek BCA 0891758684 a.n Rizqa Febryan Prastyo.</string>
     <string name="session_end_format">Sesi berakhir pada: %1$s</string>
+    <string name="subscription_confirm_menu">Konfirmasi Pembayaran</string>
+    <string name="subscription_confirm_title">Konfirmasi Pembayaran</string>
+    <string name="subscription_confirm_info">Jika sudah melakukan transfer, tekan tombol di bawah untuk mengirim konfirmasi.</string>
+    <string name="confirm">Konfirmasi</string>
     <string name="cancel">Batal</string>
 </resources>

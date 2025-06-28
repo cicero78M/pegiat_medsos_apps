@@ -9,4 +9,8 @@
         android:id="@+id/action_register_premium"
         android:title="Daftar Premium"
         android:showAsAction="never" />
+    <item
+        android:id="@+id/action_confirm_subscription"
+        android:title="@string/subscription_confirm_menu"
+        android:showAsAction="never" />
 </menu>

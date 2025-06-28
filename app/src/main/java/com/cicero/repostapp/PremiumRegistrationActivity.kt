@@ -78,6 +78,9 @@ class PremiumRegistrationActivity : AppCompatActivity() {
                 withContext(Dispatchers.Main) {
                     if (success) {
                         Toast.makeText(this@PremiumRegistrationActivity, "Pendaftaran tersimpan", Toast.LENGTH_SHORT).show()
+                        val intent = android.content.Intent(this@PremiumRegistrationActivity, SubscriptionConfirmActivity::class.java)
+                        intent.putExtra("username", usernameVal)
+                        startActivity(intent)
                         finish()
                     } else {
                         Toast.makeText(this@PremiumRegistrationActivity, "Gagal mendaftar", Toast.LENGTH_SHORT).show()

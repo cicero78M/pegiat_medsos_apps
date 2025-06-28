@@ -182,7 +182,11 @@ class LoginActivity : AppCompatActivity() {
                 .build()
             try {
                 client.newCall(checkReq).execute().use { resp ->
-                    if (resp.code == 404) {
+                    val bodyStr = resp.body?.string()
+                    val dataObj = try {
+                        JSONObject(bodyStr ?: "{}").optJSONObject("data")
+                    } catch (_: Exception) { null }
+                    if (dataObj == null) {
                         val uuid = java.util.UUID.randomUUID().toString()
                         val json = JSONObject().apply {
                             put("subscription_id", uuid)

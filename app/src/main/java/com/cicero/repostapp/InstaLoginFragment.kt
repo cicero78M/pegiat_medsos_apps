@@ -236,9 +236,15 @@ class InstaLoginFragment : Fragment(R.layout.fragment_insta_login) {
                     .build()
             try {
                 client.newCall(req).execute().use { resp ->
-                    isPremium = resp.isSuccessful
+                    val body = resp.body?.string()
+                    val dataObj = try {
+                        JSONObject(body ?: "{}").optJSONObject("data")
+                    } catch (_: Exception) { null }
+                    isPremium = resp.isSuccessful && dataObj != null
                     withContext(Dispatchers.Main) {
-                        badgeView.setImageResource(if (isPremium) R.drawable.ic_badge_premium else R.drawable.ic_badge_basic)
+                        badgeView.setImageResource(
+                            if (isPremium) R.drawable.ic_badge_premium else R.drawable.ic_badge_basic
+                        )
                     }
                 }
             } catch (_: Exception) {
@@ -278,7 +284,13 @@ class InstaLoginFragment : Fragment(R.layout.fragment_insta_login) {
                     .url("https://papiqo.com/api/premium-subscriptions/user/$userId/active")
                     .header("Authorization", "Bearer $token")
                     .build()
-                val subExists = client.newCall(checkSubReq).execute().use { it.code != 404 }
+                val subExists = client.newCall(checkSubReq).execute().use { resp ->
+                    val bodyStr = resp.body?.string()
+                    val dataObj = try {
+                        JSONObject(bodyStr ?: "{}").optJSONObject("data")
+                    } catch (_: Exception) { null }
+                    resp.isSuccessful && dataObj != null
+                }
                 if (!subExists) {
                     val json = JSONObject().apply {
                         put("subscription_id", java.util.UUID.randomUUID().toString())

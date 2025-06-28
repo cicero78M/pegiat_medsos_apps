@@ -25,6 +25,11 @@ class PremiumRegistrationActivity : AppCompatActivity() {
         val amountView = findViewById<TextView>(R.id.text_amount)
         amountView.text = "Rp. ${String.format("%,d", amount).replace(',', '.')}"
 
+        val sessionEndView = findViewById<TextView>(R.id.text_session_end)
+        val endTime = System.currentTimeMillis() + 10 * 60 * 1000
+        val sdf = java.text.SimpleDateFormat("HH:mm:ss", java.util.Locale.getDefault())
+        sessionEndView.text = getString(R.string.session_end_format, sdf.format(java.util.Date(endTime)))
+
         val username = findViewById<EditText>(R.id.input_username)
         intent.getStringExtra("username")?.takeIf { it.isNotBlank() }?.let {
             username.setText(it)
@@ -34,6 +39,9 @@ class PremiumRegistrationActivity : AppCompatActivity() {
         val nomor = findViewById<EditText>(R.id.input_nomor_rekening)
         val phone = findViewById<EditText>(R.id.input_phone)
         val button = findViewById<Button>(R.id.button_submit)
+        val cancelButton = findViewById<Button>(R.id.button_cancel)
+
+        cancelButton.setOnClickListener { finish() }
 
         button.setOnClickListener {
             val prefs = getSharedPreferences("auth", MODE_PRIVATE)

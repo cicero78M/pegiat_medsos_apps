@@ -29,6 +29,7 @@ class PremiumRegistrationActivity : AppCompatActivity() {
         intent.getStringExtra("username")?.takeIf { it.isNotBlank() }?.let {
             username.setText(it)
         }
+        username.isEnabled = false
         val nama = findViewById<EditText>(R.id.input_nama_rekening)
         val nomor = findViewById<EditText>(R.id.input_nomor_rekening)
         val phone = findViewById<EditText>(R.id.input_phone)

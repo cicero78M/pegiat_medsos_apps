@@ -57,7 +57,7 @@ class InstaLoginFragment : Fragment(R.layout.fragment_insta_login) {
     private lateinit var loginContainer: View
     private lateinit var profileContainer: View
     private lateinit var startButton: Button
-    private lateinit var premiumStatusView: TextView
+    private lateinit var badgeView: ImageView
     private lateinit var logContainer: android.widget.LinearLayout
     private lateinit var logScroll: android.widget.ScrollView
     private lateinit var avatarView: ImageView
@@ -98,7 +98,7 @@ class InstaLoginFragment : Fragment(R.layout.fragment_insta_login) {
         profileView.findViewById<Button>(R.id.button_logout).visibility = View.GONE
 
         startButton = view.findViewById(R.id.button_start)
-        premiumStatusView = view.findViewById(R.id.text_subscription_status)
+        badgeView = profileView.findViewById(R.id.image_badge)
         logContainer = view.findViewById(R.id.log_container)
         logScroll = view.findViewById(R.id.log_scroll)
 
@@ -238,12 +238,12 @@ class InstaLoginFragment : Fragment(R.layout.fragment_insta_login) {
                 client.newCall(req).execute().use { resp ->
                     isPremium = resp.isSuccessful
                     withContext(Dispatchers.Main) {
-                        premiumStatusView.text = if (isPremium) "Status: Premium" else "Status: Basic"
+                        badgeView.setImageResource(if (isPremium) R.drawable.ic_badge_premium else R.drawable.ic_badge_basic)
                     }
                 }
             } catch (_: Exception) {
                 withContext(Dispatchers.Main) {
-                    premiumStatusView.text = "Status: Basic"
+                    badgeView.setImageResource(R.drawable.ic_badge_basic)
                 }
             }
         }

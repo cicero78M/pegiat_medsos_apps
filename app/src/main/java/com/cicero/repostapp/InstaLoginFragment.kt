@@ -229,10 +229,10 @@ class InstaLoginFragment : Fragment(R.layout.fragment_insta_login) {
         if (token.isBlank() || userId.isBlank()) return
         CoroutineScope(Dispatchers.IO).launch {
             val client = OkHttpClient()
-            val req = Request.Builder()
-                .url("https://papiqo.com/api/premium-subscription/user/$userId/active")
-                .header("Authorization", "Bearer $token")
-                .build()
+                val req = Request.Builder()
+                    .url("https://papiqo.com/api/premium-subscriptions/user/$userId/active")
+                    .header("Authorization", "Bearer $token")
+                    .build()
             try {
                 client.newCall(req).execute().use { resp ->
                     isPremium = resp.isSuccessful
@@ -274,7 +274,7 @@ class InstaLoginFragment : Fragment(R.layout.fragment_insta_login) {
                 }
 
                 val checkSubReq = Request.Builder()
-                    .url("https://papiqo.com/api/premium-subscription/user/$userId/active")
+                    .url("https://papiqo.com/api/premium-subscriptions/user/$userId/active")
                     .header("Authorization", "Bearer $token")
                     .build()
                 val subExists = client.newCall(checkSubReq).execute().use { it.code != 404 }
@@ -286,7 +286,7 @@ class InstaLoginFragment : Fragment(R.layout.fragment_insta_login) {
                     }
                     val body = json.toString().toRequestBody("application/json".toMediaType())
                     val postReq = Request.Builder()
-                        .url("https://papiqo.com/api/premium-subscription")
+                        .url("https://papiqo.com/api/premium-subscriptions")
                         .header("Authorization", "Bearer $token")
                         .post(body)
                         .build()

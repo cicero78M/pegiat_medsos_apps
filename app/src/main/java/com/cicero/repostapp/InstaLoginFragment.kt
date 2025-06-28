@@ -700,6 +700,12 @@ class InstaLoginFragment : Fragment(R.layout.fragment_insta_login) {
                 startActivity(intent)
                 true
             }
+            R.id.action_confirm_subscription -> {
+                val intent = android.content.Intent(requireContext(), SubscriptionConfirmActivity::class.java)
+                intent.putExtra("username", currentUsername ?: "")
+                startActivity(intent)
+                true
+            }
             else -> super.onOptionsItemSelected(item)
         }
     }

@@ -4,6 +4,7 @@ import android.os.Bundle
 import android.widget.Button
 import android.widget.EditText
 import android.widget.TextView
+import android.widget.LinearLayout
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import kotlinx.coroutines.CoroutineScope
@@ -21,6 +22,12 @@ class PremiumRegistrationActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_premium_registration)
 
+        val prefs = getSharedPreferences("auth", MODE_PRIVATE)
+        val token = prefs.getString("token", "") ?: ""
+
+        val activeStatusView = findViewById<TextView>(R.id.text_active_status)
+        val registrationContainer = findViewById<LinearLayout>(R.id.registration_container)
+
         val amount = 50000 + (100..999).random()
         val amountView = findViewById<TextView>(R.id.text_amount)
         amountView.text = "Rp. ${String.format("%,d", amount).replace(',', '.')}"
@@ -31,7 +38,8 @@ class PremiumRegistrationActivity : AppCompatActivity() {
         sessionEndView.text = getString(R.string.session_end_format, sdf.format(java.util.Date(endTime)))
 
         val username = findViewById<EditText>(R.id.input_username)
-        intent.getStringExtra("username")?.takeIf { it.isNotBlank() }?.let {
+        val usernameExtra = intent.getStringExtra("username")
+        usernameExtra?.takeIf { it.isNotBlank() }?.let {
             username.setText(it)
         }
         username.isEnabled = false
@@ -40,6 +48,10 @@ class PremiumRegistrationActivity : AppCompatActivity() {
         val phone = findViewById<EditText>(R.id.input_phone)
         val button = findViewById<Button>(R.id.button_submit)
         val cancelButton = findViewById<Button>(R.id.button_cancel)
+
+        if (token.isNotBlank() && !usernameExtra.isNullOrBlank()) {
+            checkActiveSubscription(token, usernameExtra, activeStatusView, registrationContainer)
+        }
 
         cancelButton.setOnClickListener { finish() }
 
@@ -86,6 +98,39 @@ class PremiumRegistrationActivity : AppCompatActivity() {
                         Toast.makeText(this@PremiumRegistrationActivity, "Gagal mendaftar", Toast.LENGTH_SHORT).show()
                     }
                 }
+            }
+        }
+    }
+
+    private fun checkActiveSubscription(
+        token: String,
+        username: String,
+        statusView: TextView,
+        formContainer: LinearLayout
+    ) {
+        CoroutineScope(Dispatchers.IO).launch {
+            val client = OkHttpClient()
+            val req = Request.Builder()
+                .url("https://papiqo.com/api/premium-subscriptions/user/$username/active")
+                .header("Authorization", "Bearer $token")
+                .build()
+            try {
+                client.newCall(req).execute().use { resp ->
+                    val bodyStr = resp.body?.string()
+                    val dataObj = try {
+                        JSONObject(bodyStr ?: "{}").optJSONObject("data")
+                    } catch (_: Exception) { null }
+                    val endDate = dataObj?.optString("end_date", "")
+                    val active = resp.isSuccessful && dataObj != null
+                    if (active) {
+                        withContext(Dispatchers.Main) {
+                            formContainer.visibility = android.view.View.GONE
+                            statusView.visibility = android.view.View.VISIBLE
+                            statusView.text = getString(R.string.active_subscription_status, endDate)
+                        }
+                    }
+                }
+            } catch (_: Exception) {
             }
         }
     }

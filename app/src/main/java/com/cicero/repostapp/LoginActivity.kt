@@ -177,7 +177,7 @@ class LoginActivity : AppCompatActivity() {
         CoroutineScope(Dispatchers.IO).launch {
             val client = OkHttpClient()
             val checkReq = Request.Builder()
-                .url("https://papiqo.com/api/premium-subscription/user/$userId/active")
+                .url("https://papiqo.com/api/premium-subscriptions/user/$userId/active")
                 .header("Authorization", "Bearer $token")
                 .build()
             try {
@@ -191,7 +191,7 @@ class LoginActivity : AppCompatActivity() {
                         }
                         val body = json.toString().toRequestBody("application/json".toMediaType())
                         val postReq = Request.Builder()
-                            .url("https://papiqo.com/api/premium-subscription")
+                            .url("https://papiqo.com/api/premium-subscriptions")
                             .header("Authorization", "Bearer $token")
                             .post(body)
                             .build()

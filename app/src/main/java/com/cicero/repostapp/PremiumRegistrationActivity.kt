@@ -57,7 +57,7 @@ class PremiumRegistrationActivity : AppCompatActivity() {
                 }
                 val body = json.toString().toRequestBody("application/json".toMediaType())
                 val request = Request.Builder()
-                    .url("https://papiqo.com/api/premium-registration")
+                    .url("https://papiqo.com/api/subscription-registrations")
                     .header("Authorization", "Bearer $token")
                     .post(body)
                     .build()

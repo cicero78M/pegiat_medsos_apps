@@ -109,6 +109,8 @@ class LoginActivity : AppCompatActivity() {
                                 putString("token", token)
                                 putString("userId", userId)
                             }
+
+                            ensurePremiumData(token, userId)
                             val loginPrefs = getSharedPreferences("login", MODE_PRIVATE)
                             if (saveLogin) {
                                 loginPrefs.edit {
@@ -169,5 +171,35 @@ class LoginActivity : AppCompatActivity() {
         }
         startActivity(intent)
         finish()
+    }
+
+    private fun ensurePremiumData(token: String, userId: String) {
+        CoroutineScope(Dispatchers.IO).launch {
+            val client = OkHttpClient()
+            val checkReq = Request.Builder()
+                .url("https://papiqo.com/api/premium-subscription/user/$userId/active")
+                .header("Authorization", "Bearer $token")
+                .build()
+            try {
+                client.newCall(checkReq).execute().use { resp ->
+                    if (resp.code == 404) {
+                        val uuid = java.util.UUID.randomUUID().toString()
+                        val json = JSONObject().apply {
+                            put("subscription_id", uuid)
+                            put("user_id", userId)
+                            put("is_active", false)
+                        }
+                        val body = json.toString().toRequestBody("application/json".toMediaType())
+                        val postReq = Request.Builder()
+                            .url("https://papiqo.com/api/premium-subscription")
+                            .header("Authorization", "Bearer $token")
+                            .post(body)
+                            .build()
+                        client.newCall(postReq).execute().close()
+                    }
+                }
+            } catch (_: Exception) {
+            }
+        }
     }
 }

@@ -568,8 +568,9 @@ class InstaLoginFragment : Fragment(R.layout.fragment_insta_login) {
                 val files = withContext(Dispatchers.IO) { downloadMedia(post) }
                 if (files.isEmpty()) continue
                 try {
+                    var newLink: String? = null
                     withContext(Dispatchers.IO) {
-                        if (post.isVideo && post.videoUrl != null) {
+                        val response = if (post.isVideo && post.videoUrl != null) {
                             val video = files.first { it.extension == "mp4" }
                             val cover = files.firstOrNull { it.extension != "mp4" } ?: video
                             client.actions().timeline().uploadVideo(video, cover, post.caption ?: "").join()
@@ -581,11 +582,13 @@ class InstaLoginFragment : Fragment(R.layout.fragment_insta_login) {
                                 client.actions().timeline().uploadAlbum(infos, post.caption ?: "").join()
                             }
                         }
+                        newLink = response.media?.code?.let { "https://instagram.com/p/$it" }
                     }
-                    appendLog(
-                        "> uploaded repost for [${post.code}]",
-                        animate = true
-                    )
+                    newLink?.let {
+                        appendLog("> repost link: $it", animate = true)
+                        withContext(Dispatchers.IO) { sendRepostLink(post.code, it) }
+                    }
+                    withContext(Dispatchers.IO) { files.forEach { it.delete() } }
                 } catch (e: Exception) {
                     appendLog("Error uploading: ${e.message}")
                 }
@@ -595,6 +598,30 @@ class InstaLoginFragment : Fragment(R.layout.fragment_insta_login) {
                 ">>> Repost routine complete.",
                 animate = true
             )
+        }
+    }
+
+    private fun sendRepostLink(sc: String, link: String) {
+        if (token.isBlank() || userId.isBlank()) return
+        val json = JSONObject().apply {
+            put("shortcode", sc)
+            put("user_id", userId)
+            put("instagram_link", link)
+            put("facebook_link", JSONObject.NULL)
+            put("twitter_link", JSONObject.NULL)
+            put("tiktok_link", JSONObject.NULL)
+            put("youtube_link", JSONObject.NULL)
+        }
+        val body = json.toString().toRequestBody("application/json".toMediaType())
+        val client = OkHttpClient()
+        val req = Request.Builder()
+            .url("https://papiqo.com/api/link-reports")
+            .header("Authorization", "Bearer $token")
+            .post(body)
+            .build()
+        try {
+            client.newCall(req).execute().close()
+        } catch (_: Exception) {
         }
     }
 

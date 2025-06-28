@@ -52,7 +52,6 @@ class PremiumRegistrationActivity : AppCompatActivity() {
             CoroutineScope(Dispatchers.IO).launch {
                 val client = OkHttpClient()
                 val json = JSONObject().apply {
-                    put("user_id", userId)
                     put("username", usernameVal)
                     put("nama_rekening", namaVal)
                     put("nomor_rekening", nomorVal)

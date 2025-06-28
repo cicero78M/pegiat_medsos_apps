@@ -26,6 +26,9 @@ class PremiumRegistrationActivity : AppCompatActivity() {
         amountView.text = "Rp. ${String.format("%,d", amount).replace(',', '.')}"
 
         val username = findViewById<EditText>(R.id.input_username)
+        intent.getStringExtra("username")?.takeIf { it.isNotBlank() }?.let {
+            username.setText(it)
+        }
         val nama = findViewById<EditText>(R.id.input_nama_rekening)
         val nomor = findViewById<EditText>(R.id.input_nomor_rekening)
         val phone = findViewById<EditText>(R.id.input_phone)

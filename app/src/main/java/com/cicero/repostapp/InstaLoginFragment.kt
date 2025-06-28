@@ -37,6 +37,7 @@ import com.github.instagram4j.instagram4j.models.media.timeline.TimelineCarousel
 import com.github.instagram4j.instagram4j.models.media.timeline.ImageCarouselItem
 import com.github.instagram4j.instagram4j.models.media.timeline.VideoCarouselItem
 import com.github.instagram4j.instagram4j.actions.timeline.TimelineAction
+import com.github.instagram4j.instagram4j.requests.accounts.AccountsLogoutRequest
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import org.json.JSONObject
@@ -639,15 +640,28 @@ class InstaLoginFragment : Fragment(R.layout.fragment_insta_login) {
     override fun onOptionsItemSelected(item: android.view.MenuItem): Boolean {
         return when (item.itemId) {
             R.id.action_logout -> {
-                profileContainer.visibility = View.GONE
-                loginContainer.visibility = View.VISIBLE
-                currentUsername = null
-                clientFile.delete()
-                cookieFile.delete()
+                CoroutineScope(Dispatchers.IO).launch {
+                    try {
+                        if (clientFile.exists() && cookieFile.exists()) {
+                            val client = IGClient.deserialize(clientFile, cookieFile)
+                            client.sendRequest(AccountsLogoutRequest()).join()
+                        }
+                    } catch (_: Exception) {
+                    }
+                    withContext(Dispatchers.Main) {
+                        profileContainer.visibility = View.GONE
+                        loginContainer.visibility = View.VISIBLE
+                        currentUsername = null
+                        clientFile.delete()
+                        cookieFile.delete()
+                    }
+                }
                 true
             }
             R.id.action_register_premium -> {
-                startActivity(android.content.Intent(requireContext(), PremiumRegistrationActivity::class.java))
+                val intent = android.content.Intent(requireContext(), PremiumRegistrationActivity::class.java)
+                intent.putExtra("username", currentUsername ?: "")
+                startActivity(intent)
                 true
             }
             else -> super.onOptionsItemSelected(item)

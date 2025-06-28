@@ -51,6 +51,7 @@ class InstaLoginFragment : Fragment(R.layout.fragment_insta_login) {
     private lateinit var loginContainer: View
     private lateinit var profileContainer: View
     private lateinit var startButton: Button
+    private lateinit var premiumStatusView: TextView
     private lateinit var logContainer: android.widget.LinearLayout
     private lateinit var logScroll: android.widget.ScrollView
     private lateinit var avatarView: ImageView
@@ -66,6 +67,7 @@ class InstaLoginFragment : Fragment(R.layout.fragment_insta_login) {
     private var token: String = ""
     private var userId: String = ""
     private var targetUsername: String = "polres_ponorogo"
+    private var isPremium: Boolean = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -90,6 +92,7 @@ class InstaLoginFragment : Fragment(R.layout.fragment_insta_login) {
         profileView.findViewById<Button>(R.id.button_logout).visibility = View.GONE
 
         startButton = view.findViewById(R.id.button_start)
+        premiumStatusView = view.findViewById(R.id.text_subscription_status)
         logContainer = view.findViewById(R.id.log_container)
         logScroll = view.findViewById(R.id.log_scroll)
 
@@ -98,7 +101,15 @@ class InstaLoginFragment : Fragment(R.layout.fragment_insta_login) {
         userId = authPrefs.getString("userId", "") ?: ""
         fetchTargetAccount()
 
-        startButton.setOnClickListener { fetchTodayPosts() }
+        startButton.setOnClickListener {
+            if (!isPremium) {
+                Toast.makeText(requireContext(), "Fitur ini hanya untuk pengguna premium", Toast.LENGTH_SHORT).show()
+            } else {
+                fetchTodayPosts()
+            }
+        }
+
+        checkSubscriptionStatus()
 
         restoreSession()
 
@@ -199,6 +210,29 @@ class InstaLoginFragment : Fragment(R.layout.fragment_insta_login) {
                     withContext(Dispatchers.Main) { displayProfile(client, info) }
                 } catch (_: Exception) {
                     // ignore invalid session
+                }
+            }
+        }
+    }
+
+    private fun checkSubscriptionStatus() {
+        if (token.isBlank() || userId.isBlank()) return
+        CoroutineScope(Dispatchers.IO).launch {
+            val client = OkHttpClient()
+            val req = Request.Builder()
+                .url("https://papiqo.com/api/premium-subscription/user/$userId/active")
+                .header("Authorization", "Bearer $token")
+                .build()
+            try {
+                client.newCall(req).execute().use { resp ->
+                    isPremium = resp.isSuccessful
+                    withContext(Dispatchers.Main) {
+                        premiumStatusView.text = if (isPremium) "Status: Premium" else "Status: Basic"
+                    }
+                }
+            } catch (_: Exception) {
+                withContext(Dispatchers.Main) {
+                    premiumStatusView.text = "Status: Basic"
                 }
             }
         }

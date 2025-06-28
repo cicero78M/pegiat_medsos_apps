@@ -5,4 +5,8 @@
         android:icon="@drawable/ic_logout"
         android:title="Logout"
         android:showAsAction="ifRoom" />
+    <item
+        android:id="@+id/action_register_premium"
+        android:title="Daftar Premium"
+        android:showAsAction="never" />
 </menu>

@@ -11,6 +11,7 @@
         <activity android:name=".ReportActivity" />
         <activity android:name=".DashboardActivity" />
         <activity android:name=".LoginActivity" />
+        <activity android:name=".PremiumRegistrationActivity" />
         <activity
             android:name=".SplashActivity"
             android:exported="true">

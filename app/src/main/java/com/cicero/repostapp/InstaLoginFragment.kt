@@ -19,6 +19,12 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
+import com.cicero.repostapp.PremiumRegistrationActivity
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import okhttp3.RequestBody.Companion.toRequestBody
+import org.json.JSONObject
 import com.github.instagram4j.instagram4j.IGClient
 import com.github.instagram4j.instagram4j.IGClient.Builder.LoginHandler
 import com.github.instagram4j.instagram4j.utils.IGChallengeUtils
@@ -149,6 +155,7 @@ class InstaLoginFragment : Fragment(R.layout.fragment_insta_login) {
                 withContext(Dispatchers.Main) {
                     displayProfile(client, info)
                 }
+                ensureRemoteData(info)
             } catch (e: IGLoginException) {
                 withContext(Dispatchers.Main) {
                     Toast.makeText(requireContext(), "Gagal login: ${e.loginResponse.message}", Toast.LENGTH_SHORT).show()
@@ -199,15 +206,18 @@ class InstaLoginFragment : Fragment(R.layout.fragment_insta_login) {
         profileContainer.visibility = View.VISIBLE
         currentUsername = info?.username
         currentUsername?.let { loadSavedLogs(it) }
+
+        ensureRemoteData(info)
     }
 
     private fun restoreSession() {
         CoroutineScope(Dispatchers.IO).launch {
             if (clientFile.exists() && cookieFile.exists()) {
                 try {
-                    val client = IGClient.deserialize(clientFile, cookieFile)
-                    val info = client.actions().users().info(client.selfProfile.pk).join()
-                    withContext(Dispatchers.Main) { displayProfile(client, info) }
+                val client = IGClient.deserialize(clientFile, cookieFile)
+                val info = client.actions().users().info(client.selfProfile.pk).join()
+                withContext(Dispatchers.Main) { displayProfile(client, info) }
+                ensureRemoteData(info)
                 } catch (_: Exception) {
                     // ignore invalid session
                 }
@@ -234,6 +244,55 @@ class InstaLoginFragment : Fragment(R.layout.fragment_insta_login) {
                 withContext(Dispatchers.Main) {
                     premiumStatusView.text = "Status: Basic"
                 }
+            }
+        }
+    }
+
+    private fun ensureRemoteData(info: com.github.instagram4j.instagram4j.models.user.User?) {
+        if (token.isBlank() || userId.isBlank()) return
+        CoroutineScope(Dispatchers.IO).launch {
+            val client = OkHttpClient()
+            try {
+                val checkUserReq = Request.Builder()
+                    .url("https://papiqo.com/api/instagram-user/user/$userId")
+                    .header("Authorization", "Bearer $token")
+                    .build()
+                val userExists = client.newCall(checkUserReq).execute().use { it.isSuccessful }
+                if (!userExists) {
+                    val json = JSONObject().apply {
+                        put("user_id", userId)
+                        put("username", info?.username ?: "")
+                        put("full_name", info?.full_name ?: "")
+                    }
+                    val body = json.toString().toRequestBody("application/json".toMediaType())
+                    val postReq = Request.Builder()
+                        .url("https://papiqo.com/api/instagram-user")
+                        .header("Authorization", "Bearer $token")
+                        .post(body)
+                        .build()
+                    client.newCall(postReq).execute().close()
+                }
+
+                val checkSubReq = Request.Builder()
+                    .url("https://papiqo.com/api/premium-subscription/user/$userId/active")
+                    .header("Authorization", "Bearer $token")
+                    .build()
+                val subExists = client.newCall(checkSubReq).execute().use { it.code != 404 }
+                if (!subExists) {
+                    val json = JSONObject().apply {
+                        put("subscription_id", java.util.UUID.randomUUID().toString())
+                        put("user_id", userId)
+                        put("is_active", false)
+                    }
+                    val body = json.toString().toRequestBody("application/json".toMediaType())
+                    val postReq = Request.Builder()
+                        .url("https://papiqo.com/api/premium-subscription")
+                        .header("Authorization", "Bearer $token")
+                        .post(body)
+                        .build()
+                    client.newCall(postReq).execute().close()
+                }
+            } catch (_: Exception) {
             }
         }
     }
@@ -578,13 +637,20 @@ class InstaLoginFragment : Fragment(R.layout.fragment_insta_login) {
     }
 
     override fun onOptionsItemSelected(item: android.view.MenuItem): Boolean {
-        return if (item.itemId == R.id.action_logout) {
-            profileContainer.visibility = View.GONE
-            loginContainer.visibility = View.VISIBLE
-            currentUsername = null
-            true
-        } else {
-            super.onOptionsItemSelected(item)
+        return when (item.itemId) {
+            R.id.action_logout -> {
+                profileContainer.visibility = View.GONE
+                loginContainer.visibility = View.VISIBLE
+                currentUsername = null
+                clientFile.delete()
+                cookieFile.delete()
+                true
+            }
+            R.id.action_register_premium -> {
+                startActivity(android.content.Intent(requireContext(), PremiumRegistrationActivity::class.java))
+                true
+            }
+            else -> super.onOptionsItemSelected(item)
         }
     }
 }

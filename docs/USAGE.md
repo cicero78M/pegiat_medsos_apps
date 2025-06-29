@@ -11,6 +11,9 @@ line:
 ./gradlew assembleDebug
 ```
 
+Before building, copy `.env.example` to `.env` and provide your Twitter consumer
+key and secret. These values are read at build time to configure `TwitterFragment`.
+
 The app requires an active internet connection to reach the backend API hosted on
 `papiqo.com`. Login uses the `/api/auth/user-login` endpoint which returns a JWT
 and the user identifier. These values are saved in `SharedPreferences` under the

@@ -12,4 +12,8 @@
         android:id="@+id/nav_insta"
         android:icon="@android:drawable/ic_menu_gallery"
         android:title="Konten" />
+    <item
+        android:id="@+id/nav_twitter"
+        android:icon="@android:drawable/ic_menu_share"
+        android:title="Twitter" />
 </menu>

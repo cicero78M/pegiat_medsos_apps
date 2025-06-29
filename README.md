@@ -25,8 +25,19 @@ The app retrieves user profile information from the [Cicero_V2](https://github.c
 After a successful login, the token and user ID returned by `/api/auth/user-login`
 are used to request `/api/users/{userId}` to display the profile screen.
 The profile screen displays @username followed by rank and name, the user's NRP and Instagram statistics (post, follower and following counts). These stats are loaded from the backend and will be fetched on demand if missing. The screen also lists the fields Client ID, Satfung, Jabatan, Username TikTok and Status.
-After logging in the user is redirected to `DashboardActivity` where a bottom navigation bar lets them open the profile, Instagram automation, Instagram content and the new Twitter page.
+After logging in the user is redirected to `DashboardActivity` where a bottom navigation bar lets them open the profile, Instagram automation, Instagram content and the Twitter page. The Twitter page supports a PIN-based OAuth login using the `twitter4j` library.
 A logout button is provided at the bottom of the profile page.
+
+## Environment Variables
+
+Create a `.env` file in the project root before building the app. It must define your Twitter API credentials:
+
+```ini
+TWITTER_CONSUMER_KEY=YOUR_CONSUMER_KEY
+TWITTER_CONSUMER_SECRET=YOUR_CONSUMER_SECRET
+```
+
+You can copy `.env.example` as a starting point. These values are exposed as `BuildConfig.TWITTER_CONSUMER_KEY` and `BuildConfig.TWITTER_CONSUMER_SECRET` at runtime and are used by `TwitterFragment`.
 
 ## Documentation
 

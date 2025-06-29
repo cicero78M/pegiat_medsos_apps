@@ -1,8 +1,8 @@
 package com.cicero.repostapp
 
-import android.os.Bundle
+import android.annotation.SuppressLint
 import android.content.Context
-import android.os.Build
+import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.widget.Button
@@ -10,36 +10,34 @@ import android.widget.EditText
 import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
-import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
 import com.bumptech.glide.Glide
+import com.github.instagram4j.instagram4j.IGClient
+import com.github.instagram4j.instagram4j.IGClient.Builder.LoginHandler
+import com.github.instagram4j.instagram4j.actions.timeline.TimelineAction
+import com.github.instagram4j.instagram4j.exceptions.IGLoginException
+import com.github.instagram4j.instagram4j.models.media.timeline.ImageCarouselItem
+import com.github.instagram4j.instagram4j.models.media.timeline.TimelineCarouselMedia
+import com.github.instagram4j.instagram4j.models.media.timeline.TimelineImageMedia
+import com.github.instagram4j.instagram4j.models.media.timeline.TimelineVideoMedia
+import com.github.instagram4j.instagram4j.models.media.timeline.VideoCarouselItem
+import com.github.instagram4j.instagram4j.models.user.User
+import com.github.instagram4j.instagram4j.requests.accounts.AccountsLogoutRequest
+import com.github.instagram4j.instagram4j.requests.media.MediaActionRequest
+import com.github.instagram4j.instagram4j.utils.IGChallengeUtils
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
-import com.cicero.repostapp.PremiumRegistrationActivity
 import okhttp3.MediaType.Companion.toMediaType
-import okhttp3.RequestBody.Companion.toRequestBody
-import com.github.instagram4j.instagram4j.IGClient
-import com.github.instagram4j.instagram4j.IGClient.Builder.LoginHandler
-import com.github.instagram4j.instagram4j.utils.IGChallengeUtils
-import com.github.instagram4j.instagram4j.exceptions.IGLoginException
-import com.github.instagram4j.instagram4j.requests.media.MediaActionRequest
-import com.github.instagram4j.instagram4j.requests.media.MediaCommentRequest
-import com.github.instagram4j.instagram4j.models.media.timeline.TimelineMedia
-import com.github.instagram4j.instagram4j.models.media.timeline.TimelineImageMedia
-import com.github.instagram4j.instagram4j.models.media.timeline.TimelineVideoMedia
-import com.github.instagram4j.instagram4j.models.media.timeline.TimelineCarouselMedia
-import com.github.instagram4j.instagram4j.models.media.timeline.ImageCarouselItem
-import com.github.instagram4j.instagram4j.models.media.timeline.VideoCarouselItem
-import com.github.instagram4j.instagram4j.actions.timeline.TimelineAction
-import com.github.instagram4j.instagram4j.requests.accounts.AccountsLogoutRequest
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import okhttp3.RequestBody.Companion.toRequestBody
 import org.json.JSONObject
 import java.io.File
 import java.util.concurrent.Callable
@@ -54,6 +52,7 @@ data class PostInfo(
     val coverUrl: String? = null
 )
 
+@Suppress("DEPRECATION")
 class InstaLoginFragment : Fragment(R.layout.fragment_insta_login) {
     private lateinit var loginContainer: View
     private lateinit var profileContainer: View
@@ -144,7 +143,6 @@ class InstaLoginFragment : Fragment(R.layout.fragment_insta_login) {
         }
     }
 
-    @RequiresApi(Build.VERSION_CODES.N)
     private fun performLogin(user: String, pass: String) {
         CoroutineScope(Dispatchers.IO).launch {
             val codePrompt = Callable {
@@ -168,7 +166,7 @@ class InstaLoginFragment : Fragment(R.layout.fragment_insta_login) {
                 client.serialize(clientFile, cookieFile)
                 val info = client.actions().users().info(client.selfProfile.pk).join()
                 withContext(Dispatchers.Main) {
-                    displayProfile(client, info)
+                    displayProfile(info)
                 }
                 ensureRemoteData(info)
             } catch (e: IGLoginException) {
@@ -184,6 +182,7 @@ class InstaLoginFragment : Fragment(R.layout.fragment_insta_login) {
     }
 
 
+    @OptIn(ExperimentalCoroutinesApi::class)
     private suspend fun promptCode(): String = withContext(Dispatchers.Main) {
         suspendCancellableCoroutine { cont ->
             val view = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_two_factor, null)
@@ -201,7 +200,8 @@ class InstaLoginFragment : Fragment(R.layout.fragment_insta_login) {
         }
     }
 
-    private fun displayProfile(client: IGClient, info: com.github.instagram4j.instagram4j.models.user.User?) {
+    @SuppressLint("SetTextI18n")
+    private fun displayProfile(info: User?) {
         usernameView.text = "@${info?.username ?: ""}"
         nameView.text = info?.full_name ?: ""
         postsView.text = info?.media_count?.toString() ?: "0"
@@ -232,7 +232,7 @@ class InstaLoginFragment : Fragment(R.layout.fragment_insta_login) {
                 try {
                 val client = IGClient.deserialize(clientFile, cookieFile)
                 val info = client.actions().users().info(client.selfProfile.pk).join()
-                withContext(Dispatchers.Main) { displayProfile(client, info) }
+                withContext(Dispatchers.Main) { displayProfile(info) }
                 ensureRemoteData(info)
                 checkSubscriptionStatus(info?.username)
                 } catch (_: Exception) {
@@ -272,7 +272,7 @@ class InstaLoginFragment : Fragment(R.layout.fragment_insta_login) {
         }
     }
 
-    private fun ensureRemoteData(info: com.github.instagram4j.instagram4j.models.user.User?) {
+    private fun ensureRemoteData(info: User?) {
         val username = info?.username ?: return
         if (token.isBlank()) return
         CoroutineScope(Dispatchers.IO).launch {
@@ -397,7 +397,7 @@ class InstaLoginFragment : Fragment(R.layout.fragment_insta_login) {
         }
     }
 
-    private suspend fun fetchClientInsta(client: OkHttpClient, clientId: String): String? {
+    private fun fetchClientInsta(client: OkHttpClient, clientId: String): String? {
         val req = Request.Builder()
             .url("https://papiqo.com/api/clients/$clientId")
             .header("Authorization", "Bearer $token")
@@ -766,11 +766,13 @@ class InstaLoginFragment : Fragment(R.layout.fragment_insta_login) {
         }
     }
 
+    @Deprecated("Deprecated in Java")
     override fun onCreateOptionsMenu(menu: android.view.Menu, inflater: android.view.MenuInflater) {
         super.onCreateOptionsMenu(menu, inflater)
         inflater.inflate(R.menu.menu_insta_profile, menu)
     }
 
+    @Deprecated("Deprecated in Java")
     override fun onOptionsItemSelected(item: android.view.MenuItem): Boolean {
         return when (item.itemId) {
             R.id.action_logout -> {

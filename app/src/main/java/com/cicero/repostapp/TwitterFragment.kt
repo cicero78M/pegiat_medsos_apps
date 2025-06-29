@@ -8,7 +8,10 @@ import android.view.View
 import android.widget.Toast
 import androidx.core.content.edit
 import androidx.fragment.app.Fragment
-import kotlinx.coroutines.CoroutineScope
+import androidx.lifecycle.lifecycleScope
+import androidx.security.crypto.EncryptedSharedPreferences
+import androidx.security.crypto.MasterKey
+import android.content.SharedPreferences
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -36,7 +39,7 @@ class TwitterFragment : Fragment(R.layout.fragment_twitter) {
             view.findViewById(R.id.pin_layout)
         val statusView: android.widget.TextView = view.findViewById(R.id.text_twitter_status)
 
-        val prefs = requireContext().getSharedPreferences("twitter", Context.MODE_PRIVATE)
+        val prefs = createEncryptedPrefs(requireContext())
         val accessToken = prefs.getString("token", null)
         val accessSecret = prefs.getString("secret", null)
         if (accessToken != null && accessSecret != null) {
@@ -47,9 +50,10 @@ class TwitterFragment : Fragment(R.layout.fragment_twitter) {
                 .setOAuthAccessTokenSecret(accessSecret)
                 .build()
             twitter = TwitterFactory(config).instance
-            CoroutineScope(Dispatchers.IO).launch {
+            viewLifecycleOwner.lifecycleScope.launch(Dispatchers.IO) {
+                val tw = twitter ?: return@launch
                 try {
-                    val user = twitter!!.verifyCredentials()
+                    val user = tw.verifyCredentials()
                     withContext(Dispatchers.Main) {
                         statusView.text = "@${'$'}{user.screenName}"
                         loginButton.text = getString(R.string.logout)
@@ -82,21 +86,22 @@ class TwitterFragment : Fragment(R.layout.fragment_twitter) {
     }
 
     private fun startLogin(
-        prefs: android.content.SharedPreferences,
+        prefs: SharedPreferences,
         pinLayout: com.google.android.material.textfield.TextInputLayout,
         pinInput: com.google.android.material.textfield.TextInputEditText,
         verifyButton: View,
         statusView: android.widget.TextView
     ) {
-        CoroutineScope(Dispatchers.IO).launch {
+        viewLifecycleOwner.lifecycleScope.launch(Dispatchers.IO) {
             try {
                 val config = ConfigurationBuilder()
                     .setOAuthConsumerKey(BuildConfig.TWITTER_CONSUMER_KEY)
                     .setOAuthConsumerSecret(BuildConfig.TWITTER_CONSUMER_SECRET)
                     .build()
                 twitter = TwitterFactory(config).instance
-                requestToken = twitter!!.oAuthRequestToken
-                val url = requestToken!!.authorizationURL
+                val reqToken = twitter?.oAuthRequestToken
+                requestToken = reqToken
+                val url = reqToken?.authorizationURL ?: return@launch
                 withContext(Dispatchers.Main) {
                     startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
                     statusView.text = getString(R.string.enter_pin)
@@ -114,21 +119,23 @@ class TwitterFragment : Fragment(R.layout.fragment_twitter) {
 
     private fun finishLogin(
         pin: String,
-        prefs: android.content.SharedPreferences,
+        prefs: SharedPreferences,
         pinLayout: com.google.android.material.textfield.TextInputLayout,
         pinInput: com.google.android.material.textfield.TextInputEditText,
         verifyButton: View,
         statusView: android.widget.TextView,
         loginButton: com.google.android.material.button.MaterialButton
     ) {
-        CoroutineScope(Dispatchers.IO).launch {
+        viewLifecycleOwner.lifecycleScope.launch(Dispatchers.IO) {
+            val tw = twitter ?: return@launch
+            val reqToken = requestToken ?: return@launch
             try {
-                val token = twitter!!.getOAuthAccessToken(requestToken, pin)
+                val token = tw.getOAuthAccessToken(reqToken, pin)
                 prefs.edit {
                     putString("token", token.token)
                     putString("secret", token.tokenSecret)
                 }
-                val user = twitter!!.verifyCredentials()
+                val user = tw.verifyCredentials()
                 withContext(Dispatchers.Main) {
                     statusView.text = "@${'$'}{user.screenName}"
                     pinLayout.visibility = View.GONE
@@ -148,5 +155,18 @@ class TwitterFragment : Fragment(R.layout.fragment_twitter) {
                 }
             }
         }
+    }
+
+    private fun createEncryptedPrefs(context: Context): SharedPreferences {
+        val masterKey = MasterKey.Builder(context)
+            .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
+            .build()
+        return EncryptedSharedPreferences.create(
+            context,
+            "twitter",
+            masterKey,
+            EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
+            EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
+        )
     }
 }

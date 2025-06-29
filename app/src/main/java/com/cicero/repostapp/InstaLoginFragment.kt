@@ -29,6 +29,7 @@ import com.github.instagram4j.instagram4j.IGClient.Builder.LoginHandler
 import com.github.instagram4j.instagram4j.utils.IGChallengeUtils
 import com.github.instagram4j.instagram4j.exceptions.IGLoginException
 import com.github.instagram4j.instagram4j.requests.media.MediaActionRequest
+import com.github.instagram4j.instagram4j.requests.media.MediaCommentRequest
 import com.github.instagram4j.instagram4j.models.media.timeline.TimelineMedia
 import com.github.instagram4j.instagram4j.models.media.timeline.TimelineImageMedia
 import com.github.instagram4j.instagram4j.models.media.timeline.TimelineVideoMedia
@@ -59,6 +60,7 @@ class InstaLoginFragment : Fragment(R.layout.fragment_insta_login) {
     private lateinit var startButton: Button
     private lateinit var likeCheckbox: android.widget.CheckBox
     private lateinit var repostCheckbox: android.widget.CheckBox
+    private lateinit var commentCheckbox: android.widget.CheckBox
     private lateinit var badgeView: ImageView
     private lateinit var logContainer: android.widget.LinearLayout
     private lateinit var logScroll: android.widget.ScrollView
@@ -102,6 +104,7 @@ class InstaLoginFragment : Fragment(R.layout.fragment_insta_login) {
         startButton = view.findViewById(R.id.button_start)
         likeCheckbox = view.findViewById(R.id.checkbox_like)
         repostCheckbox = view.findViewById(R.id.checkbox_repost)
+        commentCheckbox = view.findViewById(R.id.checkbox_comment)
         badgeView = profileView.findViewById(R.id.image_badge)
         logContainer = view.findViewById(R.id.log_container)
         logScroll = view.findViewById(R.id.log_scroll)
@@ -117,8 +120,9 @@ class InstaLoginFragment : Fragment(R.layout.fragment_insta_login) {
             } else {
                 val doLike = likeCheckbox.isChecked
                 val doRepost = repostCheckbox.isChecked
-                if (doLike || doRepost) {
-                    fetchTodayPosts(doLike, doRepost)
+                val doComment = commentCheckbox.isChecked
+                if (doLike || doRepost || doComment) {
+                    fetchTodayPosts(doLike, doRepost, doComment)
                 } else {
                     Toast.makeText(requireContext(), "Pilih setidaknya satu aksi", Toast.LENGTH_SHORT).show()
                 }
@@ -417,7 +421,7 @@ class InstaLoginFragment : Fragment(R.layout.fragment_insta_login) {
         }
     }
 
-    private fun fetchTodayPosts(doLike: Boolean, doRepost: Boolean) {
+    private fun fetchTodayPosts(doLike: Boolean, doRepost: Boolean, doComment: Boolean) {
         appendLog(
             ">>> Booting IG automation engine...",
             animate = true
@@ -481,7 +485,7 @@ class InstaLoginFragment : Fragment(R.layout.fragment_insta_login) {
                     }
                 }
                 withContext(Dispatchers.Main) {
-                    launchLogAndLikes(client, posts, doLike, doRepost)
+                    launchLogAndLikes(client, posts, doLike, doRepost, doComment)
                 }
             } catch (e: Exception) {
                 withContext(Dispatchers.Main) {
@@ -495,7 +499,8 @@ class InstaLoginFragment : Fragment(R.layout.fragment_insta_login) {
         client: IGClient,
         posts: List<PostInfo>,
         doLike: Boolean,
-        doRepost: Boolean
+        doRepost: Boolean,
+        doComment: Boolean
     ) {
         CoroutineScope(Dispatchers.Main).launch {
             for (post in posts) {
@@ -573,6 +578,50 @@ class InstaLoginFragment : Fragment(R.layout.fragment_insta_login) {
                 }
                 appendLog(
                     ">>> Like routine finished. ${'$'}liked posts liked.",
+                    animate = true
+                )
+            }
+
+            if (doComment) {
+                if (doLike) {
+                    delay(10000)
+                }
+                appendLog(
+                    ">>> Preparing comment sequence...",
+                    animate = true
+                )
+                delay(2000)
+                appendLog(
+                    ">>> Executing comment routine",
+                    animate = true
+                )
+                var commented = 0
+                for (post in posts) {
+                    val code = post.code
+                    val id = post.id
+                    val text = withContext(Dispatchers.IO) { fetchRandomQuote() } ?: ""
+                    if (text.isBlank()) {
+                        delay(1000)
+                        continue
+                    }
+                    try {
+                        withContext(Dispatchers.IO) {
+                            client.sendRequest(
+                                com.github.instagram4j.instagram4j.requests.media.MediaCommentRequest(id, text)
+                            ).join()
+                        }
+                        appendLog(
+                            "> commented on [$code]",
+                            animate = true
+                        )
+                        commented++
+                    } catch (e: Exception) {
+                        appendLog("Error commenting: ${'$'}{e.message}")
+                    }
+                    delay(1000)
+                }
+                appendLog(
+                    ">>> Comment routine finished. ${'$'}commented posts commented.",
                     animate = true
                 )
             }
@@ -693,6 +742,27 @@ class InstaLoginFragment : Fragment(R.layout.fragment_insta_login) {
                 }
             }
         } catch (_: Exception) {
+        }
+    }
+
+    private fun fetchRandomQuote(): String? {
+        if (token.isBlank()) return null
+        val client = OkHttpClient()
+        val req = Request.Builder()
+            .url("https://papiqo.com/api/quotes/random")
+            .header("Authorization", "Bearer $token")
+            .build()
+        return try {
+            client.newCall(req).execute().use { resp ->
+                if (!resp.isSuccessful) return null
+                val body = resp.body?.string()
+                val obj = try {
+                    JSONObject(body ?: "{}").optJSONObject("data")
+                } catch (_: Exception) { null }
+                obj?.optString("translation")?.takeIf { it.isNotBlank() }
+            }
+        } catch (_: Exception) {
+            null
         }
     }
 

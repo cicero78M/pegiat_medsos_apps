@@ -1,6 +1,15 @@
+import java.util.Properties
+
 plugins {
     id("com.android.application")
     kotlin("android")
+}
+
+val envProps = Properties().apply {
+    val envFile = rootProject.file(".env")
+    if (envFile.exists()) {
+        envFile.inputStream().use { load(it) }
+    }
 }
 
 android {
@@ -14,6 +23,12 @@ android {
         targetSdk = 34
         versionCode = 1
         versionName = "1.4"
+        buildConfigField("String", "TWITTER_CONSUMER_KEY", "\"${envProps["TWITTER_CONSUMER_KEY"] ?: ""}\"")
+        buildConfigField("String", "TWITTER_CONSUMER_SECRET", "\"${envProps["TWITTER_CONSUMER_SECRET"] ?: ""}\"")
+    }
+
+    buildFeatures {
+        buildConfig = true
     }
 
     buildTypes {
@@ -45,4 +60,5 @@ dependencies {
     implementation("androidx.constraintlayout:constraintlayout:2.1.4")
     implementation("com.github.bumptech.glide:glide:4.16.0")
     implementation("com.github.instagram4j:instagram4j:2.0.7")
+    implementation("org.twitter4j:twitter4j-core:4.1.2")
 }

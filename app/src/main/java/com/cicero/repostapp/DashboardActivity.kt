@@ -18,7 +18,7 @@ class DashboardActivity : AppCompatActivity() {
         val token = intent.getStringExtra("token")
         val userId = intent.getStringExtra("userId")
 
-        val fragments = listOf<Fragment>(
+        val fragments = listOf(
             UserProfileFragment.newInstance(userId, token),
             InstaLoginFragment(),
             DashboardFragment.newInstance(userId, token),

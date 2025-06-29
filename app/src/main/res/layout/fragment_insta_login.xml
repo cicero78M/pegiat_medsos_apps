@@ -89,6 +89,31 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content" />
 
+        <LinearLayout
+            android:id="@+id/options_container"
+            android:orientation="horizontal"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingStart="16dp"
+            android:paddingEnd="16dp"
+            android:layout_marginTop="8dp">
+
+            <CheckBox
+                android:id="@+id/checkbox_like"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Likes"
+                android:checked="true" />
+
+            <CheckBox
+                android:id="@+id/checkbox_repost"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Repost"
+                android:checked="true"
+                android:layout_marginStart="16dp" />
+        </LinearLayout>
+
         <Button
             android:id="@+id/button_start"
             android:layout_width="match_parent"

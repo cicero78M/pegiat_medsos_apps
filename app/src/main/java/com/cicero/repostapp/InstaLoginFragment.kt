@@ -57,6 +57,8 @@ class InstaLoginFragment : Fragment(R.layout.fragment_insta_login) {
     private lateinit var loginContainer: View
     private lateinit var profileContainer: View
     private lateinit var startButton: Button
+    private lateinit var likeCheckbox: android.widget.CheckBox
+    private lateinit var repostCheckbox: android.widget.CheckBox
     private lateinit var badgeView: ImageView
     private lateinit var logContainer: android.widget.LinearLayout
     private lateinit var logScroll: android.widget.ScrollView
@@ -98,6 +100,8 @@ class InstaLoginFragment : Fragment(R.layout.fragment_insta_login) {
         profileView.findViewById<Button>(R.id.button_logout).visibility = View.GONE
 
         startButton = view.findViewById(R.id.button_start)
+        likeCheckbox = view.findViewById(R.id.checkbox_like)
+        repostCheckbox = view.findViewById(R.id.checkbox_repost)
         badgeView = profileView.findViewById(R.id.image_badge)
         logContainer = view.findViewById(R.id.log_container)
         logScroll = view.findViewById(R.id.log_scroll)
@@ -111,7 +115,13 @@ class InstaLoginFragment : Fragment(R.layout.fragment_insta_login) {
             if (!isPremium) {
                 Toast.makeText(requireContext(), "Fitur ini hanya untuk pengguna premium", Toast.LENGTH_SHORT).show()
             } else {
-                fetchTodayPosts()
+                val doLike = likeCheckbox.isChecked
+                val doRepost = repostCheckbox.isChecked
+                if (doLike || doRepost) {
+                    fetchTodayPosts(doLike, doRepost)
+                } else {
+                    Toast.makeText(requireContext(), "Pilih setidaknya satu aksi", Toast.LENGTH_SHORT).show()
+                }
             }
         }
 
@@ -407,7 +417,7 @@ class InstaLoginFragment : Fragment(R.layout.fragment_insta_login) {
         }
     }
 
-    private fun fetchTodayPosts() {
+    private fun fetchTodayPosts(doLike: Boolean, doRepost: Boolean) {
         appendLog(
             ">>> Booting IG automation engine...",
             animate = true
@@ -471,7 +481,7 @@ class InstaLoginFragment : Fragment(R.layout.fragment_insta_login) {
                     }
                 }
                 withContext(Dispatchers.Main) {
-                    launchLogAndLikes(client, posts)
+                    launchLogAndLikes(client, posts, doLike, doRepost)
                 }
             } catch (e: Exception) {
                 withContext(Dispatchers.Main) {
@@ -481,7 +491,12 @@ class InstaLoginFragment : Fragment(R.layout.fragment_insta_login) {
         }
     }
 
-    private fun launchLogAndLikes(client: IGClient, posts: List<PostInfo>) {
+    private fun launchLogAndLikes(
+        client: IGClient,
+        posts: List<PostInfo>,
+        doLike: Boolean,
+        doRepost: Boolean
+    ) {
         CoroutineScope(Dispatchers.Main).launch {
             for (post in posts) {
                 val code = post.code
@@ -492,73 +507,86 @@ class InstaLoginFragment : Fragment(R.layout.fragment_insta_login) {
                 delay(500)
             }
             appendLog(
-                ">>> Scrape complete. Preparing like sequence...",
+                ">>> Scrape complete.",
                 animate = true
             )
-            delay(2000)
-            appendLog(
-                ">>> Executing like routine",
-                animate = true
-            )
-            var liked = 0
-            for (post in posts) {
-                val code = post.code
-                val id = post.id
+
+            if (doLike) {
                 appendLog(
-                    "> checking like status for $code",
+                    ">>> Preparing like sequence...",
                     animate = true
                 )
-
-                var alreadyLiked = false
-
-                try {
-                    val info = withContext(Dispatchers.IO) {
-                        client.sendRequest(
-                            com.github.instagram4j.instagram4j.requests.media.MediaInfoRequest(id)
-                        ).join()
-                    }
-                    val alreadyLiked = info.items.firstOrNull()?.isHas_liked == true
-                    val statusText = if (alreadyLiked) "already liked" else "not yet liked"
-
+                delay(2000)
+                appendLog(
+                    ">>> Executing like routine",
+                    animate = true
+                )
+                var liked = 0
+                for (post in posts) {
+                    val code = post.code
+                    val id = post.id
                     appendLog(
-                        "> status: $statusText",
+                        "> checking like status for $code",
                         animate = true
                     )
-                } catch (e: Exception) {
-                    appendLog(
-                        "Error checking like: ${e.message}",
-                        animate = true
-                    )
-                }
 
-                if (!alreadyLiked) {
+                    var alreadyLiked = false
+
                     try {
-                        withContext(Dispatchers.IO) {
+                        val info = withContext(Dispatchers.IO) {
                             client.sendRequest(
-                                MediaActionRequest(id, MediaActionRequest.MediaAction.LIKE)
+                                com.github.instagram4j.instagram4j.requests.media.MediaInfoRequest(id)
                             ).join()
                         }
+                        val already = info.items.firstOrNull()?.isHas_liked == true
+                        alreadyLiked = already
+                        val statusText = if (already) "already liked" else "not yet liked"
+
                         appendLog(
-                            "> liked post [$code]",
+                            "> status: $statusText",
                             animate = true
                         )
-                        liked++
                     } catch (e: Exception) {
-                        appendLog("Error liking: ${'$'}{e.message}")
+                        appendLog(
+                            "Error checking like: ${e.message}",
+                            animate = true
+                        )
                     }
+
+                    if (!alreadyLiked) {
+                        try {
+                            withContext(Dispatchers.IO) {
+                                client.sendRequest(
+                                    MediaActionRequest(id, MediaActionRequest.MediaAction.LIKE)
+                                ).join()
+                            }
+                            appendLog(
+                                "> liked post [$code]",
+                                animate = true
+                            )
+                            liked++
+                        } catch (e: Exception) {
+                            appendLog("Error liking: ${'$'}{e.message}")
+                        }
+                    }
+                    delay(1000)
                 }
-                delay(1000)
+                appendLog(
+                    ">>> Like routine finished. ${'$'}liked posts liked.",
+                    animate = true
+                )
             }
-            appendLog(
-                ">>> Like routine finished. ${'$'}liked posts liked.",
-                animate = true
-            )
-            delay(10000)
-            appendLog(
-                ">>> Initiating environment for re-post ops...",
-                animate = true
-            )
-            launchRepostSequence(client, posts)
+
+            if (doRepost) {
+                if (doLike) {
+                    delay(10000)
+                }
+                appendLog(
+                    ">>> Initiating environment for re-post ops...",
+                    animate = true
+                )
+                launchRepostSequence(client, posts)
+            }
         }
     }
 

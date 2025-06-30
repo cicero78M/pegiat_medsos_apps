@@ -50,7 +50,7 @@ class TwitterFragment : Fragment(R.layout.fragment_twitter) {
             viewLifecycleOwner.lifecycleScope.launch(Dispatchers.IO) {
                 val tw = twitter ?: return@launch
                 try {
-                    tw.verifyCredentials()
+                    val user = tw.verifyCredentials()
                     withContext(Dispatchers.Main) {
                         statusView.text = "@${'$'}{user.screenName}"
                         loginButton.text = getString(R.string.logout)
@@ -130,7 +130,7 @@ class TwitterFragment : Fragment(R.layout.fragment_twitter) {
             try {
                 val token = tw.getOAuthAccessToken(reqToken, pin)
                 TwitterAuthManager.saveAccessToken(requireContext(), token)
-                tw.verifyCredentials()
+                val user = tw.verifyCredentials()
                 withContext(Dispatchers.Main) {
                     statusView.text = "@${'$'}{user.screenName}"
                     pinLayout.visibility = View.GONE

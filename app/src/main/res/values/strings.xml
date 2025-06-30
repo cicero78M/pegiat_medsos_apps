@@ -41,4 +41,5 @@
     <string name="automator_title">Automator</string>
     <string name="automator_placeholder">Automator Placeholder</string>
     <string name="login_failed">Login gagal</string>
+    <string name="start">Start</string>
 </resources>

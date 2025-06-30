@@ -114,5 +114,12 @@
             android:text="@string/check_update"
             android:layout_marginTop="12dp" />
 
+        <TextView
+            android:id="@+id/footer_version"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:paddingTop="24dp" />
+
     </LinearLayout>
 </ScrollView>

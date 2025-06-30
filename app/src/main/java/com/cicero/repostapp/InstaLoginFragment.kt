@@ -49,6 +49,8 @@ import twitter4j.auth.RequestToken
 import twitter4j.conf.ConfigurationBuilder
 import com.cicero.repostapp.BuildConfig
 import com.cicero.repostapp.TwitterAuthManager
+import com.cicero.repostapp.TikwmApi
+import com.cicero.repostapp.TiktokSessionManager
 import java.io.File
 import java.util.concurrent.Callable
 
@@ -82,6 +84,7 @@ class InstaLoginFragment : Fragment(R.layout.fragment_insta_login) {
     private lateinit var followingView: TextView
     private lateinit var twitterImage: ImageView
     private lateinit var twitterUsernameView: TextView
+    private lateinit var tiktokImage: ImageView
     private var twitter: Twitter? = null
     private var twitterRequestToken: RequestToken? = null
     private val clientFile: File by lazy { File(requireContext().filesDir, "igclient.ser") }
@@ -117,6 +120,8 @@ class InstaLoginFragment : Fragment(R.layout.fragment_insta_login) {
         val twitterContainer = view.findViewById<View>(R.id.twitter_container)
         twitterImage = twitterContainer.findViewById(R.id.image_twitter)
         twitterUsernameView = twitterContainer.findViewById(R.id.text_twitter_username)
+        tiktokImage = view.findViewById(R.id.image_tiktok)
+        tiktokImage.setOnClickListener { showTiktokDialog() }
 
         startButton = view.findViewById(R.id.button_start)
         likeCheckbox = view.findViewById(R.id.checkbox_like)
@@ -854,6 +859,29 @@ class InstaLoginFragment : Fragment(R.layout.fragment_insta_login) {
         } catch (_: Exception) {
             null
         }
+    }
+
+    private fun showTiktokDialog() {
+        val input = EditText(requireContext())
+        AlertDialog.Builder(requireContext())
+            .setTitle("TikTok Username")
+            .setView(input)
+            .setPositiveButton("Login") { _, _ ->
+                val username = input.text.toString().trim()
+                if (username.isNotEmpty()) {
+                    viewLifecycleOwner.lifecycleScope.launch {
+                        val user = TikwmApi.fetchUser(username)
+                        if (user != null) {
+                            TiktokSessionManager.saveProfile(requireContext(), user)
+                            Toast.makeText(requireContext(), "Logged in as ${'$'}{user.optString("uniqueId")}", Toast.LENGTH_SHORT).show()
+                        } else {
+                            Toast.makeText(requireContext(), "Login gagal", Toast.LENGTH_SHORT).show()
+                        }
+                    }
+                }
+            }
+            .setNegativeButton(android.R.string.cancel, null)
+            .show()
     }
 
     @Deprecated("Deprecated in Java")

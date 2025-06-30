@@ -85,6 +85,7 @@ class InstaLoginFragment : Fragment(R.layout.fragment_insta_login) {
     private lateinit var twitterImage: ImageView
     private lateinit var twitterUsernameView: TextView
     private lateinit var tiktokImage: ImageView
+    private lateinit var tiktokUsernameView: TextView
     private var twitter: Twitter? = null
     private var twitterRequestToken: RequestToken? = null
     private val clientFile: File by lazy { File(requireContext().filesDir, "igclient.ser") }
@@ -120,7 +121,10 @@ class InstaLoginFragment : Fragment(R.layout.fragment_insta_login) {
         val twitterContainer = view.findViewById<View>(R.id.twitter_container)
         twitterImage = twitterContainer.findViewById(R.id.image_twitter)
         twitterUsernameView = twitterContainer.findViewById(R.id.text_twitter_username)
-        tiktokImage = view.findViewById(R.id.image_tiktok)
+
+        val tiktokContainer = view.findViewById<View>(R.id.tiktok_container)
+        tiktokImage = tiktokContainer.findViewById(R.id.image_tiktok)
+        tiktokUsernameView = tiktokContainer.findViewById(R.id.text_tiktok_username)
         tiktokImage.setOnClickListener { showTiktokDialog() }
 
         startButton = view.findViewById(R.id.button_start)
@@ -155,6 +159,7 @@ class InstaLoginFragment : Fragment(R.layout.fragment_insta_login) {
 
         restoreSession()
         updateTwitterStatus()
+        updateTiktokStatus()
 
         twitterImage.setOnClickListener { startTwitterLogin() }
 
@@ -172,6 +177,7 @@ class InstaLoginFragment : Fragment(R.layout.fragment_insta_login) {
     override fun onResume() {
         super.onResume()
         updateTwitterStatus()
+        updateTiktokStatus()
     }
 
     private fun performLogin(user: String, pass: String) {
@@ -334,6 +340,27 @@ class InstaLoginFragment : Fragment(R.layout.fragment_insta_login) {
         } else {
             twitterImage.setImageResource(R.drawable.twitter_icon)
             twitterUsernameView.visibility = View.GONE
+        }
+    }
+
+    private fun updateTiktokStatus() {
+        val profile = TiktokSessionManager.loadProfile(requireContext())
+        if (profile != null) {
+            val username = profile.optString("uniqueId")
+            tiktokUsernameView.text = "@$username"
+            tiktokUsernameView.visibility = View.VISIBLE
+            val avatarUrl = profile.optString("avatarLarger", profile.optString("avatarThumb"))
+            if (avatarUrl.isNotBlank()) {
+                Glide.with(this)
+                    .load(avatarUrl)
+                    .circleCrop()
+                    .into(tiktokImage)
+            } else {
+                tiktokImage.setImageResource(R.drawable.tiktok_icon)
+            }
+        } else {
+            tiktokImage.setImageResource(R.drawable.tiktok_icon)
+            tiktokUsernameView.visibility = View.GONE
         }
     }
 
@@ -874,6 +901,7 @@ class InstaLoginFragment : Fragment(R.layout.fragment_insta_login) {
                         if (user != null) {
                             TiktokSessionManager.saveProfile(requireContext(), user)
                             Toast.makeText(requireContext(), "Logged in as ${user.optString("uniqueId")}", Toast.LENGTH_SHORT).show()
+                            updateTiktokStatus()
                         } else {
                             Toast.makeText(requireContext(), "Login gagal", Toast.LENGTH_SHORT).show()
                         }

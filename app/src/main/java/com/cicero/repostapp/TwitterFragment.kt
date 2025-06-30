@@ -36,6 +36,9 @@ class TwitterFragment : Fragment(R.layout.fragment_twitter) {
         val pinLayout: com.google.android.material.textfield.TextInputLayout =
             view.findViewById(R.id.pin_layout)
         val statusView: android.widget.TextView = view.findViewById(R.id.text_twitter_status)
+        val responseView: android.widget.TextView = view.findViewById(R.id.text_twitter_response)
+
+        TwitterAuthManager.loadLastResponse(requireContext())?.let { responseView.text = it }
 
         val stored = TwitterAuthManager.loadAccessToken(requireContext())
         if (stored != null) {
@@ -58,18 +61,18 @@ class TwitterFragment : Fragment(R.layout.fragment_twitter) {
                             TwitterAuthManager.clearTokens(requireContext())
                             statusView.text = getString(R.string.not_logged_in)
                             loginButton.text = getString(R.string.login_twitter)
-                            loginButton.setOnClickListener { startLogin(pinLayout, pinInput, verifyButton, statusView) }
+                            loginButton.setOnClickListener { startLogin(pinLayout, pinInput, verifyButton, statusView, responseView) }
                         }
                     }
                 } catch (_: TwitterException) {
                     withContext(Dispatchers.Main) {
                         statusView.text = getString(R.string.not_logged_in)
-                        loginButton.setOnClickListener { startLogin(pinLayout, pinInput, verifyButton, statusView) }
+                        loginButton.setOnClickListener { startLogin(pinLayout, pinInput, verifyButton, statusView, responseView) }
                     }
                 }
             }
         } else {
-            loginButton.setOnClickListener { startLogin(pinLayout, pinInput, verifyButton, statusView) }
+            loginButton.setOnClickListener { startLogin(pinLayout, pinInput, verifyButton, statusView, responseView) }
         }
 
         verifyButton.setOnClickListener {
@@ -77,7 +80,7 @@ class TwitterFragment : Fragment(R.layout.fragment_twitter) {
             if (pin.isBlank()) {
                 Toast.makeText(requireContext(), getString(R.string.enter_pin), Toast.LENGTH_SHORT).show()
             } else {
-                finishLogin(pin, pinLayout, pinInput, verifyButton, statusView, loginButton)
+                finishLogin(pin, pinLayout, pinInput, verifyButton, statusView, loginButton, responseView)
             }
         }
     }
@@ -86,7 +89,8 @@ class TwitterFragment : Fragment(R.layout.fragment_twitter) {
         pinLayout: com.google.android.material.textfield.TextInputLayout,
         pinInput: com.google.android.material.textfield.TextInputEditText,
         verifyButton: View,
-        statusView: android.widget.TextView
+        statusView: android.widget.TextView,
+        responseView: android.widget.TextView
     ) {
         viewLifecycleOwner.lifecycleScope.launch(Dispatchers.IO) {
             try {
@@ -105,12 +109,14 @@ class TwitterFragment : Fragment(R.layout.fragment_twitter) {
                 withContext(Dispatchers.Main) {
                     startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
                     statusView.text = getString(R.string.enter_pin)
+                    responseView.text = reqToken.toString()
                 }
             } catch (e: Exception) {
                 Log.e("TwitterFragment", "Error starting login", e)
                 withContext(Dispatchers.Main) {
                     val msg = e.message ?: e.toString()
                     Toast.makeText(requireContext(), msg, Toast.LENGTH_SHORT).show()
+                    responseView.text = msg
                 }
             }
         }
@@ -122,7 +128,8 @@ class TwitterFragment : Fragment(R.layout.fragment_twitter) {
         pinInput: com.google.android.material.textfield.TextInputEditText,
         verifyButton: View,
         statusView: android.widget.TextView,
-        loginButton: com.google.android.material.button.MaterialButton
+        loginButton: com.google.android.material.button.MaterialButton,
+        responseView: android.widget.TextView
     ) {
         viewLifecycleOwner.lifecycleScope.launch(Dispatchers.IO) {
             val tw = twitter ?: return@launch
@@ -131,6 +138,8 @@ class TwitterFragment : Fragment(R.layout.fragment_twitter) {
                 val token = tw.getOAuthAccessToken(reqToken, pin)
                 TwitterAuthManager.saveAccessToken(requireContext(), token)
                 val user = tw.verifyCredentials()
+                val resp = "token=${'$'}{token.token}\nsecret=${'$'}{token.tokenSecret}\nuser=@${'$'}{user.screenName}"
+                TwitterAuthManager.saveLastResponse(requireContext(), resp)
                 withContext(Dispatchers.Main) {
                     statusView.text = "@${'$'}{user.screenName}"
                     pinLayout.visibility = View.GONE
@@ -140,14 +149,18 @@ class TwitterFragment : Fragment(R.layout.fragment_twitter) {
                         TwitterAuthManager.clearTokens(requireContext())
                         statusView.text = getString(R.string.not_logged_in)
                         loginButton.text = getString(R.string.login_twitter)
-                        loginButton.setOnClickListener { startLogin(pinLayout, pinInput, verifyButton, statusView) }
+                        loginButton.setOnClickListener { startLogin(pinLayout, pinInput, verifyButton, statusView, responseView) }
                     }
+                    responseView.text = resp
                     Toast.makeText(requireContext(), "Login berhasil", Toast.LENGTH_SHORT).show()
                 }
             } catch (e: Exception) {
                 Log.e("TwitterFragment", "Error finishing login", e)
                 withContext(Dispatchers.Main) {
+                    val msg = e.message ?: e.toString()
                     Toast.makeText(requireContext(), "PIN salah", Toast.LENGTH_SHORT).show()
+                    responseView.text = msg
+                    TwitterAuthManager.saveLastResponse(requireContext(), msg)
                 }
             }
         }

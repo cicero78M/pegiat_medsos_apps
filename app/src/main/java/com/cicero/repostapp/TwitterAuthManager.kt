@@ -60,9 +60,17 @@ object TwitterAuthManager {
         prefs(context).edit { clear() }
     }
 
-    fun finishAuth(context: Context, verifier: String): Boolean {
+    fun saveLastResponse(context: Context, response: String) {
+        prefs(context).edit { putString("last_response", response) }
+    }
+
+    fun loadLastResponse(context: Context): String? {
+        return prefs(context).getString("last_response", null)
+    }
+
+    fun finishAuth(context: Context, verifier: String): String {
         return try {
-            val reqToken = loadRequestToken(context) ?: return false
+            val reqToken = loadRequestToken(context) ?: return "Missing request token"
             val config = ConfigurationBuilder()
                 .setOAuthConsumerKey(BuildConfig.TWITTER_CONSUMER_KEY)
                 .setOAuthConsumerSecret(BuildConfig.TWITTER_CONSUMER_SECRET)
@@ -71,9 +79,14 @@ object TwitterAuthManager {
             val access = twitter.getOAuthAccessToken(reqToken, verifier)
             saveAccessToken(context, access)
             clearRequestToken(context)
-            true
-        } catch (_: Exception) {
-            false
+            val user = twitter.verifyCredentials()
+            val response = "token=${'$'}{access.token}\nsecret=${'$'}{access.tokenSecret}\nuser=@${'$'}{user.screenName}"
+            saveLastResponse(context, response)
+            response
+        } catch (e: Exception) {
+            val msg = e.message ?: e.toString()
+            saveLastResponse(context, msg)
+            msg
         }
     }
 }

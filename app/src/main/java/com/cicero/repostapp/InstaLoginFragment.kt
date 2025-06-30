@@ -88,6 +88,7 @@ class InstaLoginFragment : Fragment(R.layout.fragment_insta_login) {
     private lateinit var tiktokUsernameView: TextView
     private var twitter: Twitter? = null
     private var twitterRequestToken: RequestToken? = null
+    private val repostedIds = mutableSetOf<String>()
     private val clientFile: File by lazy { File(requireContext().filesDir, "igclient.ser") }
     private val cookieFile: File by lazy { File(requireContext().filesDir, "igcookie.ser") }
     private var currentUsername: String? = null
@@ -138,6 +139,8 @@ class InstaLoginFragment : Fragment(R.layout.fragment_insta_login) {
         val authPrefs = requireContext().getSharedPreferences("auth", Context.MODE_PRIVATE)
         token = authPrefs.getString("token", "") ?: ""
         userId = authPrefs.getString("userId", "") ?: ""
+        val repostPrefs = requireContext().getSharedPreferences("reposted", Context.MODE_PRIVATE)
+        repostedIds.addAll(repostPrefs.getStringSet("ids", emptySet()) ?: emptySet())
         fetchTargetAccount()
 
         startButton.setOnClickListener {
@@ -764,8 +767,9 @@ class InstaLoginFragment : Fragment(R.layout.fragment_insta_login) {
 
     private fun launchRepostSequence(client: IGClient, posts: List<PostInfo>) {
         Log.d("InstaLoginFragment", "Start repost sequence")
+        val toProcess = posts.filter { !repostedIds.contains(it.code) }
         CoroutineScope(Dispatchers.Main).launch {
-            for (post in posts) {
+            for (post in toProcess) {
                 Log.d("InstaLoginFragment", "Processing post ${'$'}{post.code}")
                 val files = withContext(Dispatchers.IO) {
                     Log.d("InstaLoginFragment", "Downloading media for ${'$'}{post.code}")
@@ -794,6 +798,9 @@ class InstaLoginFragment : Fragment(R.layout.fragment_insta_login) {
                         Log.d("InstaLoginFragment", "Send link ${'$'}it")
                         appendLog("> repost link: ${'$'}it", animate = true)
                         withContext(Dispatchers.IO) { sendRepostLink(post.code, it) }
+                        repostedIds.add(post.code)
+                        val prefs = requireContext().getSharedPreferences("reposted", Context.MODE_PRIVATE)
+                        prefs.edit().putStringSet("ids", repostedIds).apply()
                     }
                     // do not delete downloaded files
                 } catch (e: Exception) {
@@ -801,7 +808,8 @@ class InstaLoginFragment : Fragment(R.layout.fragment_insta_login) {
                     appendLog("Error uploading: ${'$'}{e.message}")
                 }
                 Log.d("InstaLoginFragment", "Waiting before next post")
-                delay(60000)
+                appendLog("> waiting for next post", animate = true)
+                showWaitingDots(60000)
             }
             Log.d("InstaLoginFragment", "Repost sequence finished")
             appendLog(
@@ -842,13 +850,21 @@ class InstaLoginFragment : Fragment(R.layout.fragment_insta_login) {
         if (post.isVideo && post.videoUrl != null) {
             val videoFile = File(dir, post.code + ".mp4")
             if (!videoFile.exists()) {
+                appendLog("> downloading video", animate = true)
                 downloadUrl(post.videoUrl, videoFile)
+            } else {
+                appendLog("> video already downloaded", animate = true)
             }
             files.add(videoFile)
             val coverUrl = post.coverUrl
             if (!coverUrl.isNullOrBlank()) {
                 val coverFile = File(dir, post.code + "_cover.jpg")
-                if (!coverFile.exists()) downloadUrl(coverUrl, coverFile)
+                if (!coverFile.exists()) {
+                    appendLog("> downloading cover", animate = true)
+                    downloadUrl(coverUrl, coverFile)
+                } else {
+                    appendLog("> cover already downloaded", animate = true)
+                }
                 files.add(coverFile)
             }
         } else {
@@ -856,7 +872,12 @@ class InstaLoginFragment : Fragment(R.layout.fragment_insta_login) {
             for (url in post.imageUrls) {
                 val name = if (post.imageUrls.size > 1) "${post.code}_${idx++}.jpg" else "${post.code}.jpg"
                 val f = File(dir, name)
-                if (!f.exists()) downloadUrl(url, f)
+                if (!f.exists()) {
+                    appendLog("> downloading image", animate = true)
+                    downloadUrl(url, f)
+                } else {
+                    appendLog("> image already downloaded", animate = true)
+                }
                 files.add(f)
             }
         }
@@ -865,6 +886,7 @@ class InstaLoginFragment : Fragment(R.layout.fragment_insta_login) {
 
     private fun downloadUrl(url: String, file: File) {
         try {
+            appendLog("> fetching $url", animate = true)
             val client = OkHttpClient()
             val req = Request.Builder().url(url).build()
             client.newCall(req).execute().use { resp ->
@@ -874,6 +896,7 @@ class InstaLoginFragment : Fragment(R.layout.fragment_insta_login) {
                     body.byteStream().copyTo(out)
                 }
             }
+            appendLog("> saved to ${'$'}{file.name}", animate = true)
         } catch (_: Exception) {
         }
     }
@@ -896,6 +919,15 @@ class InstaLoginFragment : Fragment(R.layout.fragment_insta_login) {
             }
         } catch (_: Exception) {
             null
+        }
+    }
+
+    private suspend fun showWaitingDots(duration: Long) {
+        var remaining = duration
+        while (remaining > 0) {
+            delay(5000)
+            appendLog(".", animate = false)
+            remaining -= 5000
         }
     }
 

@@ -122,6 +122,43 @@
                 android:layout_marginStart="16dp" />
         </LinearLayout>
 
+        <LinearLayout
+            android:id="@+id/social_icons_row"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:gravity="center"
+            android:orientation="horizontal">
+
+            <ImageView
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:src="@drawable/facebook_icon"
+                android:contentDescription="Facebook" />
+
+            <ImageView
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:layout_marginStart="16dp"
+                android:src="@drawable/twitter_icon"
+                android:contentDescription="Twitter" />
+
+            <ImageView
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:layout_marginStart="16dp"
+                android:src="@drawable/tiktok_icon"
+                android:contentDescription="TikTok" />
+
+            <ImageView
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:layout_marginStart="16dp"
+                android:src="@drawable/yt_icon"
+                android:contentDescription="YouTube" />
+
+        </LinearLayout>
+
         <Button
             android:id="@+id/button_start"
             android:layout_width="match_parent"

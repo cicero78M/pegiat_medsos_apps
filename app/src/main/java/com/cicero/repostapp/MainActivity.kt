@@ -1,15 +1,18 @@
 package com.cicero.repostapp
 
 import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
-import androidx.appcompat.app.AppCompatActivity
 import android.widget.Button
+import android.widget.Toast
+import androidx.appcompat.app.AppCompatActivity
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import org.json.JSONObject
 
 class MainActivity : AppCompatActivity() {
 
@@ -29,6 +32,10 @@ class MainActivity : AppCompatActivity() {
 
         findViewById<Button>(R.id.button_open_login).setOnClickListener {
             startActivity(Intent(this, LoginActivity::class.java))
+        }
+
+        findViewById<Button>(R.id.button_check_update).setOnClickListener {
+            checkForUpdates()
         }
     }
 
@@ -60,5 +67,38 @@ class MainActivity : AppCompatActivity() {
         }
         startActivity(intent)
         finish()
+    }
+
+    private fun checkForUpdates() {
+        CoroutineScope(Dispatchers.IO).launch {
+            val client = OkHttpClient()
+            val request = Request.Builder()
+                .url("https://api.github.com/repos/cicero78M/pegiat_medsos_apps/releases/latest")
+                .build()
+            try {
+                client.newCall(request).execute().use { resp ->
+                    val body = resp.body?.string()
+                    if (resp.isSuccessful && body != null) {
+                        val json = JSONObject(body)
+                        val tag = json.getString("tag_name")
+                        if (tag != BuildConfig.VERSION_NAME) {
+                            val assets = json.getJSONArray("assets")
+                            if (assets.length() > 0) {
+                                val url = assets.getJSONObject(0).getString("browser_download_url")
+                                withContext(Dispatchers.Main) {
+                                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
+                                    startActivity(intent)
+                                }
+                            }
+                        } else {
+                            withContext(Dispatchers.Main) {
+                                Toast.makeText(this@MainActivity, getString(R.string.up_to_date), Toast.LENGTH_SHORT).show()
+                            }
+                        }
+                    }
+                }
+            } catch (_: Exception) {
+            }
+        }
     }
 }

@@ -19,6 +19,15 @@ The project uses Gradle Kotlin DSL. To build the project you would typically run
 ./gradlew assembleDebug
 ```
 
+## Update from GitHub Releases
+
+`MainActivity` includes a **Perbarui Aplikasi** button that queries the latest
+release on GitHub. If a newer `app-release.apk` is found, the download URL is
+opened in the browser.
+
+A workflow in `.github/workflows/update-release.yml` creates or updates a GitHub
+release whenever a new APK is pushed to the repository.
+
 Additional implementation is required to integrate Instagram APIs and handle authentication.
 
 The app retrieves user profile information from the [Cicero_V2](https://github.com/cicero78M/Cicero_V2) backend API.

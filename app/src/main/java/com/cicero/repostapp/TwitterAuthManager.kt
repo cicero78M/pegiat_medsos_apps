@@ -1,0 +1,79 @@
+package com.cicero.repostapp
+
+import android.content.Context
+import androidx.core.content.edit
+import androidx.security.crypto.EncryptedSharedPreferences
+import androidx.security.crypto.MasterKey
+import twitter4j.auth.AccessToken
+import twitter4j.auth.RequestToken
+import twitter4j.conf.ConfigurationBuilder
+import twitter4j.TwitterFactory
+import com.cicero.repostapp.BuildConfig
+
+object TwitterAuthManager {
+
+    private fun prefs(context: Context) =
+        EncryptedSharedPreferences.create(
+            context,
+            "twitter",
+            MasterKey.Builder(context).setKeyScheme(MasterKey.KeyScheme.AES256_GCM).build(),
+            EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
+            EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
+        )
+
+    fun saveRequestToken(context: Context, token: RequestToken) {
+        prefs(context).edit {
+            putString("request_token", token.token)
+            putString("request_secret", token.tokenSecret)
+        }
+    }
+
+    fun loadRequestToken(context: Context): RequestToken? {
+        val p = prefs(context)
+        val token = p.getString("request_token", null)
+        val secret = p.getString("request_secret", null)
+        return if (token != null && secret != null) RequestToken(token, secret) else null
+    }
+
+    fun clearRequestToken(context: Context) {
+        prefs(context).edit {
+            remove("request_token")
+            remove("request_secret")
+        }
+    }
+
+    fun saveAccessToken(context: Context, token: AccessToken) {
+        prefs(context).edit {
+            putString("token", token.token)
+            putString("secret", token.tokenSecret)
+        }
+    }
+
+    fun loadAccessToken(context: Context): Pair<String, String>? {
+        val p = prefs(context)
+        val token = p.getString("token", null)
+        val secret = p.getString("secret", null)
+        return if (token != null && secret != null) token to secret else null
+    }
+
+    fun clearTokens(context: Context) {
+        prefs(context).edit { clear() }
+    }
+
+    fun finishAuth(context: Context, verifier: String): Boolean {
+        return try {
+            val reqToken = loadRequestToken(context) ?: return false
+            val config = ConfigurationBuilder()
+                .setOAuthConsumerKey(BuildConfig.TWITTER_CONSUMER_KEY)
+                .setOAuthConsumerSecret(BuildConfig.TWITTER_CONSUMER_SECRET)
+                .build()
+            val twitter = TwitterFactory(config).instance
+            val access = twitter.getOAuthAccessToken(reqToken, verifier)
+            saveAccessToken(context, access)
+            clearRequestToken(context)
+            true
+        } catch (_: Exception) {
+            false
+        }
+    }
+}

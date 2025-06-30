@@ -14,6 +14,17 @@
         <activity android:name=".PremiumRegistrationActivity" />
         <activity android:name=".SubscriptionConfirmActivity" />
         <activity
+            android:name=".TwitterCallbackActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="repostapp"
+                    android:host="twitter-callback" />
+            </intent-filter>
+        </activity>
+        <activity
             android:name=".SplashActivity"
             android:exported="true">
             <intent-filter>

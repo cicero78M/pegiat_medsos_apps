@@ -16,4 +16,8 @@
         android:id="@+id/nav_twitter"
         android:icon="@android:drawable/ic_menu_share"
         android:title="Twitter" />
+    <item
+        android:id="@+id/nav_tiktok"
+        android:icon="@android:drawable/ic_menu_slideshow"
+        android:title="TikTok" />
 </menu>

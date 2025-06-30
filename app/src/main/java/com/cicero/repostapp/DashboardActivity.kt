@@ -22,7 +22,8 @@ class DashboardActivity : AppCompatActivity() {
             UserProfileFragment.newInstance(userId, token),
             InstaLoginFragment(),
             DashboardFragment.newInstance(userId, token),
-            TwitterFragment()
+            TwitterFragment(),
+            TiktokFragment()
         )
 
         val viewPager = findViewById<ViewPager2>(R.id.view_pager)
@@ -39,6 +40,7 @@ class DashboardActivity : AppCompatActivity() {
                 R.id.nav_insta_login -> { viewPager.currentItem = 1; true }
                 R.id.nav_insta -> { viewPager.currentItem = 2; true }
                 R.id.nav_twitter -> { viewPager.currentItem = 3; true }
+                R.id.nav_tiktok -> { viewPager.currentItem = 4; true }
                 else -> false
             }
         }
@@ -50,6 +52,7 @@ class DashboardActivity : AppCompatActivity() {
                     1 -> bottomNav.selectedItemId = R.id.nav_insta_login
                     2 -> bottomNav.selectedItemId = R.id.nav_insta
                     3 -> bottomNav.selectedItemId = R.id.nav_twitter
+                    4 -> bottomNav.selectedItemId = R.id.nav_tiktok
                 }
             }
         })

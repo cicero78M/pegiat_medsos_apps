@@ -122,3 +122,4 @@ app.*.symbols
 local.properties
 .env
 node_modules/
+app/release/

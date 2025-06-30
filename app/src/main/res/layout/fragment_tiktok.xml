@@ -20,19 +20,6 @@
                 android:layout_height="wrap_content"
                 android:text="@string/not_logged_in" />
 
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/input_tiktok_username"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:hint="@string/username" />
-
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/input_tiktok_password"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:hint="@string/password"
-                android:inputType="textPassword" />
-
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/button_tiktok_login"
                 android:layout_width="wrap_content"

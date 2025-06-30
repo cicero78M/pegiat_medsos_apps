@@ -13,6 +13,10 @@
         android:icon="@android:drawable/ic_menu_edit"
         android:title="Insta" />
     <item
+        android:id="@+id/nav_automator"
+        android:icon="@android:drawable/ic_menu_manage"
+        android:title="Automator" />
+    <item
         android:id="@+id/nav_facebook"
         android:icon="@drawable/facebook_icon"
         android:title="Facebook" />

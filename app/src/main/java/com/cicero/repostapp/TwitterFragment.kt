@@ -1,5 +1,6 @@
 package com.cicero.repostapp
 
+import android.annotation.SuppressLint
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
@@ -23,6 +24,7 @@ class TwitterFragment : Fragment(R.layout.fragment_twitter) {
     private var twitter: Twitter? = null
     private var requestToken: RequestToken? = null
 
+    @SuppressLint("SetTextI18n")
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         val loginButton: com.google.android.material.button.MaterialButton =
@@ -48,7 +50,7 @@ class TwitterFragment : Fragment(R.layout.fragment_twitter) {
             viewLifecycleOwner.lifecycleScope.launch(Dispatchers.IO) {
                 val tw = twitter ?: return@launch
                 try {
-                    val user = tw.verifyCredentials()
+                    tw.verifyCredentials()
                     withContext(Dispatchers.Main) {
                         statusView.text = "@${'$'}{user.screenName}"
                         loginButton.text = getString(R.string.logout)
@@ -91,6 +93,7 @@ class TwitterFragment : Fragment(R.layout.fragment_twitter) {
                 val config = ConfigurationBuilder()
                     .setOAuthConsumerKey(BuildConfig.TWITTER_CONSUMER_KEY)
                     .setOAuthConsumerSecret(BuildConfig.TWITTER_CONSUMER_SECRET)
+                    .setUseSSL(true)                  // use HTTPS instead of HTTP
                     .build()
                 twitter = TwitterFactory(config).instance
                 val reqToken = twitter?.getOAuthRequestToken("repostapp://twitter-callback")
@@ -127,7 +130,7 @@ class TwitterFragment : Fragment(R.layout.fragment_twitter) {
             try {
                 val token = tw.getOAuthAccessToken(reqToken, pin)
                 TwitterAuthManager.saveAccessToken(requireContext(), token)
-                val user = tw.verifyCredentials()
+                tw.verifyCredentials()
                 withContext(Dispatchers.Main) {
                     statusView.text = "@${'$'}{user.screenName}"
                     pinLayout.visibility = View.GONE

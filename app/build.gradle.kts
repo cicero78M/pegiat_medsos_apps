@@ -22,7 +22,7 @@ android {
         //noinspection EditedTargetSdkVersion
         targetSdk = 34
         versionCode = 1
-        versionName = "1.4"
+        versionName = "1.4.1"
         buildConfigField("String", "TWITTER_CONSUMER_KEY", "\"${envProps["TWITTER_CONSUMER_KEY"] ?: ""}\"")
         buildConfigField("String", "TWITTER_CONSUMER_SECRET", "\"${envProps["TWITTER_CONSUMER_SECRET"] ?: ""}\"")
     }

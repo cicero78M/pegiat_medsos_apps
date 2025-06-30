@@ -6,11 +6,13 @@ import android.view.View
 import android.webkit.CookieManager
 import android.webkit.WebView
 import android.webkit.WebViewClient
+import android.graphics.Bitmap
 import android.widget.TextView
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import com.google.android.material.button.MaterialButton
+import android.widget.ProgressBar
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -24,6 +26,7 @@ class FacebookFragment : Fragment(R.layout.fragment_facebook) {
         val statusView: TextView = view.findViewById(R.id.text_facebook_status)
         val loginButton: MaterialButton = view.findViewById(R.id.button_facebook_login)
         val webView: WebView = view.findViewById(R.id.webview_facebook)
+        val progressBar: ProgressBar = view.findViewById(R.id.progress_facebook)
         val cookieManager = CookieManager.getInstance()
         cookieManager.setAcceptCookie(true)
 
@@ -36,7 +39,7 @@ class FacebookFragment : Fragment(R.layout.fragment_facebook) {
             loginButton.setOnClickListener { logout(statusView, loginButton, cookieManager) }
             fetchProfile(statusView)
         } else {
-            loginButton.setOnClickListener { startLogin(webView, statusView, loginButton, cookieManager) }
+            loginButton.setOnClickListener { startLogin(webView, progressBar, statusView, loginButton, cookieManager) }
         }
     }
 
@@ -48,28 +51,51 @@ class FacebookFragment : Fragment(R.layout.fragment_facebook) {
         loginButton.text = getString(R.string.login_facebook)
         loginButton.setOnClickListener {
             val webView = requireView().findViewById<WebView>(R.id.webview_facebook)
-            startLogin(webView, statusView, loginButton, manager)
+            val progressBar = requireView().findViewById<ProgressBar>(R.id.progress_facebook)
+            startLogin(webView, progressBar, statusView, loginButton, manager)
         }
     }
 
     @SuppressLint("SetJavaScriptEnabled")
-    private fun startLogin(webView: WebView, statusView: TextView, loginButton: MaterialButton, manager: CookieManager) {
+    private fun startLogin(
+        webView: WebView,
+        progressBar: ProgressBar,
+        statusView: TextView,
+        loginButton: MaterialButton,
+        manager: CookieManager
+    ) {
         webView.settings.javaScriptEnabled = true
         webView.visibility = View.VISIBLE
+        progressBar.visibility = View.VISIBLE
         loginButton.visibility = View.GONE
         webView.webViewClient = object : WebViewClient() {
+            override fun onPageStarted(view: WebView?, url: String?, favicon: android.graphics.Bitmap?) {
+                progressBar.visibility = View.VISIBLE
+            }
+
             override fun onPageFinished(view: WebView?, url: String?) {
-                if (url != null && url.contains("/me")) {
-                    val cookies = manager.getCookie("https://basic.facebook.com")
-                    if (!cookies.isNullOrBlank()) {
-                        FacebookSessionManager.saveCookies(requireContext(), cookies)
-                    }
+                progressBar.visibility = View.GONE
+                val cookies = manager.getCookie("https://basic.facebook.com")
+                val loggedIn = !cookies.isNullOrBlank() && cookies.contains("c_user=")
+                if (loggedIn && url != null && url.contains("/me")) {
+                    FacebookSessionManager.saveCookies(requireContext(), cookies)
                     webView.visibility = View.GONE
                     loginButton.visibility = View.VISIBLE
                     loginButton.text = getString(R.string.logout)
                     loginButton.setOnClickListener { logout(statusView, loginButton, manager) }
                     fetchProfile(statusView)
+                } else if (!loggedIn && url != null && url.contains("save-device")) {
+                    Toast.makeText(requireContext(), R.string.login_failed, Toast.LENGTH_SHORT).show()
                 }
+            }
+
+            override fun onReceivedError(
+                view: WebView?,
+                request: android.webkit.WebResourceRequest?,
+                error: android.webkit.WebResourceError?
+            ) {
+                progressBar.visibility = View.GONE
+                Toast.makeText(requireContext(), error?.description ?: error.toString(), Toast.LENGTH_SHORT).show()
             }
         }
         webView.loadUrl("https://basic.facebook.com/login.php?next=https%3A%2F%2Fbasic.facebook.com%2Fme")

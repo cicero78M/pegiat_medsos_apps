@@ -5,6 +5,7 @@ import android.view.View
 import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
+import android.util.Log
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import com.google.android.material.button.MaterialButton
@@ -85,9 +86,9 @@ class TiktokFragment : Fragment(R.layout.fragment_tiktok) {
             try {
                 client.newCall(request).execute().use { resp ->
                     val body = resp.body?.string()
-                    val data = try {
-                        JSONObject(body ?: "{}").optJSONObject("data")
-                    } catch (_: Exception) { null }
+                    val json = try { JSONObject(body ?: "{}") } catch (_: Exception) { null }
+                    val data = json?.optJSONObject("data")
+                    val message = json?.optString("msg").takeIf { !it.isNullOrBlank() } ?: "Login gagal"
                     withContext(Dispatchers.Main) {
                         if (resp.isSuccessful && data != null) {
                             TiktokSessionManager.saveProfile(requireContext(), data)
@@ -103,14 +104,17 @@ class TiktokFragment : Fragment(R.layout.fragment_tiktok) {
                             Toast.makeText(requireContext(), "Login berhasil", Toast.LENGTH_SHORT).show()
                         } else {
                             statusView.text = getString(R.string.not_logged_in)
-                            Toast.makeText(requireContext(), "Login gagal", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show()
+                            Log.e("TiktokFragment", "Login failed: $message")
                         }
                     }
                 }
-            } catch (_: Exception) {
+            } catch (e: Exception) {
+                Log.e("TiktokFragment", "Login error", e)
                 withContext(Dispatchers.Main) {
                     statusView.text = getString(R.string.not_logged_in)
-                    Toast.makeText(requireContext(), "Login gagal", Toast.LENGTH_SHORT).show()
+                    val msg = e.message ?: e.toString()
+                    Toast.makeText(requireContext(), "Error: $msg", Toast.LENGTH_SHORT).show()
                 }
             }
         }

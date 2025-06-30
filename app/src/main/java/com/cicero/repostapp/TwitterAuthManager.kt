@@ -22,7 +22,7 @@ object TwitterAuthManager {
         )
 
     fun saveRequestToken(context: Context, token: RequestToken) {
-        prefs(context).edit {
+        prefs(context).edit(commit = true) {
             putString("request_token", token.token)
             putString("request_secret", token.tokenSecret)
         }
@@ -36,14 +36,14 @@ object TwitterAuthManager {
     }
 
     fun clearRequestToken(context: Context) {
-        prefs(context).edit {
+        prefs(context).edit(commit = true) {
             remove("request_token")
             remove("request_secret")
         }
     }
 
     fun saveAccessToken(context: Context, token: AccessToken) {
-        prefs(context).edit {
+        prefs(context).edit(commit = true) {
             putString("token", token.token)
             putString("secret", token.tokenSecret)
         }
@@ -57,11 +57,11 @@ object TwitterAuthManager {
     }
 
     fun clearTokens(context: Context) {
-        prefs(context).edit { clear() }
+        prefs(context).edit(commit = true) { clear() }
     }
 
     fun saveLastResponse(context: Context, response: String) {
-        prefs(context).edit { putString("last_response", response) }
+        prefs(context).edit(commit = true) { putString("last_response", response) }
     }
 
     fun loadLastResponse(context: Context): String? {

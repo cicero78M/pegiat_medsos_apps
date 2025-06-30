@@ -25,6 +25,14 @@ object TiktokSessionManager {
         return try { JSONObject(str) } catch (_: Exception) { null }
     }
 
+    fun saveCookies(context: Context, cookies: String) {
+        prefs(context).edit { putString("cookies", cookies) }
+    }
+
+    fun loadCookies(context: Context): String? {
+        return prefs(context).getString("cookies", null)
+    }
+
     fun clear(context: Context) {
         prefs(context).edit { clear() }
     }

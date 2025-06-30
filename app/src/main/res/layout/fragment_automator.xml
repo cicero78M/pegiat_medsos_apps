@@ -1,14 +1,29 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:orientation="vertical"
     android:padding="32dp">
 
     <TextView
-        android:id="@+id/text_automator_placeholder"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="@string/automator_placeholder"
-        android:layout_gravity="center" />
+        android:id="@+id/termux_shell_view"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:background="#000000"
+        android:textColor="#00FF00"
+        android:textSize="12sp"
+        android:typeface="monospace"
+        android:text="shell@termux:~$ "
+        android:padding="8dp"
+        android:gravity="top|start"
+        android:scrollbars="vertical" />
 
-</FrameLayout>
+    <Button
+        android:id="@+id/button_start_shell"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:text="@string/start" />
+
+</LinearLayout>

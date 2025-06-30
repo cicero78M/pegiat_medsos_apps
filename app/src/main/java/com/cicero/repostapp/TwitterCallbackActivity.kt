@@ -17,11 +17,11 @@ class TwitterCallbackActivity : AppCompatActivity() {
             return
         }
         lifecycleScope.launch(Dispatchers.IO) {
-            val success = TwitterAuthManager.finishAuth(this@TwitterCallbackActivity, verifier)
+            val result = TwitterAuthManager.finishAuth(this@TwitterCallbackActivity, verifier)
             withContext(Dispatchers.Main) {
                 Toast.makeText(
                     this@TwitterCallbackActivity,
-                    if (success) "Login berhasil" else "Login gagal",
+                    result,
                     Toast.LENGTH_SHORT
                 ).show()
                 finish()

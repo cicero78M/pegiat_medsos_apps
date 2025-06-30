@@ -7,10 +7,10 @@
 .buildlog/
 .history
 *.hprof
-*.apk binary
-*.zip binary
-*.png binary
-*.jpg binary
+*.apk
+*.zip
+*.png
+*.jpg
 
 
 

@@ -756,19 +756,26 @@ class InstaLoginFragment : Fragment(R.layout.fragment_insta_login) {
                     ">>> Initiating environment for re-post ops...",
                     animate = true
                 )
+                Log.d("InstaLoginFragment", "Start reposting posts")
                 launchRepostSequence(client, posts)
             }
         }
     }
 
     private fun launchRepostSequence(client: IGClient, posts: List<PostInfo>) {
+        Log.d("InstaLoginFragment", "Start repost sequence")
         CoroutineScope(Dispatchers.Main).launch {
             for (post in posts) {
-                val files = withContext(Dispatchers.IO) { downloadMedia(post) }
+                Log.d("InstaLoginFragment", "Processing post ${'$'}{post.code}")
+                val files = withContext(Dispatchers.IO) {
+                    Log.d("InstaLoginFragment", "Downloading media for ${'$'}{post.code}")
+                    downloadMedia(post)
+                }
                 if (files.isEmpty()) continue
                 try {
                     var newLink: String? = null
                     withContext(Dispatchers.IO) {
+                        Log.d("InstaLoginFragment", "Uploading ${'$'}{post.code}")
                         val response = if (post.isVideo && post.videoUrl != null) {
                             val video = files.first { it.extension == "mp4" }
                             val cover = files.firstOrNull { it.extension != "mp4" } ?: video
@@ -784,15 +791,19 @@ class InstaLoginFragment : Fragment(R.layout.fragment_insta_login) {
                         newLink = response.media?.code?.let { "https://instagram.com/p/$it" }
                     }
                     newLink?.let {
-                        appendLog("> repost link: $it", animate = true)
+                        Log.d("InstaLoginFragment", "Send link ${'$'}it")
+                        appendLog("> repost link: ${'$'}it", animate = true)
                         withContext(Dispatchers.IO) { sendRepostLink(post.code, it) }
                     }
-                    withContext(Dispatchers.IO) { files.forEach { it.delete() } }
+                    // do not delete downloaded files
                 } catch (e: Exception) {
-                    appendLog("Error uploading: ${e.message}")
+                    Log.e("InstaLoginFragment", "Error uploading", e)
+                    appendLog("Error uploading: ${'$'}{e.message}")
                 }
+                Log.d("InstaLoginFragment", "Waiting before next post")
                 delay(60000)
             }
+            Log.d("InstaLoginFragment", "Repost sequence finished")
             appendLog(
                 ">>> Repost routine complete.",
                 animate = true

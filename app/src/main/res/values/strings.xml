@@ -21,6 +21,8 @@
     <string name="save_login">Save Login</string>
     <string name="show_password">Show Password</string>
     <string name="bagikan_ulang_konten_resmi_lebih_mudah">Bagikan Ulang Konten Resmi Lebih Mudah</string>
+    <string name="check_update">Perbarui Aplikasi</string>
+    <string name="up_to_date">Aplikasi sudah versi terbaru</string>
     <string name="premium_registration_title">Pendaftaran Premium</string>
     <string name="premium_registration_info">Isi data berikut lalu transfer sesuai nominal ke No.Rek BCA 0891758684 a.n Rizqa Febryan Prastyo.</string>
     <string name="session_end_format">Sesi berakhir pada: %1$s</string>

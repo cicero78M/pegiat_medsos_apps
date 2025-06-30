@@ -873,7 +873,7 @@ class InstaLoginFragment : Fragment(R.layout.fragment_insta_login) {
                         val user = TikwmApi.fetchUser(username)
                         if (user != null) {
                             TiktokSessionManager.saveProfile(requireContext(), user)
-                            Toast.makeText(requireContext(), "Logged in as ${'$'}{user.optString("uniqueId")}", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(requireContext(), "Logged in as ${user.optString("uniqueId")}", Toast.LENGTH_SHORT).show()
                         } else {
                             Toast.makeText(requireContext(), "Login gagal", Toast.LENGTH_SHORT).show()
                         }

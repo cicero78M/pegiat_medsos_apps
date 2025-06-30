@@ -16,6 +16,12 @@ class TiktokLoginActivity : AppCompatActivity() {
         val cookieManager = CookieManager.getInstance()
         cookieManager.setAcceptCookie(true)
 
+        // restore existing cookies so users stay logged in across sessions
+        TiktokSessionManager.loadCookies(this)?.let { saved ->
+            cookieManager.setCookie("https://www.tiktok.com", saved)
+            cookieManager.flush()
+        }
+
         webView.settings.javaScriptEnabled = true
         webView.webViewClient = object : WebViewClient() {
             override fun onPageFinished(view: WebView?, url: String?) {

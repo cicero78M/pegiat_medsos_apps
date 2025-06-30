@@ -10,6 +10,7 @@ import android.widget.EditText
 import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
+import android.util.Log
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
 import com.bumptech.glide.Glide
@@ -174,8 +175,10 @@ class InstaLoginFragment : Fragment(R.layout.fragment_insta_login) {
                     Toast.makeText(requireContext(), "Gagal login: ${e.loginResponse.message}", Toast.LENGTH_SHORT).show()
                 }
             } catch (e: Exception) {
+                Log.e("InstaLoginFragment", "Login failed", e)
                 withContext(Dispatchers.Main) {
-                    Toast.makeText(requireContext(), "Error: ${e.localizedMessage}", Toast.LENGTH_SHORT).show()
+                    val message = e.message ?: e.toString()
+                    Toast.makeText(requireContext(), "Error: $message", Toast.LENGTH_SHORT).show()
                 }
             }
         }

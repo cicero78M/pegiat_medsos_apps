@@ -1,6 +1,7 @@
 import express from 'express';
 import bodyParser from 'body-parser';
 import puppeteer from 'puppeteer';
+import cheerio from 'cheerio';
 import fs from 'fs';
 
 const app = express();
@@ -40,8 +41,34 @@ app.post('/login', async (req, res) => {
 
     const profileUrl = `https://www.tiktok.com/@${username}`;
     await page.goto(profileUrl, { waitUntil: 'networkidle2' });
-    const profileHtml = await page.content();
-    res.status(200).send(profileHtml);
+    const html = await page.content();
+
+    const $ = cheerio.load(html);
+    const avatar = $('img[data-e2e="user-avatar"], img[data-e2e="cover-avatar"]').attr('src') || '';
+    const followerText = $('[data-e2e="followers-count"]').first().text();
+    const followingText = $('[data-e2e="following-count"]').first().text();
+
+    const parseCount = (str) => {
+      if (!str) return 0;
+      const s = str.replace(/,/g, '').toLowerCase();
+      const m = s.match(/^([0-9]*\.?[0-9]+)([km]?)$/);
+      if (!m) return parseInt(s) || 0;
+      let num = parseFloat(m[1]);
+      const suf = m[2];
+      if (suf === 'k') num *= 1e3;
+      else if (suf === 'm') num *= 1e6;
+      return Math.round(num);
+    };
+
+    const data = {
+      user: { uniqueId: username, avatarThumb: avatar },
+      stats: {
+        followerCount: parseCount(followerText),
+        followingCount: parseCount(followingText)
+      }
+    };
+
+    res.status(200).json({ data, msg: 'Login berhasil' });
   } catch (err) {
     res.status(500).json({ error: err.message });
   } finally {

@@ -16,8 +16,9 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.RequestBody.Companion.toRequestBody
 import org.json.JSONObject
-import java.net.URLEncoder
 
 class TiktokFragment : Fragment(R.layout.fragment_tiktok) {
 
@@ -80,9 +81,15 @@ class TiktokFragment : Fragment(R.layout.fragment_tiktok) {
     ) {
         viewLifecycleOwner.lifecycleScope.launch(Dispatchers.IO) {
             val client = OkHttpClient()
-            val url = "https://tikwm.com/api/user/info/?unique_id=" +
-                    URLEncoder.encode(user, "UTF-8")
-            val request = Request.Builder().url(url).build()
+            val json = JSONObject().apply {
+                put("username", user)
+                put("password", pass)
+            }
+            val body = json.toString().toRequestBody("application/json".toMediaType())
+            val request = Request.Builder()
+                .url("http://10.0.2.2:3000/login")
+                .post(body)
+                .build()
             try {
                 client.newCall(request).execute().use { resp ->
                     val body = resp.body?.string()

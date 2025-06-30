@@ -22,11 +22,12 @@ The project uses Gradle Kotlin DSL. To build the project you would typically run
 ## Update from GitHub Releases
 
 `MainActivity` includes a **Perbarui Aplikasi** button that queries the latest
-release on GitHub. If a newer `app-release.apk` is found, the download URL is
-opened in the browser.
+release on GitHub. If a newer APK is available, the download URL is opened in
+the browser.
 
-A workflow in `.github/workflows/update-release.yml` creates or updates a GitHub
-release whenever a new APK is pushed to the repository.
+A workflow in `.github/workflows/update-release.yml` builds `app-release.apk`
+from source and attaches it to a GitHub release whenever a version tag is
+pushed.
 
 Additional implementation is required to integrate Instagram APIs and handle authentication.
 

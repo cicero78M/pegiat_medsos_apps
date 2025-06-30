@@ -5,6 +5,7 @@ import android.net.Uri
 import android.os.Bundle
 import android.view.View
 import android.widget.Toast
+import android.util.Log
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.Dispatchers
@@ -103,8 +104,10 @@ class TwitterFragment : Fragment(R.layout.fragment_twitter) {
                     statusView.text = getString(R.string.enter_pin)
                 }
             } catch (e: Exception) {
+                Log.e("TwitterFragment", "Error starting login", e)
                 withContext(Dispatchers.Main) {
-                    Toast.makeText(requireContext(), "${'$'}{e.localizedMessage}", Toast.LENGTH_SHORT).show()
+                    val msg = e.message ?: e.toString()
+                    Toast.makeText(requireContext(), msg, Toast.LENGTH_SHORT).show()
                 }
             }
         }
@@ -138,7 +141,8 @@ class TwitterFragment : Fragment(R.layout.fragment_twitter) {
                     }
                     Toast.makeText(requireContext(), "Login berhasil", Toast.LENGTH_SHORT).show()
                 }
-            } catch (_: Exception) {
+            } catch (e: Exception) {
+                Log.e("TwitterFragment", "Error finishing login", e)
                 withContext(Dispatchers.Main) {
                     Toast.makeText(requireContext(), "PIN salah", Toast.LENGTH_SHORT).show()
                 }

@@ -4,6 +4,7 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.widget.Button
+import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import kotlinx.coroutines.CoroutineScope
@@ -37,6 +38,9 @@ class MainActivity : AppCompatActivity() {
         findViewById<Button>(R.id.button_check_update).setOnClickListener {
             checkForUpdates()
         }
+
+        val footer = findViewById<TextView>(R.id.footer_version)
+        footer.text = "${getString(R.string.app_name)} versi ${BuildConfig.VERSION_NAME} copyright @cicero"
     }
 
     // No external storage permission required when using app-specific storage

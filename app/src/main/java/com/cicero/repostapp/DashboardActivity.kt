@@ -4,8 +4,8 @@ import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.viewpager2.widget.ViewPager2
 import com.google.android.material.bottomnavigation.BottomNavigationView
-import androidx.fragment.app.Fragment
 import androidx.viewpager2.adapter.FragmentStateAdapter
+import com.cicero.repostapp.FacebookFragment
 
 class DashboardActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -23,6 +23,7 @@ class DashboardActivity : AppCompatActivity() {
             DashboardFragment.newInstance(userId, token),
             InstaLoginFragment(),
             TwitterFragment(),
+            FacebookFragment(),
             TiktokFragment()
         )
 
@@ -40,7 +41,8 @@ class DashboardActivity : AppCompatActivity() {
                 R.id.nav_insta -> { viewPager.currentItem = 1; true }
                 R.id.nav_insta_login -> { viewPager.currentItem = 2; true }
                 R.id.nav_twitter -> { viewPager.currentItem = 3; true }
-                R.id.nav_tiktok -> { viewPager.currentItem = 4; true }
+                R.id.nav_facebook -> { viewPager.currentItem = 4; true }
+                R.id.nav_tiktok -> { viewPager.currentItem = 5; true }
                 else -> false
             }
         }
@@ -52,7 +54,8 @@ class DashboardActivity : AppCompatActivity() {
                     1 -> bottomNav.selectedItemId = R.id.nav_insta
                     2 -> bottomNav.selectedItemId = R.id.nav_insta_login
                     3 -> bottomNav.selectedItemId = R.id.nav_twitter
-                    4 -> bottomNav.selectedItemId = R.id.nav_tiktok
+                    4 -> bottomNav.selectedItemId = R.id.nav_facebook
+                    5 -> bottomNav.selectedItemId = R.id.nav_tiktok
                 }
             }
         })

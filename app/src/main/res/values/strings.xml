@@ -37,4 +37,5 @@
     <string name="verify_pin">Verifikasi PIN</string>
     <string name="enter_pin">Masukkan PIN</string>
     <string name="not_logged_in">Belum login</string>
+    <string name="facebook">Facebook</string>
 </resources>

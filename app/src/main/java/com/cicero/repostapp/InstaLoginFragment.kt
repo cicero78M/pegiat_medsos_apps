@@ -5,6 +5,8 @@ import android.content.Context
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
+import android.content.Intent
+import android.net.Uri
 import android.widget.Button
 import android.widget.EditText
 import android.widget.ImageView
@@ -13,6 +15,7 @@ import android.widget.Toast
 import android.util.Log
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
 import com.bumptech.glide.Glide
 import com.github.instagram4j.instagram4j.IGClient
 import com.github.instagram4j.instagram4j.IGClient.Builder.LoginHandler
@@ -40,6 +43,12 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import org.json.JSONObject
+import twitter4j.Twitter
+import twitter4j.TwitterFactory
+import twitter4j.auth.RequestToken
+import twitter4j.conf.ConfigurationBuilder
+import com.cicero.repostapp.BuildConfig
+import com.cicero.repostapp.TwitterAuthManager
 import java.io.File
 import java.util.concurrent.Callable
 
@@ -71,6 +80,10 @@ class InstaLoginFragment : Fragment(R.layout.fragment_insta_login) {
     private lateinit var postsView: TextView
     private lateinit var followersView: TextView
     private lateinit var followingView: TextView
+    private lateinit var twitterImage: ImageView
+    private lateinit var twitterUsernameView: TextView
+    private var twitter: Twitter? = null
+    private var twitterRequestToken: RequestToken? = null
     private val clientFile: File by lazy { File(requireContext().filesDir, "igclient.ser") }
     private val cookieFile: File by lazy { File(requireContext().filesDir, "igcookie.ser") }
     private var currentUsername: String? = null
@@ -100,6 +113,10 @@ class InstaLoginFragment : Fragment(R.layout.fragment_insta_login) {
         profileView.findViewById<View>(R.id.text_nrp).visibility = View.GONE
         profileView.findViewById<View>(R.id.info_container).visibility = View.GONE
         profileView.findViewById<Button>(R.id.button_logout).visibility = View.GONE
+
+        val twitterContainer = view.findViewById<View>(R.id.twitter_container)
+        twitterImage = twitterContainer.findViewById(R.id.image_twitter)
+        twitterUsernameView = twitterContainer.findViewById(R.id.text_twitter_username)
 
         startButton = view.findViewById(R.id.button_start)
         likeCheckbox = view.findViewById(R.id.checkbox_like)
@@ -132,6 +149,9 @@ class InstaLoginFragment : Fragment(R.layout.fragment_insta_login) {
         checkSubscriptionStatus(currentUsername)
 
         restoreSession()
+        updateTwitterStatus()
+
+        twitterImage.setOnClickListener { startTwitterLogin() }
 
         view.findViewById<Button>(R.id.button_login_insta).setOnClickListener {
             val user = username.text.toString().trim()
@@ -142,6 +162,11 @@ class InstaLoginFragment : Fragment(R.layout.fragment_insta_login) {
                 Toast.makeText(requireContext(), "Username dan password wajib diisi", Toast.LENGTH_SHORT).show()
             }
         }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        updateTwitterStatus()
     }
 
     private fun performLogin(user: String, pass: String) {
@@ -242,6 +267,68 @@ class InstaLoginFragment : Fragment(R.layout.fragment_insta_login) {
                     // ignore invalid session
                 }
             }
+        }
+    }
+
+    private fun startTwitterLogin() {
+        viewLifecycleOwner.lifecycleScope.launch(Dispatchers.IO) {
+            try {
+                val config = ConfigurationBuilder()
+                    .setOAuthConsumerKey(BuildConfig.TWITTER_CONSUMER_KEY)
+                    .setOAuthConsumerSecret(BuildConfig.TWITTER_CONSUMER_SECRET)
+                    .setUseSSL(true)
+                    .build()
+                twitter = TwitterFactory(config).instance
+                val reqToken = twitter?.getOAuthRequestToken("repostapp://twitter-callback")
+                if (reqToken != null) {
+                    TwitterAuthManager.saveRequestToken(requireContext(), reqToken)
+                }
+                twitterRequestToken = reqToken
+                val url = reqToken?.authorizationURL ?: return@launch
+                withContext(Dispatchers.Main) {
+                    startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
+                }
+            } catch (_: Exception) {
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(requireContext(), "Gagal menghubungi Twitter", Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+    }
+
+    private fun updateTwitterStatus() {
+        val stored = TwitterAuthManager.loadAccessToken(requireContext())
+        if (stored != null) {
+            val (accessToken, accessSecret) = stored
+            val config = ConfigurationBuilder()
+                .setOAuthConsumerKey(BuildConfig.TWITTER_CONSUMER_KEY)
+                .setOAuthConsumerSecret(BuildConfig.TWITTER_CONSUMER_SECRET)
+                .setOAuthAccessToken(accessToken)
+                .setOAuthAccessTokenSecret(accessSecret)
+                .build()
+            twitter = TwitterFactory(config).instance
+            viewLifecycleOwner.lifecycleScope.launch(Dispatchers.IO) {
+                val tw = twitter ?: return@launch
+                try {
+                    val user = tw.verifyCredentials()
+                    withContext(Dispatchers.Main) {
+                        twitterUsernameView.text = "@${'$'}{user.screenName}"
+                        twitterUsernameView.visibility = View.VISIBLE
+                        Glide.with(this@InstaLoginFragment)
+                            .load(user.profileImageURLHttps)
+                            .circleCrop()
+                            .into(twitterImage)
+                    }
+                } catch (_: Exception) {
+                    withContext(Dispatchers.Main) {
+                        twitterImage.setImageResource(R.drawable.twitter_icon)
+                        twitterUsernameView.visibility = View.GONE
+                    }
+                }
+            }
+        } else {
+            twitterImage.setImageResource(R.drawable.twitter_icon)
+            twitterUsernameView.visibility = View.GONE
         }
     }
 

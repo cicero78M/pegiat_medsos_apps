@@ -59,3 +59,24 @@ found in the [docs](docs/) directory:
 - [`USAGE.md`](docs/USAGE.md) – how to build and interact with the app.
 - [`landing_page.html`](docs/landing_page.html) – a lightweight landing page
   describing key features and providing a download link.
+
+## TikTok Automation
+
+The `scripts/tiktok_post.py` helper demonstrates how to upload a video to TikTok
+using the [UIAutomator2](https://github.com/openatx/uiautomator2) library. Install
+the requirements first:
+
+```bash
+pip install -r requirements.txt
+```
+
+Then connect your Android device (USB or Wi‑Fi) and run:
+
+```bash
+python scripts/tiktok_post.py <device-serial> /sdcard/video.mp4 --caption "Hello"
+```
+
+This will open TikTok, select the first video in the gallery, optionally set the
+caption and publish the post.
+
+

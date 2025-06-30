@@ -97,7 +97,6 @@ class TwitterFragment : Fragment(R.layout.fragment_twitter) {
                 val config = ConfigurationBuilder()
                     .setOAuthConsumerKey(BuildConfig.TWITTER_CONSUMER_KEY)
                     .setOAuthConsumerSecret(BuildConfig.TWITTER_CONSUMER_SECRET)
-                    .setUseSSL(true)                  // use HTTPS instead of HTTP
                     .build()
                 twitter = TwitterFactory(config).instance
                 val reqToken = twitter?.getOAuthRequestToken("repostapp://twitter-callback")
@@ -165,5 +164,4 @@ class TwitterFragment : Fragment(R.layout.fragment_twitter) {
             }
         }
     }
-
 }

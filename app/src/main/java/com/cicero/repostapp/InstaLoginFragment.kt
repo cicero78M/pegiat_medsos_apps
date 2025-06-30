@@ -290,7 +290,6 @@ class InstaLoginFragment : Fragment(R.layout.fragment_insta_login) {
                 val config = ConfigurationBuilder()
                     .setOAuthConsumerKey(BuildConfig.TWITTER_CONSUMER_KEY)
                     .setOAuthConsumerSecret(BuildConfig.TWITTER_CONSUMER_SECRET)
-                    .setUseSSL(true)
                     .build()
                 twitter = TwitterFactory(config).instance
                 val reqToken = twitter?.getOAuthRequestToken("repostapp://twitter-callback")

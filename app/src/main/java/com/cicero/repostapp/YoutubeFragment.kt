@@ -64,7 +64,8 @@ class YoutubeFragment : Fragment(R.layout.fragment_youtube) {
     private fun onSignedIn(account: GoogleSignInAccount) {
         val email = account.email
         val name = account.displayName
-        YoutubeAuthManager.saveAccount(requireContext(), email, name)
+        val photo = account.photoUrl?.toString()
+        YoutubeAuthManager.saveAccount(requireContext(), email, name, photo)
         statusView.text = email ?: name ?: getString(R.string.not_logged_in)
         loginButton.visibility = View.GONE
         logoutButton.visibility = View.VISIBLE

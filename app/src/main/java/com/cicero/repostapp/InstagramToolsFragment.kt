@@ -18,6 +18,12 @@ import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import com.bumptech.glide.Glide
+import com.google.android.gms.auth.api.signin.GoogleSignIn
+import com.google.android.gms.auth.api.signin.GoogleSignInAccount
+import com.google.android.gms.auth.api.signin.GoogleSignInClient
+import com.google.android.gms.auth.api.signin.GoogleSignInOptions
+import com.google.android.gms.common.api.ApiException
+import com.google.android.gms.common.api.Scope
 import com.github.instagram4j.instagram4j.IGClient
 import com.github.instagram4j.instagram4j.IGClient.Builder.LoginHandler
 import com.github.instagram4j.instagram4j.actions.timeline.TimelineAction
@@ -89,6 +95,17 @@ class InstagramToolsFragment : Fragment(R.layout.fragment_instagram_tools) {
     private lateinit var facebookUsernameView: TextView
     private lateinit var tiktokImage: ImageView
     private lateinit var tiktokUsernameView: TextView
+    private lateinit var youtubeImage: ImageView
+    private lateinit var youtubeUsernameView: TextView
+    private lateinit var youtubeClient: GoogleSignInClient
+    private val youtubeLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        val task = GoogleSignIn.getSignedInAccountFromIntent(result.data)
+        try {
+            val account = task.getResult(ApiException::class.java)
+            onYoutubeSignedIn(account)
+        } catch (_: Exception) {
+        }
+    }
     private var twitter: Twitter? = null
     private var twitterRequestToken: RequestToken? = null
     private val repostedIds = mutableSetOf<String>()
@@ -138,6 +155,17 @@ class InstagramToolsFragment : Fragment(R.layout.fragment_instagram_tools) {
         tiktokUsernameView = tiktokContainer.findViewById(R.id.text_tiktok_username)
         tiktokImage.setOnClickListener { showTiktokDialog() }
 
+        val youtubeContainer = view.findViewById<View>(R.id.youtube_container)
+        youtubeImage = youtubeContainer.findViewById(R.id.image_youtube)
+        youtubeUsernameView = youtubeContainer.findViewById(R.id.text_youtube_username)
+
+        val options = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+            .requestEmail()
+            .requestScopes(Scope("https://www.googleapis.com/auth/youtube.readonly"))
+            .build()
+        youtubeClient = GoogleSignIn.getClient(requireContext(), options)
+        youtubeImage.setOnClickListener { youtubeLauncher.launch(youtubeClient.signInIntent) }
+
         startButton = view.findViewById(R.id.button_start)
         likeCheckbox = view.findViewById(R.id.checkbox_like)
         repostCheckbox = view.findViewById(R.id.checkbox_repost)
@@ -174,6 +202,7 @@ class InstagramToolsFragment : Fragment(R.layout.fragment_instagram_tools) {
         updateTwitterStatus()
         updateTiktokStatus()
         updateFacebookStatus()
+        updateYoutubeStatus()
 
         twitterImage.setOnClickListener { startTwitterLogin() }
         facebookImage.setOnClickListener {
@@ -196,6 +225,7 @@ class InstagramToolsFragment : Fragment(R.layout.fragment_instagram_tools) {
         updateTwitterStatus()
         updateTiktokStatus()
         updateFacebookStatus()
+        updateYoutubeStatus()
     }
 
     private fun performLogin(user: String, pass: String) {
@@ -421,6 +451,57 @@ class InstagramToolsFragment : Fragment(R.layout.fragment_instagram_tools) {
         } else {
             facebookImage.setImageResource(R.drawable.facebook_icon)
             facebookUsernameView.visibility = View.GONE
+        }
+    }
+
+    private fun updateYoutubeStatus() {
+        val account = GoogleSignIn.getLastSignedInAccount(requireContext())
+        if (account != null) {
+            onYoutubeSignedIn(account)
+        } else {
+            val stored = YoutubeAuthManager.loadAccount(requireContext())
+            if (stored != null) {
+                val (_, name, photo) = stored
+                if (!photo.isNullOrBlank()) {
+                    Glide.with(this)
+                        .load(photo)
+                        .circleCrop()
+                        .into(youtubeImage)
+                } else {
+                    youtubeImage.setImageResource(R.drawable.yt_icon)
+                }
+                if (!name.isNullOrBlank()) {
+                    youtubeUsernameView.text = name
+                    youtubeUsernameView.visibility = View.VISIBLE
+                } else {
+                    youtubeUsernameView.visibility = View.GONE
+                }
+            } else {
+                youtubeImage.setImageResource(R.drawable.yt_icon)
+                youtubeUsernameView.visibility = View.GONE
+            }
+        }
+    }
+
+    private fun onYoutubeSignedIn(account: GoogleSignInAccount) {
+        val email = account.email
+        val name = account.displayName
+        val photo = account.photoUrl?.toString()
+        YoutubeAuthManager.saveAccount(requireContext(), email, name, photo)
+        if (!photo.isNullOrBlank()) {
+            Glide.with(this)
+                .load(photo)
+                .circleCrop()
+                .into(youtubeImage)
+        } else {
+            youtubeImage.setImageResource(R.drawable.yt_icon)
+        }
+        val label = name ?: email
+        if (!label.isNullOrBlank()) {
+            youtubeUsernameView.text = label
+            youtubeUsernameView.visibility = View.VISIBLE
+        } else {
+            youtubeUsernameView.visibility = View.GONE
         }
     }
 

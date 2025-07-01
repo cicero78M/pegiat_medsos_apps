@@ -79,4 +79,7 @@ python scripts/tiktok_post.py <device-serial> /sdcard/video.mp4 --caption "Hello
 This will open TikTok, select the first video in the gallery, optionally set the
 caption and publish the post.
 
+See [docs/AUTOMATOR.md](docs/AUTOMATOR.md) for details shown on the Automator
+screen inside the app.
+
 

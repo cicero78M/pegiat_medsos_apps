@@ -9,10 +9,12 @@ import android.webkit.WebViewClient
 import android.graphics.Bitmap
 import android.widget.TextView
 import android.widget.Toast
+import android.widget.ImageView
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import com.google.android.material.button.MaterialButton
 import android.widget.ProgressBar
+import com.bumptech.glide.Glide
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -24,6 +26,7 @@ class FacebookFragment : Fragment(R.layout.fragment_facebook) {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         val statusView: TextView = view.findViewById(R.id.text_facebook_status)
+        val avatarView: ImageView = view.findViewById(R.id.image_facebook_avatar)
         val loginButton: MaterialButton = view.findViewById(R.id.button_facebook_login)
         val webView: WebView = view.findViewById(R.id.webview_facebook)
         val progressBar: ProgressBar = view.findViewById(R.id.progress_facebook)
@@ -37,9 +40,9 @@ class FacebookFragment : Fragment(R.layout.fragment_facebook) {
             cookieManager.flush()
             loginButton.text = getString(R.string.logout)
             loginButton.setOnClickListener { logout(statusView, loginButton, cookieManager) }
-            fetchProfile(statusView)
+            fetchProfile(statusView, avatarView)
         } else {
-            loginButton.setOnClickListener { startLogin(webView, progressBar, statusView, loginButton, cookieManager) }
+            loginButton.setOnClickListener { startLogin(webView, progressBar, statusView, avatarView, loginButton, cookieManager) }
         }
     }
 
@@ -48,11 +51,13 @@ class FacebookFragment : Fragment(R.layout.fragment_facebook) {
         manager.removeAllCookies(null)
         manager.flush()
         statusView.text = getString(R.string.not_logged_in)
+        val avatarView: ImageView = requireView().findViewById(R.id.image_facebook_avatar)
+        avatarView.visibility = View.GONE
         loginButton.text = getString(R.string.login_facebook)
         loginButton.setOnClickListener {
             val webView = requireView().findViewById<WebView>(R.id.webview_facebook)
             val progressBar = requireView().findViewById<ProgressBar>(R.id.progress_facebook)
-            startLogin(webView, progressBar, statusView, loginButton, manager)
+            startLogin(webView, progressBar, statusView, avatarView, loginButton, manager)
         }
     }
 
@@ -61,6 +66,7 @@ class FacebookFragment : Fragment(R.layout.fragment_facebook) {
         webView: WebView,
         progressBar: ProgressBar,
         statusView: TextView,
+        avatarView: ImageView,
         loginButton: MaterialButton,
         manager: CookieManager
     ) {
@@ -83,7 +89,7 @@ class FacebookFragment : Fragment(R.layout.fragment_facebook) {
                     loginButton.visibility = View.VISIBLE
                     loginButton.text = getString(R.string.logout)
                     loginButton.setOnClickListener { logout(statusView, loginButton, manager) }
-                    fetchProfile(statusView)
+                    fetchProfile(statusView, avatarView)
                 } else if (!loggedIn && url != null && url.contains("save-device")) {
                     Toast.makeText(requireContext(), R.string.login_failed, Toast.LENGTH_SHORT).show()
                 }
@@ -101,7 +107,7 @@ class FacebookFragment : Fragment(R.layout.fragment_facebook) {
         webView.loadUrl("https://m.facebook.com/login.php?next=https%3A%2F%2Fm.facebook.com%2Fme")
     }
 
-    private fun fetchProfile(statusView: TextView) {
+    private fun fetchProfile(statusView: TextView, avatarView: ImageView) {
         viewLifecycleOwner.lifecycleScope.launch(Dispatchers.IO) {
             try {
                 val cookies = FacebookSessionManager.loadCookies(requireContext()) ?: return@launch
@@ -114,7 +120,24 @@ class FacebookFragment : Fragment(R.layout.fragment_facebook) {
                 client.newCall(req).execute().use { resp ->
                     val body = resp.body?.string().orEmpty()
                     val name = Regex("<title>([^<]+)").find(body)?.groupValues?.get(1) ?: "Facebook"
-                    withContext(Dispatchers.Main) { statusView.text = name }
+                    val avatar = Regex("<img[^>]+src=\\"([^\\"]+)\\"[^>]*profile", RegexOption.IGNORE_CASE)
+                        .find(body)?.groupValues?.get(1)
+                        ?: Regex("profilePicThumb\\\"[^>]*src=\\\"([^\\"]+)\\\"", RegexOption.IGNORE_CASE)
+                            .find(body)?.groupValues?.get(1)
+                    withContext(Dispatchers.Main) {
+                        statusView.text = name
+                        if (avatar != null) {
+                            avatarView.visibility = View.VISIBLE
+                            Glide.with(this@FacebookFragment)
+                                .load(avatar)
+                                .placeholder(R.drawable.profile_avatar_placeholder)
+                                .error(R.drawable.profile_avatar_placeholder)
+                                .circleCrop()
+                                .into(avatarView)
+                        } else {
+                            avatarView.visibility = View.GONE
+                        }
+                    }
                 }
             } catch (e: Exception) {
                 withContext(Dispatchers.Main) {

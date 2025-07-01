@@ -35,7 +35,7 @@ The app retrieves user profile information from the [Cicero_V2](https://github.c
 After a successful login, the token and user ID returned by `/api/auth/user-login`
 are used to request `/api/users/{userId}` to display the profile screen.
 The profile screen displays @username followed by rank and name, the user's NRP and Instagram statistics (post, follower and following counts). These stats are loaded from the backend and will be fetched on demand if missing. The screen also lists the fields Client ID, Satfung, Jabatan, and Status.
-After logging in the user is redirected to `DashboardActivity` where a bottom navigation bar lets them open the profile, Instagram automation, Instagram content and the Twitter page. The Twitter page uses the `twitter4j` library for OAuth authentication. After logging in through the browser you will be redirected back to `repostapp://twitter-callback` which should be configured as a callback URL in the Twitter developer portal. This replaces the manual PIN entry.
+After logging in the user is redirected to `DashboardActivity` where a bottom navigation bar lets them open the profile, Instagram content, the Instagram login tools, a YouTube page and the Twitter page. The Twitter page uses the `twitter4j` library for OAuth authentication. After logging in through the browser you will be redirected back to `repostapp://twitter-callback` which should be configured as a callback URL in the Twitter developer portal. This replaces the manual PIN entry.
 A logout button is provided at the bottom of the profile page.
 
 ## Environment Variables
@@ -79,7 +79,6 @@ python scripts/tiktok_post.py <device-serial> /sdcard/video.mp4 --caption "Hello
 This will open TikTok, select the first video in the gallery, optionally set the
 caption and publish the post.
 
-See [docs/AUTOMATOR.md](docs/AUTOMATOR.md) for details shown on the Automator
-screen inside the app.
+
 
 

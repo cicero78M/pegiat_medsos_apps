@@ -13,9 +13,9 @@
         android:icon="@android:drawable/ic_menu_edit"
         android:title="Insta" />
     <item
-        android:id="@+id/nav_automator"
-        android:icon="@android:drawable/ic_menu_manage"
-        android:title="Automator" />
+        android:id="@+id/nav_youtube"
+        android:icon="@android:drawable/ic_media_play"
+        android:title="YouTube" />
     <item
         android:id="@+id/nav_facebook"
         android:icon="@drawable/facebook_icon"

@@ -17,6 +17,17 @@
         android:padding="32dp"
         android:gravity="center">
 
+        <ImageView
+            android:id="@+id/image_facebook_avatar"
+            android:layout_width="72dp"
+            android:layout_height="72dp"
+            android:layout_marginBottom="8dp"
+            android:background="@drawable/avatar_background"
+            android:src="@drawable/profile_avatar_placeholder"
+            android:scaleType="centerCrop"
+            android:visibility="gone"
+            android:contentDescription="@string/todo" />
+
         <TextView
             android:id="@+id/text_facebook_status"
             android:layout_width="wrap_content"

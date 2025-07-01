@@ -97,11 +97,29 @@
             android:gravity="center"
             android:orientation="horizontal">
 
-            <ImageView
-                android:layout_width="32dp"
-                android:layout_height="32dp"
-                android:src="@drawable/facebook_icon"
-                android:contentDescription="Facebook" />
+            <LinearLayout
+                android:id="@+id/facebook_container"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:gravity="center">
+
+                <ImageView
+                    android:id="@+id/image_facebook"
+                    android:layout_width="32dp"
+                    android:layout_height="32dp"
+                    android:src="@drawable/facebook_icon"
+                    android:contentDescription="Facebook" />
+
+                <TextView
+                    android:id="@+id/text_facebook_username"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:textColor="@android:color/black"
+                    android:textSize="12sp"
+                    android:visibility="gone" />
+            </LinearLayout>
 
             <LinearLayout
                 android:id="@+id/twitter_container"

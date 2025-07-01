@@ -9,9 +9,9 @@
         android:icon="@android:drawable/ic_menu_gallery"
         android:title="Konten" />
     <item
-        android:id="@+id/nav_insta_login"
+        android:id="@+id/nav_instagram_tools"
         android:icon="@android:drawable/ic_menu_edit"
-        android:title="Insta" />
+        android:title="IG Tools" />
     <item
         android:id="@+id/nav_youtube"
         android:icon="@android:drawable/ic_media_play"

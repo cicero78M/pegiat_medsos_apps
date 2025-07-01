@@ -59,6 +59,8 @@ found in the [docs](docs/) directory:
 - [`USAGE.md`](docs/USAGE.md) – how to build and interact with the app.
 - [`landing_page.html`](docs/landing_page.html) – a lightweight landing page
   describing key features and providing a download link.
+- [`IGTOOLS_FACEBOOK.md`](docs/IGTOOLS_FACEBOOK.md) – skenario pemuatan profil
+  Facebook di halaman IG Tools.
 
 ## TikTok Automation
 

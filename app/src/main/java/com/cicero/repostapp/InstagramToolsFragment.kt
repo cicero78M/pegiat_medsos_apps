@@ -65,7 +65,7 @@ data class PostInfo(
 )
 
 @Suppress("DEPRECATION")
-class InstaLoginFragment : Fragment(R.layout.fragment_insta_login) {
+class InstagramToolsFragment : Fragment(R.layout.fragment_instagram_tools) {
     private lateinit var loginContainer: View
     private lateinit var profileContainer: View
     private lateinit var startButton: Button
@@ -214,7 +214,7 @@ class InstaLoginFragment : Fragment(R.layout.fragment_insta_login) {
                     Toast.makeText(requireContext(), "Gagal login: ${e.loginResponse.message}", Toast.LENGTH_SHORT).show()
                 }
             } catch (e: Exception) {
-                Log.e("InstaLoginFragment", "Login failed", e)
+                Log.e("InstagramToolsFragment", "Login failed", e)
                 withContext(Dispatchers.Main) {
                     val message = e.message ?: e.toString()
                     Toast.makeText(requireContext(), "Error: $message", Toast.LENGTH_SHORT).show()
@@ -327,7 +327,7 @@ class InstaLoginFragment : Fragment(R.layout.fragment_insta_login) {
                     withContext(Dispatchers.Main) {
                         twitterUsernameView.text = "@${user.screenName}"
                         twitterUsernameView.visibility = View.VISIBLE
-                        Glide.with(this@InstaLoginFragment)
+                        Glide.with(this@InstagramToolsFragment)
                             .load(user.profileImageURLHttps)
                             .circleCrop()
                             .into(twitterImage)
@@ -758,27 +758,27 @@ class InstaLoginFragment : Fragment(R.layout.fragment_insta_login) {
                     ">>> Initiating environment for re-post ops...",
                     animate = true
                 )
-                Log.d("InstaLoginFragment", "Start reposting posts")
+                Log.d("InstagramToolsFragment", "Start reposting posts")
                 launchRepostSequence(client, posts)
             }
         }
     }
 
     private fun launchRepostSequence(client: IGClient, posts: List<PostInfo>) {
-        Log.d("InstaLoginFragment", "Start repost sequence")
+        Log.d("InstagramToolsFragment", "Start repost sequence")
         val toProcess = posts.filter { !repostedIds.contains(it.code) }
         CoroutineScope(Dispatchers.Main).launch {
             for (post in toProcess) {
-                Log.d("InstaLoginFragment", "Processing post ${'$'}{post.code}")
+                Log.d("InstagramToolsFragment", "Processing post ${'$'}{post.code}")
                 val files = withContext(Dispatchers.IO) {
-                    Log.d("InstaLoginFragment", "Downloading media for ${'$'}{post.code}")
+                    Log.d("InstagramToolsFragment", "Downloading media for ${'$'}{post.code}")
                     downloadMedia(post)
                 }
                 if (files.isEmpty()) continue
                 try {
                     var newLink: String? = null
                     withContext(Dispatchers.IO) {
-                        Log.d("InstaLoginFragment", "Uploading ${'$'}{post.code}")
+                        Log.d("InstagramToolsFragment", "Uploading ${'$'}{post.code}")
                         val response = if (post.isVideo && post.videoUrl != null) {
                             val video = files.first { it.extension == "mp4" }
                             val cover = files.firstOrNull { it.extension != "mp4" } ?: video
@@ -794,7 +794,7 @@ class InstaLoginFragment : Fragment(R.layout.fragment_insta_login) {
                         newLink = response.media?.code?.let { "https://instagram.com/p/$it" }
                     }
                     newLink?.let {
-                        Log.d("InstaLoginFragment", "Send link ${'$'}it")
+                        Log.d("InstagramToolsFragment", "Send link ${'$'}it")
                         appendLog("> repost link: ${'$'}it", animate = true)
                         withContext(Dispatchers.IO) { sendRepostLink(post.code, it) }
                         repostedIds.add(post.code)
@@ -803,14 +803,14 @@ class InstaLoginFragment : Fragment(R.layout.fragment_insta_login) {
                     }
                     // do not delete downloaded files
                 } catch (e: Exception) {
-                    Log.e("InstaLoginFragment", "Error uploading", e)
+                    Log.e("InstagramToolsFragment", "Error uploading", e)
                     appendLog("Error uploading: ${'$'}{e.message}")
                 }
-                Log.d("InstaLoginFragment", "Waiting before next post")
+                Log.d("InstagramToolsFragment", "Waiting before next post")
                 appendLog("> waiting for next post", animate = true)
                 showWaitingDots(60000)
             }
-            Log.d("InstaLoginFragment", "Repost sequence finished")
+            Log.d("InstagramToolsFragment", "Repost sequence finished")
             appendLog(
                 ">>> Repost routine complete.",
                 animate = true
@@ -957,7 +957,7 @@ class InstaLoginFragment : Fragment(R.layout.fragment_insta_login) {
     @Deprecated("Deprecated in Java")
     override fun onCreateOptionsMenu(menu: android.view.Menu, inflater: android.view.MenuInflater) {
         super.onCreateOptionsMenu(menu, inflater)
-        inflater.inflate(R.menu.menu_insta_profile, menu)
+        inflater.inflate(R.menu.menu_instagram_profile, menu)
     }
 
     @Deprecated("Deprecated in Java")

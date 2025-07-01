@@ -6,6 +6,13 @@
     android:padding="32dp">
 
     <TextView
+        android:id="@+id/text_instructions"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/automator_instructions"
+        android:paddingBottom="16dp" />
+
+    <TextView
         android:id="@+id/termux_shell_view"
         android:layout_width="match_parent"
         android:layout_height="0dp"

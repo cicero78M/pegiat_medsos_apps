@@ -7,6 +7,7 @@ import android.widget.Button
 import android.widget.CheckBox
 import android.widget.EditText
 import android.widget.Toast
+import android.net.Uri
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.edit
 import kotlinx.coroutines.CoroutineScope
@@ -36,6 +37,7 @@ class LoginActivity : AppCompatActivity() {
         val showPasswordBox = findViewById<CheckBox>(R.id.checkbox_show_password)
         val saveLoginBox = findViewById<CheckBox>(R.id.checkbox_save_login)
         val loginButton = findViewById<Button>(R.id.button_login)
+        val registerButton = findViewById<Button>(R.id.button_register)
 
         val loginPrefs = getSharedPreferences("login", MODE_PRIVATE)
         val savedNrp = loginPrefs.getString("nrp", "")
@@ -64,6 +66,13 @@ class LoginActivity : AppCompatActivity() {
             } else {
                 login(nrp, phone, save)
             }
+        }
+
+        registerButton.setOnClickListener {
+            val message = getString(R.string.whatsapp_message_registration)
+            val url = "https://wa.me/62895601093339?text=" + Uri.encode(message)
+            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
+            startActivity(intent)
         }
     }
 

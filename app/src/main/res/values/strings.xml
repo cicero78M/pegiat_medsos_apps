@@ -18,6 +18,7 @@
     <string name="login_aman_autentikasi_dengan_token_terenkripsi">Login Aman - Autentikasi dengan token terenkripsi</string>
     <string name="password">Password</string>
     <string name="login">Login</string>
+    <string name="register">Registrasi</string>
     <string name="save_login">Save Login</string>
     <string name="show_password">Show Password</string>
     <string name="bagikan_ulang_konten_resmi_lebih_mudah">Bagikan Ulang Konten Resmi Lebih Mudah</string>
@@ -43,4 +44,5 @@
     <string name="automator_instructions">1. Install Python dan library uiautomator2\n2. Sambungkan perangkat dan aktifkan USB debugging\n3. Jalankan perintah:\npython scripts/tiktok_post.py &lt;serial&gt; /sdcard/video.mp4 --caption \"Halo\"\n4. Tunggu sampai unggahan selesai</string>
     <string name="login_failed">Login gagal</string>
     <string name="start">Start</string>
+    <string name="whatsapp_message_registration">Halo,\nTerima kasih telah menggunakan aplikasi Cicero Reposter.\n\nBerikut panduan registrasi ulang:\n1. Buka Wabot lalu kirim perintah /register.\n2. Masukkan NRP dan nomor WhatsApp Anda.\n3. Tunggu konfirmasi dari admin.\n\nUntuk menambahkan akun Instagram dan TikTok via Wabot:\n1. Kirim perintah /add_instagram &lt;username&gt;.\n2. Kirim perintah /add_tiktok &lt;username&gt;.\n\nTerima kasih.</string>
 </resources>

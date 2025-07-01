@@ -25,6 +25,9 @@ android {
         versionName = "1.5.2"
         buildConfigField("String", "TWITTER_CONSUMER_KEY", "\"${envProps["TWITTER_CONSUMER_KEY"] ?: ""}\"")
         buildConfigField("String", "TWITTER_CONSUMER_SECRET", "\"${envProps["TWITTER_CONSUMER_SECRET"] ?: ""}\"")
+        buildConfigField("String", "YOUTUBE_CLIENT_ID", "\"${envProps["YOUTUBE_CLIENT_ID"] ?: ""}\"")
+        buildConfigField("String", "YOUTUBE_API_KEY", "\"${envProps["YOUTUBE_API_KEY"] ?: ""}\"")
+        buildConfigField("String", "YOUTUBE_CLIENT_SECRET", "\"${envProps["YOUTUBE_CLIENT_SECRET"] ?: ""}\"")
     }
 
     buildFeatures {

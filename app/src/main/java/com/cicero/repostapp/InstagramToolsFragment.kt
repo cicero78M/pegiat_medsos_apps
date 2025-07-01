@@ -7,6 +7,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.content.Intent
 import android.net.Uri
+import androidx.activity.result.contract.ActivityResultContracts
 import android.widget.Button
 import android.widget.EditText
 import android.widget.ImageView
@@ -84,11 +85,16 @@ class InstagramToolsFragment : Fragment(R.layout.fragment_instagram_tools) {
     private lateinit var followingView: TextView
     private lateinit var twitterImage: ImageView
     private lateinit var twitterUsernameView: TextView
+    private lateinit var facebookImage: ImageView
+    private lateinit var facebookUsernameView: TextView
     private lateinit var tiktokImage: ImageView
     private lateinit var tiktokUsernameView: TextView
     private var twitter: Twitter? = null
     private var twitterRequestToken: RequestToken? = null
     private val repostedIds = mutableSetOf<String>()
+    private val facebookLoginLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
+        updateFacebookStatus()
+    }
     private val clientFile: File by lazy { File(requireContext().filesDir, "igclient.ser") }
     private val cookieFile: File by lazy { File(requireContext().filesDir, "igcookie.ser") }
     private var currentUsername: String? = null
@@ -118,6 +124,10 @@ class InstagramToolsFragment : Fragment(R.layout.fragment_instagram_tools) {
         profileView.findViewById<View>(R.id.text_nrp).visibility = View.GONE
         profileView.findViewById<View>(R.id.info_container).visibility = View.GONE
         profileView.findViewById<Button>(R.id.button_logout).visibility = View.GONE
+
+        val facebookContainer = view.findViewById<View>(R.id.facebook_container)
+        facebookImage = facebookContainer.findViewById(R.id.image_facebook)
+        facebookUsernameView = facebookContainer.findViewById(R.id.text_facebook_username)
 
         val twitterContainer = view.findViewById<View>(R.id.twitter_container)
         twitterImage = twitterContainer.findViewById(R.id.image_twitter)
@@ -163,8 +173,12 @@ class InstagramToolsFragment : Fragment(R.layout.fragment_instagram_tools) {
         restoreSession()
         updateTwitterStatus()
         updateTiktokStatus()
+        updateFacebookStatus()
 
         twitterImage.setOnClickListener { startTwitterLogin() }
+        facebookImage.setOnClickListener {
+            facebookLoginLauncher.launch(android.content.Intent(requireContext(), FacebookLoginActivity::class.java))
+        }
 
         view.findViewById<Button>(R.id.button_login_insta).setOnClickListener {
             val user = username.text.toString().trim()
@@ -181,6 +195,7 @@ class InstagramToolsFragment : Fragment(R.layout.fragment_instagram_tools) {
         super.onResume()
         updateTwitterStatus()
         updateTiktokStatus()
+        updateFacebookStatus()
     }
 
     private fun performLogin(user: String, pass: String) {
@@ -363,6 +378,49 @@ class InstagramToolsFragment : Fragment(R.layout.fragment_instagram_tools) {
         } else {
             tiktokImage.setImageResource(R.drawable.tiktok_icon)
             tiktokUsernameView.visibility = View.GONE
+        }
+    }
+
+    private fun updateFacebookStatus() {
+        val cookies = FacebookSessionManager.loadCookies(requireContext())
+        if (cookies != null) {
+            viewLifecycleOwner.lifecycleScope.launch(Dispatchers.IO) {
+                try {
+                    val client = OkHttpClient()
+                    val req = Request.Builder()
+                        .url("https://m.facebook.com/me")
+                        .header("Cookie", cookies)
+                        .header("User-Agent", "Mozilla/5.0 (Android)")
+                        .build()
+                    client.newCall(req).execute().use { resp ->
+                        val body = resp.body?.string().orEmpty()
+                        val name = Regex("<title>([^<]+)").find(body)?.groupValues?.get(1)
+                        val picUrl = Regex("src=\"([^\"]+profile[^\"]*)\"").find(body)?.groupValues?.get(1)
+                        withContext(Dispatchers.Main) {
+                            if (!name.isNullOrBlank()) {
+                                facebookUsernameView.text = name
+                                facebookUsernameView.visibility = View.VISIBLE
+                            }
+                            if (!picUrl.isNullOrBlank()) {
+                                Glide.with(this@InstagramToolsFragment)
+                                    .load(picUrl)
+                                    .circleCrop()
+                                    .into(facebookImage)
+                            } else {
+                                facebookImage.setImageResource(R.drawable.facebook_icon)
+                            }
+                        }
+                    }
+                } catch (_: Exception) {
+                    withContext(Dispatchers.Main) {
+                        facebookImage.setImageResource(R.drawable.facebook_icon)
+                        facebookUsernameView.visibility = View.GONE
+                    }
+                }
+            }
+        } else {
+            facebookImage.setImageResource(R.drawable.facebook_icon)
+            facebookUsernameView.visibility = View.GONE
         }
     }
 

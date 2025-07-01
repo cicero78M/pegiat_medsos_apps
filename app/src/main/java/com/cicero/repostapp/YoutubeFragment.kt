@@ -13,12 +13,17 @@ import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.android.gms.common.api.ApiException
 import com.google.android.gms.common.api.Scope
 import com.google.android.material.button.MaterialButton
+import com.cicero.repostapp.BuildConfig
 
 class YoutubeFragment : Fragment(R.layout.fragment_youtube) {
     private lateinit var client: GoogleSignInClient
     private lateinit var statusView: TextView
     private lateinit var loginButton: MaterialButton
     private lateinit var logoutButton: MaterialButton
+
+    private val youtubeClientId = BuildConfig.YOUTUBE_CLIENT_ID
+    private val youtubeApiKey = BuildConfig.YOUTUBE_API_KEY
+    private val youtubeClientSecret = BuildConfig.YOUTUBE_CLIENT_SECRET
 
     private val launcher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         val task = GoogleSignIn.getSignedInAccountFromIntent(result.data)
@@ -36,10 +41,14 @@ class YoutubeFragment : Fragment(R.layout.fragment_youtube) {
         loginButton = view.findViewById(R.id.button_youtube_login)
         logoutButton = view.findViewById(R.id.button_youtube_logout)
 
-        val options = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+        val builder = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
             .requestEmail()
             .requestScopes(Scope("https://www.googleapis.com/auth/youtube.readonly"))
-            .build()
+        if (youtubeClientId.isNotBlank()) {
+            builder.requestIdToken(youtubeClientId)
+            builder.requestServerAuthCode(youtubeClientId)
+        }
+        val options = builder.build()
         client = GoogleSignIn.getClient(requireContext(), options)
 
         val account = GoogleSignIn.getLastSignedInAccount(requireContext())

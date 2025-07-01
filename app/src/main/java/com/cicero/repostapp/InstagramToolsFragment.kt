@@ -425,7 +425,13 @@ class InstagramToolsFragment : Fragment(R.layout.fragment_instagram_tools) {
                     client.newCall(req).execute().use { resp ->
                         val body = resp.body?.string().orEmpty()
                         val name = Regex("<title>([^<]+)").find(body)?.groupValues?.get(1)
-                        val picUrl = Regex("src=\"([^\"]+profile[^\"]*)\"").find(body)?.groupValues?.get(1)
+                        val picUrl =
+                            Regex("<img[^>]+src=\\\"([^\\\"]+)\\\"[^>]*profile", RegexOption.IGNORE_CASE)
+                                .find(body)?.groupValues?.get(1)
+                                ?: Regex(
+                                    "profilePicThumb\\\"[^>]*src=\\\"([^\\\"]+)\\\"",
+                                    RegexOption.IGNORE_CASE
+                                ).find(body)?.groupValues?.get(1)
                         withContext(Dispatchers.Main) {
                             if (!name.isNullOrBlank()) {
                                 facebookUsernameView.text = name

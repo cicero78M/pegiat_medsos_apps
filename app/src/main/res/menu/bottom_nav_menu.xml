@@ -20,8 +20,4 @@
         android:id="@+id/nav_facebook"
         android:icon="@drawable/facebook_icon"
         android:title="Facebook" />
-    <item
-        android:id="@+id/nav_twitter"
-        android:icon="@android:drawable/ic_menu_share"
-        android:title="Twitter" />
 </menu>

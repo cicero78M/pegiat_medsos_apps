@@ -22,17 +22,32 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 
 class FacebookFragment : Fragment(R.layout.fragment_facebook) {
+    private lateinit var statusView: TextView
+    private lateinit var avatarView: ImageView
+    private lateinit var loginButton: MaterialButton
+    private lateinit var webView: WebView
+    private lateinit var progressBar: ProgressBar
+    private val cookieManager: CookieManager = CookieManager.getInstance()
+
     @SuppressLint("SetJavaScriptEnabled")
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        val statusView: TextView = view.findViewById(R.id.text_facebook_status)
-        val avatarView: ImageView = view.findViewById(R.id.image_facebook_avatar)
-        val loginButton: MaterialButton = view.findViewById(R.id.button_facebook_login)
-        val webView: WebView = view.findViewById(R.id.webview_facebook)
-        val progressBar: ProgressBar = view.findViewById(R.id.progress_facebook)
-        val cookieManager = CookieManager.getInstance()
+        statusView = view.findViewById(R.id.text_facebook_status)
+        avatarView = view.findViewById(R.id.image_facebook_avatar)
+        loginButton = view.findViewById(R.id.button_facebook_login)
+        webView = view.findViewById(R.id.webview_facebook)
+        progressBar = view.findViewById(R.id.progress_facebook)
         cookieManager.setAcceptCookie(true)
 
+        refreshStatus()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        refreshStatus()
+    }
+
+    private fun refreshStatus() {
         val saved = FacebookSessionManager.loadCookies(requireContext())
         if (saved != null) {
             cookieManager.setCookie("https://facebook.com", saved)
@@ -42,7 +57,12 @@ class FacebookFragment : Fragment(R.layout.fragment_facebook) {
             loginButton.setOnClickListener { logout(statusView, loginButton, cookieManager) }
             fetchProfile(statusView, avatarView)
         } else {
-            loginButton.setOnClickListener { startLogin(webView, progressBar, statusView, avatarView, loginButton, cookieManager) }
+            statusView.text = getString(R.string.not_logged_in)
+            avatarView.visibility = View.GONE
+            loginButton.text = getString(R.string.login_facebook)
+            loginButton.setOnClickListener {
+                startLogin(webView, progressBar, statusView, avatarView, loginButton, cookieManager)
+            }
         }
     }
 

@@ -33,7 +33,7 @@ class FacebookFragment : Fragment(R.layout.fragment_facebook) {
         val saved = FacebookSessionManager.loadCookies(requireContext())
         if (saved != null) {
             cookieManager.setCookie("https://facebook.com", saved)
-            cookieManager.setCookie("https://basic.facebook.com", saved)
+            cookieManager.setCookie("https://m.facebook.com", saved)
             cookieManager.flush()
             loginButton.text = getString(R.string.logout)
             loginButton.setOnClickListener { logout(statusView, loginButton, cookieManager) }
@@ -75,7 +75,7 @@ class FacebookFragment : Fragment(R.layout.fragment_facebook) {
 
             override fun onPageFinished(view: WebView?, url: String?) {
                 progressBar.visibility = View.GONE
-                val cookies = manager.getCookie("https://basic.facebook.com")
+                val cookies = manager.getCookie("https://m.facebook.com")
                 val loggedIn = !cookies.isNullOrBlank() && cookies.contains("c_user=")
                 if (loggedIn && url != null && url.contains("/me")) {
                     FacebookSessionManager.saveCookies(requireContext(), cookies)
@@ -98,7 +98,7 @@ class FacebookFragment : Fragment(R.layout.fragment_facebook) {
                 Toast.makeText(requireContext(), error?.description ?: error.toString(), Toast.LENGTH_SHORT).show()
             }
         }
-        webView.loadUrl("https://basic.facebook.com/login.php?next=https%3A%2F%2Fbasic.facebook.com%2Fme")
+        webView.loadUrl("https://m.facebook.com/login.php?next=https%3A%2F%2Fm.facebook.com%2Fme")
     }
 
     private fun fetchProfile(statusView: TextView) {
@@ -107,7 +107,7 @@ class FacebookFragment : Fragment(R.layout.fragment_facebook) {
                 val cookies = FacebookSessionManager.loadCookies(requireContext()) ?: return@launch
                 val client = OkHttpClient()
                 val req = Request.Builder()
-                    .url("https://basic.facebook.com/me")
+                    .url("https://m.facebook.com/me")
                     .header("Cookie", cookies)
                     .header("User-Agent", "Mozilla/5.0 (Android)")
                     .build()

@@ -90,39 +90,6 @@
             android:layout_height="wrap_content" />
 
         <LinearLayout
-            android:id="@+id/options_container"
-            android:orientation="horizontal"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:paddingStart="16dp"
-            android:paddingEnd="16dp"
-            android:layout_marginTop="8dp">
-
-            <CheckBox
-                android:id="@+id/checkbox_like"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Likes"
-                android:checked="true" />
-
-            <CheckBox
-                android:id="@+id/checkbox_repost"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Repost"
-                android:checked="true"
-                android:layout_marginStart="16dp" />
-
-            <CheckBox
-                android:id="@+id/checkbox_comment"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Komentar"
-                android:checked="true"
-                android:layout_marginStart="16dp" />
-        </LinearLayout>
-
-        <LinearLayout
             android:id="@+id/social_icons_row"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -193,6 +160,39 @@
                 android:src="@drawable/yt_icon"
                 android:contentDescription="YouTube" />
 
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/options_container"
+            android:orientation="horizontal"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingStart="16dp"
+            android:paddingEnd="16dp"
+            android:layout_marginTop="8dp">
+
+            <CheckBox
+                android:id="@+id/checkbox_like"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Likes"
+                android:checked="true" />
+
+            <CheckBox
+                android:id="@+id/checkbox_repost"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Repost"
+                android:checked="true"
+                android:layout_marginStart="16dp" />
+
+            <CheckBox
+                android:id="@+id/checkbox_comment"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Komentar"
+                android:checked="true"
+                android:layout_marginStart="16dp" />
         </LinearLayout>
 
         <Button

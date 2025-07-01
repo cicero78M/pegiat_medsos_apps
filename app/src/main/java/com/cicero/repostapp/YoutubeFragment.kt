@@ -39,6 +39,7 @@ class YoutubeFragment : Fragment(R.layout.fragment_youtube) {
             onSignedIn(account)
         } catch (e: Exception) {
             statusView.text = getString(R.string.login_failed)
+            resultView.text = e.localizedMessage ?: e.toString()
         }
     }
 

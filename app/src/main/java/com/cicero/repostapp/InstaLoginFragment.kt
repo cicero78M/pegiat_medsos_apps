@@ -325,7 +325,7 @@ class InstaLoginFragment : Fragment(R.layout.fragment_insta_login) {
                 try {
                     val user = tw.verifyCredentials()
                     withContext(Dispatchers.Main) {
-                        twitterUsernameView.text = "@${'$'}{user.screenName}"
+                        twitterUsernameView.text = "@${user.screenName}"
                         twitterUsernameView.visibility = View.VISIBLE
                         Glide.with(this@InstaLoginFragment)
                             .load(user.profileImageURLHttps)

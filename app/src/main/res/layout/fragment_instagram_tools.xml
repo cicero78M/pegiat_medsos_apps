@@ -171,12 +171,30 @@
                     android:visibility="gone" />
             </LinearLayout>
 
-            <ImageView
-                android:layout_width="32dp"
-                android:layout_height="32dp"
+            <LinearLayout
+                android:id="@+id/youtube_container"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
                 android:layout_marginStart="16dp"
-                android:src="@drawable/yt_icon"
-                android:contentDescription="YouTube" />
+                android:orientation="vertical"
+                android:gravity="center">
+
+                <ImageView
+                    android:id="@+id/image_youtube"
+                    android:layout_width="32dp"
+                    android:layout_height="32dp"
+                    android:src="@drawable/yt_icon"
+                    android:contentDescription="YouTube" />
+
+                <TextView
+                    android:id="@+id/text_youtube_username"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:textColor="@android:color/black"
+                    android:textSize="12sp"
+                    android:visibility="gone" />
+            </LinearLayout>
 
         </LinearLayout>
 

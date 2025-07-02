@@ -38,11 +38,8 @@
     <string name="verify_pin">Verifikasi PIN</string>
     <string name="enter_pin">Masukkan PIN</string>
     <string name="not_logged_in">Belum login</string>
-    <string name="login_facebook">Login dengan Facebook</string>
-    <string name="login_youtube">Login dengan YouTube</string>
     <string name="login_failed">Login gagal</string>
     <string name="loading">Memuat…</string>
-    <string name="facebook_app_id">YOUR_FACEBOOK_APP_ID</string>
     <string name="start">Start</string>
     <string name="whatsapp_message_registration">Halo,\nTerima kasih telah menggunakan aplikasi Cicero Reposter.\n\nBerikut panduan registrasi ulang:\n1. Buka Wabot lalu kirim perintah /register.\n2. Masukkan NRP dan nomor WhatsApp Anda.\n3. Tunggu konfirmasi dari admin.\n\nUntuk menambahkan akun Instagram dan TikTok via Wabot:\n1. Kirim perintah /add_instagram &lt;username&gt;.\n2. Kirim perintah /add_tiktok &lt;username&gt;.\n\nTerima kasih.</string>
 </resources>

@@ -1,10 +1,9 @@
-# Facebook Login via WebView
+# Facebook Login via Facebook SDK
 
-This fragment shows how the application logs a user into Facebook using a built-in WebView.
+Fragment ini kini menggunakan Facebook SDK resmi sehingga proses login lebih sederhana.
 
-1. When the **Login dengan Facebook** button is pressed the WebView is displayed.
-2. The login page from `m.facebook.com` is loaded and a progress bar is shown.
-3. After credentials are entered and the page redirects to `/me`, cookies are stored securely using `FacebookSessionManager`.
-4. The fragment fetches the `/me` page again to read the title and profile image. The user's name and avatar are displayed when the session is active.
-5. Whenever the fragment resumes it checks saved cookies and updates the profile view, so returning users immediately see their information.
-6. Pressing **Logout** removes the cookies and hides the profile picture while showing the login button again.
+1. Ketika tombol **Login dengan Facebook** ditekan, `LoginManager.logInWithReadPermissions()` dipanggil dengan izin `public_profile`.
+2. Setelah autentikasi berhasil, callback `onSuccess` menyimpan token bawaan SDK.
+3. Fungsi `updateFacebookStatus()` menjalankan `GraphRequest.newMeRequest()` untuk mendapatkan nama dan foto profil.
+4. Selama token tersimpan dan belum kedaluwarsa, fragment otomatis menampilkan informasi pengguna tanpa perlu login ulang.
+5. Tombol **Logout** memanggil `LoginManager.logOut()` dan menyembunyikan data profil.

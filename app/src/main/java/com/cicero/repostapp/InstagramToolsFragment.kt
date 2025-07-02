@@ -18,25 +18,12 @@ import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import com.bumptech.glide.Glide
-import com.google.android.gms.auth.api.signin.GoogleSignIn
-import com.google.android.gms.auth.api.signin.GoogleSignInAccount
-import com.google.android.gms.auth.api.signin.GoogleSignInClient
-import com.google.android.gms.auth.api.signin.GoogleSignInOptions
-import com.google.android.gms.common.api.ApiException
-import com.google.android.gms.common.api.Scope
 import com.github.instagram4j.instagram4j.IGClient
 import com.github.instagram4j.instagram4j.IGClient.Builder.LoginHandler
 import com.github.instagram4j.instagram4j.actions.timeline.TimelineAction
 import com.github.instagram4j.instagram4j.exceptions.IGLoginException
 import com.github.instagram4j.instagram4j.models.media.timeline.ImageCarouselItem
 import com.github.instagram4j.instagram4j.models.media.timeline.TimelineCarouselMedia
-import com.facebook.CallbackManager
-import com.facebook.FacebookCallback
-import com.facebook.FacebookException
-import com.facebook.login.LoginManager
-import com.facebook.login.LoginResult
-import com.facebook.AccessToken
-import com.facebook.GraphRequest
 import com.github.instagram4j.instagram4j.models.media.timeline.TimelineImageMedia
 import com.github.instagram4j.instagram4j.models.media.timeline.TimelineVideoMedia
 import com.github.instagram4j.instagram4j.models.media.timeline.VideoCarouselItem
@@ -98,25 +85,11 @@ class InstagramToolsFragment : Fragment(R.layout.fragment_instagram_tools) {
     private lateinit var followingView: TextView
     private lateinit var twitterImage: ImageView
     private lateinit var twitterUsernameView: TextView
-    private lateinit var facebookImage: ImageView
-    private lateinit var facebookUsernameView: TextView
     private lateinit var tiktokImage: ImageView
     private lateinit var tiktokUsernameView: TextView
-    private lateinit var youtubeImage: ImageView
-    private lateinit var youtubeUsernameView: TextView
-    private lateinit var youtubeClient: GoogleSignInClient
-    private val youtubeLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-        val task = GoogleSignIn.getSignedInAccountFromIntent(result.data)
-        try {
-            val account = task.getResult(ApiException::class.java)
-            onYoutubeSignedIn(account)
-        } catch (_: Exception) {
-        }
-    }
     private var twitter: Twitter? = null
     private var twitterRequestToken: RequestToken? = null
     private val repostedIds = mutableSetOf<String>()
-    private lateinit var facebookCallbackManager: CallbackManager
     private val clientFile: File by lazy { File(requireContext().filesDir, "igclient.ser") }
     private val cookieFile: File by lazy { File(requireContext().filesDir, "igcookie.ser") }
     private var currentUsername: String? = null
@@ -128,13 +101,8 @@ class InstagramToolsFragment : Fragment(R.layout.fragment_instagram_tools) {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setHasOptionsMenu(true)
-        facebookCallbackManager = CallbackManager.Factory.create()
     }
 
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: android.content.Intent?) {
-        super.onActivityResult(requestCode, resultCode, data)
-        facebookCallbackManager.onActivityResult(requestCode, resultCode, data)
-    }
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         val username = view.findViewById<EditText>(R.id.input_username)
@@ -153,10 +121,6 @@ class InstagramToolsFragment : Fragment(R.layout.fragment_instagram_tools) {
         profileView.findViewById<View>(R.id.info_container).visibility = View.GONE
         profileView.findViewById<Button>(R.id.button_logout).visibility = View.GONE
 
-        val facebookContainer = view.findViewById<View>(R.id.facebook_container)
-        facebookImage = facebookContainer.findViewById(R.id.image_facebook)
-        facebookUsernameView = facebookContainer.findViewById(R.id.text_facebook_username)
-
         val twitterContainer = view.findViewById<View>(R.id.twitter_container)
         twitterImage = twitterContainer.findViewById(R.id.image_twitter)
         twitterUsernameView = twitterContainer.findViewById(R.id.text_twitter_username)
@@ -166,16 +130,6 @@ class InstagramToolsFragment : Fragment(R.layout.fragment_instagram_tools) {
         tiktokUsernameView = tiktokContainer.findViewById(R.id.text_tiktok_username)
         tiktokImage.setOnClickListener { showTiktokDialog() }
 
-        val youtubeContainer = view.findViewById<View>(R.id.youtube_container)
-        youtubeImage = youtubeContainer.findViewById(R.id.image_youtube)
-        youtubeUsernameView = youtubeContainer.findViewById(R.id.text_youtube_username)
-
-        val options = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-            .requestEmail()
-            .requestScopes(Scope("https://www.googleapis.com/auth/youtube.readonly"))
-            .build()
-        youtubeClient = GoogleSignIn.getClient(requireContext(), options)
-        youtubeImage.setOnClickListener { youtubeLauncher.launch(youtubeClient.signInIntent) }
 
         startButton = view.findViewById(R.id.button_start)
         likeCheckbox = view.findViewById(R.id.checkbox_like)
@@ -212,11 +166,8 @@ class InstagramToolsFragment : Fragment(R.layout.fragment_instagram_tools) {
         restoreSession()
         updateTwitterStatus()
         updateTiktokStatus()
-        updateFacebookStatus()
-        updateYoutubeStatus()
 
         twitterImage.setOnClickListener { startTwitterLogin() }
-        facebookImage.setOnClickListener { startFacebookLogin() }
 
         view.findViewById<Button>(R.id.button_login_insta).setOnClickListener {
             val user = username.text.toString().trim()
@@ -233,8 +184,6 @@ class InstagramToolsFragment : Fragment(R.layout.fragment_instagram_tools) {
         super.onResume()
         updateTwitterStatus()
         updateTiktokStatus()
-        updateFacebookStatus()
-        updateYoutubeStatus()
     }
 
     private fun performLogin(user: String, pass: String) {
@@ -363,21 +312,6 @@ class InstagramToolsFragment : Fragment(R.layout.fragment_instagram_tools) {
         }
     }
 
-    private fun startFacebookLogin() {
-        LoginManager.getInstance().registerCallback(facebookCallbackManager, object : FacebookCallback<LoginResult> {
-            override fun onSuccess(result: LoginResult) {
-                updateFacebookStatus()
-            }
-
-            override fun onCancel() {}
-
-            override fun onError(error: FacebookException) {
-                Toast.makeText(requireContext(), error.message ?: error.toString(), Toast.LENGTH_SHORT).show()
-            }
-        })
-        LoginManager.getInstance().logInWithReadPermissions(this, listOf("public_profile"))
-    }
-
     private fun updateTwitterStatus() {
         val stored = TwitterAuthManager.loadAccessToken(requireContext())
         if (stored != null) {
@@ -435,85 +369,6 @@ class InstagramToolsFragment : Fragment(R.layout.fragment_instagram_tools) {
         }
     }
 
-    private fun updateFacebookStatus() {
-        val token = AccessToken.getCurrentAccessToken()
-        if (token != null && !token.isExpired) {
-            val request = GraphRequest.newMeRequest(token) { obj, _ ->
-                val name = obj?.optString("name")
-                val picUrl = obj?.optJSONObject("picture")?.optJSONObject("data")?.optString("url")
-                if (!name.isNullOrBlank()) {
-                    facebookUsernameView.text = name
-                    facebookUsernameView.visibility = View.VISIBLE
-                }
-                if (!picUrl.isNullOrBlank()) {
-                    Glide.with(this)
-                        .load(picUrl)
-                        .circleCrop()
-                        .into(facebookImage)
-                } else {
-                    facebookImage.setImageResource(R.drawable.facebook_icon)
-                }
-            }
-            val params = Bundle()
-            params.putString("fields", "name,picture.type(large)")
-            request.parameters = params
-            request.executeAsync()
-        } else {
-            facebookImage.setImageResource(R.drawable.facebook_icon)
-            facebookUsernameView.visibility = View.GONE
-        }
-    }
-
-    private fun updateYoutubeStatus() {
-        val account = GoogleSignIn.getLastSignedInAccount(requireContext())
-        if (account != null) {
-            onYoutubeSignedIn(account)
-        } else {
-            val stored = YoutubeAuthManager.loadAccount(requireContext())
-            if (stored != null) {
-                val (_, name, photo) = stored
-                if (!photo.isNullOrBlank()) {
-                    Glide.with(this)
-                        .load(photo)
-                        .circleCrop()
-                        .into(youtubeImage)
-                } else {
-                    youtubeImage.setImageResource(R.drawable.yt_icon)
-                }
-                if (!name.isNullOrBlank()) {
-                    youtubeUsernameView.text = name
-                    youtubeUsernameView.visibility = View.VISIBLE
-                } else {
-                    youtubeUsernameView.visibility = View.GONE
-                }
-            } else {
-                youtubeImage.setImageResource(R.drawable.yt_icon)
-                youtubeUsernameView.visibility = View.GONE
-            }
-        }
-    }
-
-    private fun onYoutubeSignedIn(account: GoogleSignInAccount) {
-        val email = account.email
-        val name = account.displayName
-        val photo = account.photoUrl?.toString()
-        YoutubeAuthManager.saveAccount(requireContext(), email, name, photo)
-        if (!photo.isNullOrBlank()) {
-            Glide.with(this)
-                .load(photo)
-                .circleCrop()
-                .into(youtubeImage)
-        } else {
-            youtubeImage.setImageResource(R.drawable.yt_icon)
-        }
-        val label = name ?: email
-        if (!label.isNullOrBlank()) {
-            youtubeUsernameView.text = label
-            youtubeUsernameView.visibility = View.VISIBLE
-        } else {
-            youtubeUsernameView.visibility = View.GONE
-        }
-    }
 
     private fun checkSubscriptionStatus(username: String?) {
         val user = username ?: return
@@ -973,10 +828,8 @@ class InstagramToolsFragment : Fragment(R.layout.fragment_instagram_tools) {
             put("shortcode", sc)
             put("user_id", userId)
             put("instagram_link", link)
-            put("facebook_link", JSONObject.NULL)
             put("twitter_link", JSONObject.NULL)
             put("tiktok_link", JSONObject.NULL)
-            put("youtube_link", JSONObject.NULL)
         }
         val body = json.toString().toRequestBody("application/json".toMediaType())
         val client = OkHttpClient()

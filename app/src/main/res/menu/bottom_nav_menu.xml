@@ -12,12 +12,5 @@
         android:id="@+id/nav_instagram_tools"
         android:icon="@android:drawable/ic_menu_edit"
         android:title="IG Tools" />
-    <item
-        android:id="@+id/nav_youtube"
-        android:icon="@android:drawable/ic_media_play"
-        android:title="YouTube" />
-    <item
-        android:id="@+id/nav_facebook"
-        android:icon="@drawable/facebook_icon"
-        android:title="Facebook" />
+    <!-- Removed YouTube and Facebook pages -->
 </menu>

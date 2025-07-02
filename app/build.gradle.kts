@@ -25,10 +25,6 @@ android {
         versionName = "1.5.2"
         buildConfigField("String", "TWITTER_CONSUMER_KEY", "\"${envProps["TWITTER_CONSUMER_KEY"] ?: ""}\"")
         buildConfigField("String", "TWITTER_CONSUMER_SECRET", "\"${envProps["TWITTER_CONSUMER_SECRET"] ?: ""}\"")
-        buildConfigField("String", "YOUTUBE_CLIENT_ID", "\"${envProps["YOUTUBE_CLIENT_ID"] ?: ""}\"")
-        buildConfigField("String", "YOUTUBE_API_KEY", "\"${envProps["YOUTUBE_API_KEY"] ?: ""}\"")
-        buildConfigField("String", "YOUTUBE_CLIENT_SECRET", "\"${envProps["YOUTUBE_CLIENT_SECRET"] ?: ""}\"")
-        resValue("string", "facebook_app_id", "${envProps["FACEBOOK_APP_ID"] ?: ""}")
     }
 
     buildFeatures {
@@ -66,7 +62,6 @@ dependencies {
     implementation("com.github.instagram4j:instagram4j:2.0.7")
     implementation("androidx.security:security-crypto:1.1.0-alpha06")
     implementation("org.twitter4j:twitter4j-core:4.0.7")
-    implementation("com.facebook.android:facebook-login:18.0.3")
-    implementation("com.google.android.gms:play-services-auth:21.2.0")
+    
 
 }

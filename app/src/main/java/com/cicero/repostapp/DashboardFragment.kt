@@ -433,10 +433,8 @@ class DashboardFragment : Fragment(R.layout.fragment_dashboard) {
                     if (o.optString("shortcode") == sc && o.optString("user_id") == userId) {
                         return mapOf(
                             "instagram" to o.optString("instagram_link").takeIf { it.isNotBlank() },
-                            "facebook" to o.optString("facebook_link").takeIf { it.isNotBlank() },
                             "twitter" to o.optString("twitter_link").takeIf { it.isNotBlank() },
-                            "tiktok" to o.optString("tiktok_link").takeIf { it.isNotBlank() },
-                            "youtube" to o.optString("youtube_link").takeIf { it.isNotBlank() }
+                            "tiktok" to o.optString("tiktok_link").takeIf { it.isNotBlank() }
                         )
                     }
                 }
@@ -463,11 +461,9 @@ class DashboardFragment : Fragment(R.layout.fragment_dashboard) {
 
             Laporan Link Pelaksanaan Sebagai Berikut :
             1. ${links["instagram"] ?: "-"},
-            2. ${links["facebook"] ?: "-"},
-            3. ${links["twitter"] ?: "-"},
-            4. ${links["tiktok"] ?: "-"},
-            5. ${links["youtube"] ?: "-"},
-
+            2. ${links["twitter"] ?: "-"},
+            3. ${links["tiktok"] ?: "-"},
+            
             DUMM.
         """.trimIndent()
         val intent = Intent(Intent.ACTION_SEND).apply {

@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest package="com.cicero.repostapp"
-    xmlns:android="http://schemas.android.com/apk/res/android">
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
     <uses-permission android:name="android.permission.INTERNET" />
 
     <application
@@ -25,7 +26,8 @@
         <provider
             android:name="com.facebook.internal.FacebookInitProvider"
             android:authorities="com.facebook.app.FacebookContentProvider${applicationId}"
-            android:exported="false" />
+            android:exported="false"
+            tools:replace="android:authorities" />
         <activity
             android:name=".TwitterCallbackActivity"
             android:exported="true">

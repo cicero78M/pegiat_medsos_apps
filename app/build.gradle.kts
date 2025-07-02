@@ -28,6 +28,7 @@ android {
         buildConfigField("String", "YOUTUBE_CLIENT_ID", "\"${envProps["YOUTUBE_CLIENT_ID"] ?: ""}\"")
         buildConfigField("String", "YOUTUBE_API_KEY", "\"${envProps["YOUTUBE_API_KEY"] ?: ""}\"")
         buildConfigField("String", "YOUTUBE_CLIENT_SECRET", "\"${envProps["YOUTUBE_CLIENT_SECRET"] ?: ""}\"")
+        resValue("string", "facebook_app_id", "${envProps["FACEBOOK_APP_ID"] ?: ""}")
     }
 
     buildFeatures {

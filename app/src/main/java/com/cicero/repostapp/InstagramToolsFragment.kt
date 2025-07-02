@@ -30,6 +30,13 @@ import com.github.instagram4j.instagram4j.actions.timeline.TimelineAction
 import com.github.instagram4j.instagram4j.exceptions.IGLoginException
 import com.github.instagram4j.instagram4j.models.media.timeline.ImageCarouselItem
 import com.github.instagram4j.instagram4j.models.media.timeline.TimelineCarouselMedia
+import com.facebook.CallbackManager
+import com.facebook.FacebookCallback
+import com.facebook.FacebookException
+import com.facebook.login.LoginManager
+import com.facebook.login.LoginResult
+import com.facebook.AccessToken
+import com.facebook.GraphRequest
 import com.github.instagram4j.instagram4j.models.media.timeline.TimelineImageMedia
 import com.github.instagram4j.instagram4j.models.media.timeline.TimelineVideoMedia
 import com.github.instagram4j.instagram4j.models.media.timeline.VideoCarouselItem
@@ -109,9 +116,7 @@ class InstagramToolsFragment : Fragment(R.layout.fragment_instagram_tools) {
     private var twitter: Twitter? = null
     private var twitterRequestToken: RequestToken? = null
     private val repostedIds = mutableSetOf<String>()
-    private val facebookLoginLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
-        updateFacebookStatus()
-    }
+    private lateinit var facebookCallbackManager: CallbackManager
     private val clientFile: File by lazy { File(requireContext().filesDir, "igclient.ser") }
     private val cookieFile: File by lazy { File(requireContext().filesDir, "igcookie.ser") }
     private var currentUsername: String? = null
@@ -123,6 +128,12 @@ class InstagramToolsFragment : Fragment(R.layout.fragment_instagram_tools) {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setHasOptionsMenu(true)
+        facebookCallbackManager = CallbackManager.Factory.create()
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: android.content.Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        facebookCallbackManager.onActivityResult(requestCode, resultCode, data)
     }
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -205,9 +216,7 @@ class InstagramToolsFragment : Fragment(R.layout.fragment_instagram_tools) {
         updateYoutubeStatus()
 
         twitterImage.setOnClickListener { startTwitterLogin() }
-        facebookImage.setOnClickListener {
-            facebookLoginLauncher.launch(android.content.Intent(requireContext(), FacebookLoginActivity::class.java))
-        }
+        facebookImage.setOnClickListener { startFacebookLogin() }
 
         view.findViewById<Button>(R.id.button_login_insta).setOnClickListener {
             val user = username.text.toString().trim()
@@ -354,6 +363,21 @@ class InstagramToolsFragment : Fragment(R.layout.fragment_instagram_tools) {
         }
     }
 
+    private fun startFacebookLogin() {
+        LoginManager.getInstance().registerCallback(facebookCallbackManager, object : FacebookCallback<LoginResult> {
+            override fun onSuccess(result: LoginResult) {
+                updateFacebookStatus()
+            }
+
+            override fun onCancel() {}
+
+            override fun onError(error: FacebookException) {
+                Toast.makeText(requireContext(), error.message ?: error.toString(), Toast.LENGTH_SHORT).show()
+            }
+        })
+        LoginManager.getInstance().logInWithReadPermissions(this, listOf("public_profile"))
+    }
+
     private fun updateTwitterStatus() {
         val stored = TwitterAuthManager.loadAccessToken(requireContext())
         if (stored != null) {
@@ -412,48 +436,28 @@ class InstagramToolsFragment : Fragment(R.layout.fragment_instagram_tools) {
     }
 
     private fun updateFacebookStatus() {
-        val cookies = FacebookSessionManager.loadCookies(requireContext())
-        if (cookies != null) {
-            viewLifecycleOwner.lifecycleScope.launch(Dispatchers.IO) {
-                try {
-                    val client = OkHttpClient()
-                    val req = Request.Builder()
-                        .url("https://m.facebook.com/me")
-                        .header("Cookie", cookies)
-                        .header("User-Agent", "Mozilla/5.0 (Android)")
-                        .build()
-                    client.newCall(req).execute().use { resp ->
-                        val body = resp.body?.string().orEmpty()
-                        val name = Regex("<title>([^<]+)").find(body)?.groupValues?.get(1)
-                        val picUrl =
-                            Regex("<img[^>]+src=\\\"([^\\\"]+)\\\"[^>]*profile", RegexOption.IGNORE_CASE)
-                                .find(body)?.groupValues?.get(1)
-                                ?: Regex(
-                                    "profilePicThumb\\\"[^>]*src=\\\"([^\\\"]+)\\\"",
-                                    RegexOption.IGNORE_CASE
-                                ).find(body)?.groupValues?.get(1)
-                        withContext(Dispatchers.Main) {
-                            if (!name.isNullOrBlank()) {
-                                facebookUsernameView.text = name
-                                facebookUsernameView.visibility = View.VISIBLE
-                            }
-                            if (!picUrl.isNullOrBlank()) {
-                                Glide.with(this@InstagramToolsFragment)
-                                    .load(picUrl)
-                                    .circleCrop()
-                                    .into(facebookImage)
-                            } else {
-                                facebookImage.setImageResource(R.drawable.facebook_icon)
-                            }
-                        }
-                    }
-                } catch (_: Exception) {
-                    withContext(Dispatchers.Main) {
-                        facebookImage.setImageResource(R.drawable.facebook_icon)
-                        facebookUsernameView.visibility = View.GONE
-                    }
+        val token = AccessToken.getCurrentAccessToken()
+        if (token != null && !token.isExpired) {
+            val request = GraphRequest.newMeRequest(token) { obj, _ ->
+                val name = obj?.optString("name")
+                val picUrl = obj?.optJSONObject("picture")?.optJSONObject("data")?.optString("url")
+                if (!name.isNullOrBlank()) {
+                    facebookUsernameView.text = name
+                    facebookUsernameView.visibility = View.VISIBLE
+                }
+                if (!picUrl.isNullOrBlank()) {
+                    Glide.with(this)
+                        .load(picUrl)
+                        .circleCrop()
+                        .into(facebookImage)
+                } else {
+                    facebookImage.setImageResource(R.drawable.facebook_icon)
                 }
             }
+            val params = Bundle()
+            params.putString("fields", "name,picture.type(large)")
+            request.parameters = params
+            request.executeAsync()
         } else {
             facebookImage.setImageResource(R.drawable.facebook_icon)
             facebookUsernameView.visibility = View.GONE

@@ -48,10 +48,12 @@ TWITTER_CONSUMER_SECRET=YOUR_CONSUMER_SECRET
 YOUTUBE_CLIENT_ID=YOUR_YOUTUBE_CLIENT_ID
 YOUTUBE_API_KEY=YOUR_YOUTUBE_API_KEY
 YOUTUBE_CLIENT_SECRET=YOUR_YOUTUBE_CLIENT_SECRET
+FACEBOOK_APP_ID=YOUR_FACEBOOK_APP_ID
 ```
 
 You can copy `.env.example` as a starting point. These values are exposed as `BuildConfig.TWITTER_CONSUMER_KEY` and `BuildConfig.TWITTER_CONSUMER_SECRET` at runtime and are used by `TwitterFragment`.
 The YouTube variables become `BuildConfig.YOUTUBE_CLIENT_ID`, `BuildConfig.YOUTUBE_API_KEY` and `BuildConfig.YOUTUBE_CLIENT_SECRET`, which are read by `YoutubeFragment`.
+`FACEBOOK_APP_ID` becomes the `facebook_app_id` string resource used by the Facebook SDK.
 
 ## Documentation
 

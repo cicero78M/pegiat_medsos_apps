@@ -4,18 +4,16 @@ Dokumen ini menjelaskan alur memuat foto profil dan nama akun Facebook di halama
 
 ## 1. Pengecekan Sesi
 
-Saat `InstagramToolsFragment` dibuat atau kembali aktif, fungsi `updateFacebookStatus()` dijalankan. Fungsi ini memanggil `FacebookSessionManager.loadCookies()` untuk membaca cookie yang tersimpan secara terenkripsi. Jika cookie ditemukan, fragment akan mencoba mengambil halaman `https://m.facebook.com/me` menggunakan OkHttp.
+Ketika `InstagramToolsFragment` aktif, fungsi `updateFacebookStatus()` dipanggil. Fungsi ini memeriksa `AccessToken.getCurrentAccessToken()` dari Facebook SDK. Bila token masih valid maka profil pengguna dimuat lewat Graph API.
 
 ## 2. Mendapatkan Nama dan Foto Profil
 
-Respon HTML dari `/me` dipindai menggunakan regex untuk mencari tag `<title>` sebagai nama pengguna dan URL gambar profil. Nilai tersebut lalu ditampilkan pada `image_facebook` dan `text_facebook_username`.
+Permintaan `GraphRequest.newMeRequest()` digunakan dengan parameter `fields=name,picture.type(large)` untuk memperoleh nama dan URL foto profil. Nilai tersebut kemudian ditampilkan pada `image_facebook` dan `text_facebook_username`.
 
 ## 3. Proses Login
 
-Bila belum ada cookie, pengguna dapat menekan ikon Facebook pada halaman IG Tools. Hal ini membuka `FacebookLoginActivity` yang menampilkan WebView login dari `m.facebook.com`. Setelah kredensial valid dan halaman mengarah ke `/me`, cookie disimpan lewat `FacebookSessionManager.saveCookies()` dan activity ditutup.
+Apabila token belum ada, menekan ikon Facebook memicu `LoginManager.logInWithReadPermissions()` dengan izin `public_profile`. Setelah berhasil, callback `onSuccess` menyimpan token bawaan SDK dan memanggil kembali `updateFacebookStatus()`.
 
 ## 4. Penyimpanan Sesi
 
-Cookie disimpan di `EncryptedSharedPreferences` sehingga tetap aman dan dapat digunakan kembali ketika aplikasi dibuka ulang. Setiap kali `InstagramToolsFragment` muncul, cookie ini otomatis dipasang ke `CookieManager` sehingga status login tidak hilang.
-
-Dengan alur ini, halaman IG Tools dapat langsung menampilkan nama dan foto profil Facebook tanpa login ulang selama cookie masih valid.
+Facebook SDK secara otomatis menyimpan token di `SharedPreferences` sehingga sesi tetap ada saat aplikasi dibuka ulang. Selama token masih berlaku, halaman IG Tools akan langsung menampilkan nama dan foto profil pengguna tanpa login ulang.

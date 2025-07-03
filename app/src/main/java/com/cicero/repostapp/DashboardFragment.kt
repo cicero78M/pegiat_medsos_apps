@@ -24,6 +24,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import com.cicero.repostapp.BuildConfig
 import org.json.JSONArray
 import org.json.JSONObject
 
@@ -66,7 +67,10 @@ class DashboardFragment : Fragment(R.layout.fragment_dashboard) {
 
         token = arguments?.getString(ARG_TOKEN) ?: ""
         userId = arguments?.getString(ARG_USER_ID) ?: ""
-        if (token.isNotBlank() && userId.isNotBlank()) {
+        if (BuildConfig.IG_GRAPH_TOKEN.isNotEmpty() && BuildConfig.IG_USER_ID.isNotEmpty()) {
+            progressBar.visibility = View.VISIBLE
+            fetchGraphPosts(BuildConfig.IG_GRAPH_TOKEN, BuildConfig.IG_USER_ID)
+        } else if (token.isNotBlank() && userId.isNotBlank()) {
             progressBar.visibility = View.VISIBLE
             CoroutineScope(Dispatchers.IO).launch {
                 reportedIds.clear()
@@ -173,6 +177,69 @@ class DashboardFragment : Fragment(R.layout.fragment_dashboard) {
                     }
                 }
             } catch (e: Exception) {
+                withContext(Dispatchers.Main) {
+                    progressBar.visibility = View.GONE
+                    Toast.makeText(requireContext(), "Gagal terhubung ke server", Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+    }
+
+    private fun fetchGraphPosts(accessToken: String, igUserId: String) {
+        CoroutineScope(Dispatchers.IO).launch {
+            val client = OkHttpClient()
+            val fields = "id,caption,media_type,media_url,thumbnail_url,permalink,timestamp"
+            val url = "https://graph.facebook.com/v19.0/$igUserId/media?fields=$fields&access_token=$accessToken"
+            val req = Request.Builder().url(url).build()
+            try {
+                client.newCall(req).execute().use { resp ->
+                    val body = resp.body?.string()
+                    withContext(Dispatchers.Main) {
+                        emptyView.visibility = View.GONE
+                        if (resp.isSuccessful) {
+                            val arr = try {
+                                JSONObject(body ?: "{}").optJSONArray("data")
+                            } catch (_: Exception) { JSONArray() }
+                            val posts = mutableListOf<InstaPost>()
+                            val today = java.time.LocalDate.now()
+                            for (i in 0 until arr.length()) {
+                                val obj = arr.optJSONObject(i) ?: continue
+                                val created = obj.optString("timestamp")
+                                val createdDate = try {
+                                    java.time.OffsetDateTime.parse(created)
+                                        .atZoneSameInstant(java.time.ZoneId.systemDefault())
+                                        .toLocalDate()
+                                } catch (_: Exception) { null }
+                                if (createdDate == today) {
+                                    val id = obj.optString("id")
+                                    val mediaType = obj.optString("media_type")
+                                    val mediaUrl = obj.optString("media_url")
+                                    val thumbUrl = obj.optString("thumbnail_url")
+                                    posts.add(
+                                        InstaPost(
+                                            id = id,
+                                            caption = obj.optString("caption"),
+                                            imageUrl = if (mediaType == "VIDEO") thumbUrl else mediaUrl,
+                                            createdAt = created,
+                                            isVideo = mediaType == "VIDEO",
+                                            videoUrl = if (mediaType == "VIDEO") mediaUrl else null,
+                                            sourceUrl = obj.optString("permalink"),
+                                            downloaded = downloadedIds.contains(id),
+                                            reported = reportedIds.contains(id)
+                                        )
+                                    )
+                                }
+                            }
+                            adapter.setData(posts)
+                            emptyView.visibility = if (posts.isEmpty()) View.VISIBLE else View.GONE
+                            progressBar.visibility = View.GONE
+                        } else {
+                            progressBar.visibility = View.GONE
+                            Toast.makeText(requireContext(), "Gagal mengambil konten", Toast.LENGTH_SHORT).show()
+                        }
+                    }
+                }
+            } catch (_: Exception) {
                 withContext(Dispatchers.Main) {
                     progressBar.visibility = View.GONE
                     Toast.makeText(requireContext(), "Gagal terhubung ke server", Toast.LENGTH_SHORT).show()

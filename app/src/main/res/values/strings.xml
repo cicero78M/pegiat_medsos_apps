@@ -18,6 +18,7 @@
     <string name="login_aman_autentikasi_dengan_token_terenkripsi">Login Aman - Autentikasi dengan token terenkripsi</string>
     <string name="password">Password</string>
     <string name="login">Login</string>
+    <string name="login_instagram">Login Instagram</string>
     <string name="register">Registrasi</string>
     <string name="save_login">Save Login</string>
     <string name="show_password">Show Password</string>

@@ -11,6 +11,7 @@ import android.view.View
 import android.widget.ProgressBar
 import android.widget.Toast
 import android.util.Log
+import android.widget.Button
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.os.bundleOf
 import android.provider.Settings
@@ -25,6 +26,7 @@ import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import com.cicero.repostapp.BuildConfig
+import com.cicero.repostapp.InstagramAuthManager
 import org.json.JSONArray
 import org.json.JSONObject
 
@@ -44,6 +46,7 @@ class DashboardFragment : Fragment(R.layout.fragment_dashboard) {
     private lateinit var adapter: PostAdapter
     private lateinit var progressBar: ProgressBar
     private lateinit var emptyView: android.widget.TextView
+    private lateinit var loginButton: Button
     private val downloadedIds = mutableSetOf<String>()
     private val reportedIds = mutableSetOf<String>()
     private var token: String = ""
@@ -62,14 +65,20 @@ class DashboardFragment : Fragment(R.layout.fragment_dashboard) {
         val recycler = view.findViewById<RecyclerView>(R.id.recycler_posts)
         progressBar = view.findViewById(R.id.progress_loading)
         emptyView = view.findViewById(R.id.text_empty)
+        loginButton = view.findViewById(R.id.button_instagram_login)
         recycler.layoutManager = LinearLayoutManager(requireContext())
         recycler.adapter = adapter
 
         token = arguments?.getString(ARG_TOKEN) ?: ""
         userId = arguments?.getString(ARG_USER_ID) ?: ""
+        val stored = InstagramAuthManager.loadToken(requireContext())
         if (BuildConfig.IG_GRAPH_TOKEN.isNotEmpty() && BuildConfig.IG_USER_ID.isNotEmpty()) {
             progressBar.visibility = View.VISIBLE
             fetchGraphPosts(BuildConfig.IG_GRAPH_TOKEN, BuildConfig.IG_USER_ID)
+        } else if (stored != null) {
+            progressBar.visibility = View.VISIBLE
+            val (access, igUser) = stored
+            fetchGraphPosts(access, igUser)
         } else if (token.isNotBlank() && userId.isNotBlank()) {
             progressBar.visibility = View.VISIBLE
             CoroutineScope(Dispatchers.IO).launch {
@@ -79,6 +88,9 @@ class DashboardFragment : Fragment(R.layout.fragment_dashboard) {
                     fetchClientAndPosts(userId, token)
                 }
             }
+        } else {
+            loginButton.visibility = View.VISIBLE
+            loginButton.setOnClickListener { startInstagramLogin() }
         }
     }
 
@@ -322,6 +334,14 @@ class DashboardFragment : Fragment(R.layout.fragment_dashboard) {
         }
 
         downloadPost(post)
+    }
+
+    private fun startInstagramLogin() {
+        val clientId = BuildConfig.IG_CLIENT_ID
+        val redirect = BuildConfig.IG_REDIRECT_URI
+        val scope = "user_profile,user_media"
+        val url = "https://api.instagram.com/oauth/authorize?client_id=${'$'}clientId&redirect_uri=${'$'}redirect&scope=${'$'}scope&response_type=code"
+        startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
     }
 
     private fun downloadPost(post: InstaPost) {

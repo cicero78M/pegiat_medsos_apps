@@ -355,7 +355,7 @@ class ReportActivity : AppCompatActivity() {
         val satfung = prefsAuth.getString("satfung", "") ?: ""
         val nrp = prefsAuth.getString("userId", userId) ?: userId
         val userInfo = """
-            Tambahkan data nama : $rank $name
+            Nama : $rank $name
             NRP / NIP : $nrp
             Satfung : $satfung
         """.trimIndent()
@@ -372,11 +372,11 @@ class ReportActivity : AppCompatActivity() {
             https://instagram.com/p/$shortcode
 
             Laporan Link Pelaksanaan Sebagai Berikut :
-            1. ${links["instagram"] ?: "-"},
-            2. ${links["facebook"] ?: "-"},
-            3. ${links["twitter"] ?: "-"},
-            4. ${links["tiktok"] ?: "-"},
-            5. ${links["youtube"] ?: "-"}
+            1. ${links["instagram"] ?: "Nihil"},
+            2. ${links["facebook"] ?: "Nihil"},
+            3. ${links["twitter"] ?: "Nihil"},
+            4. ${links["tiktok"] ?: "Nihil"},
+            5. ${links["youtube"] ?: "Nihil"}
         """.trimIndent()
         val intent = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
             type = "text/plain"

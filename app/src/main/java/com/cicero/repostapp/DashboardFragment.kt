@@ -456,7 +456,7 @@ class DashboardFragment : Fragment(R.layout.fragment_dashboard) {
         val satfung = prefsAuth.getString("satfung", "") ?: ""
         val nrp = prefsAuth.getString("userId", userId) ?: userId
         val userInfo = """
-            Tambahkan data nama : $rank $name
+            Nama : $rank $name
             NRP / NIP : $nrp
             Satfung : $satfung
         """.trimIndent()
@@ -473,9 +473,11 @@ class DashboardFragment : Fragment(R.layout.fragment_dashboard) {
             https://instagram.com/p/$shortcode
 
             Laporan Link Pelaksanaan Sebagai Berikut :
-            1. ${links["instagram"] ?: "-"},
-            2. ${links["twitter"] ?: "-"},
-            3. ${links["tiktok"] ?: "-"}
+            1. ${links["instagram"] ?: "Nihil"},
+            2. ${links["facebook"] ?: "Nihil"},
+            3. ${links["twitter"] ?: "Nihil"},
+            4. ${links["tiktok"] ?: "Nihil"},
+            5. ${links["youtube"] ?: "Nihil"}
         """.trimIndent()
         val intent = Intent(Intent.ACTION_SEND).apply {
             type = "text/plain"

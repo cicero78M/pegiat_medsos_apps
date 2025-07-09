@@ -433,8 +433,10 @@ class DashboardFragment : Fragment(R.layout.fragment_dashboard) {
                     if (o.optString("shortcode") == sc && o.optString("user_id") == userId) {
                         return mapOf(
                             "instagram" to o.optString("instagram_link").takeIf { it.isNotBlank() },
+                            "facebook" to o.optString("facebook_link").takeIf { it.isNotBlank() },
                             "twitter" to o.optString("twitter_link").takeIf { it.isNotBlank() },
-                            "tiktok" to o.optString("tiktok_link").takeIf { it.isNotBlank() }
+                            "tiktok" to o.optString("tiktok_link").takeIf { it.isNotBlank() },
+                            "youtube" to o.optString("youtube_link").takeIf { it.isNotBlank() }
                         )
                     }
                 }

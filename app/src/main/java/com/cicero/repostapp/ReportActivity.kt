@@ -73,6 +73,13 @@ class ReportActivity : AppCompatActivity() {
                 ""
             ),
             Platform(
+                "facebook",
+                R.id.text_facebook,
+                R.id.button_paste_facebook,
+                "Paste link Facebook",
+                ""
+            ),
+            Platform(
                 "twitter",
                 R.id.text_twitter,
                 R.id.button_paste_twitter,
@@ -86,6 +93,13 @@ class ReportActivity : AppCompatActivity() {
                 "Paste link TikTok",
                 ""
             ),
+            Platform(
+                "youtube",
+                R.id.text_youtube,
+                R.id.button_paste_youtube,
+                "Paste link YouTube",
+                ""
+            )
         )
 
         platforms.forEach { setupPasteButton(it) }
@@ -128,8 +142,10 @@ class ReportActivity : AppCompatActivity() {
         val host = uri.host ?: return false
         return when (platform) {
             "instagram" -> host.contains("instagram.com")
+            "facebook" -> host.contains("facebook.com") || host.contains("fb.watch")
             "twitter" -> host.contains("twitter.com") || host.contains("x.com")
             "tiktok" -> host.contains("tiktok.com")
+            "youtube" -> host.contains("youtube.com") || host.contains("youtu.be")
             else -> false
         }
     }
@@ -237,8 +253,10 @@ class ReportActivity : AppCompatActivity() {
                     val obj = arr.optJSONObject(i) ?: continue
                     val links = listOf(
                         obj.optString("instagram_link"),
+                        obj.optString("facebook_link"),
                         obj.optString("twitter_link"),
-                        obj.optString("tiktok_link")
+                        obj.optString("tiktok_link"),
+                        obj.optString("youtube_link")
                     )
                     if (links.any { it.equals(link, true) }) return true
                 }
@@ -264,9 +282,10 @@ class ReportActivity : AppCompatActivity() {
         }
 
         if (links["instagram"].isNullOrBlank() ||
+            links["facebook"].isNullOrBlank() ||
             links["twitter"].isNullOrBlank()
         ) {
-            Toast.makeText(this, "Lengkapi link Instagram dan Twitter", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "Lengkapi link Instagram, Facebook dan Twitter", Toast.LENGTH_SHORT).show()
             return
         }
 
@@ -283,7 +302,7 @@ class ReportActivity : AppCompatActivity() {
                 }
             }
 
-            if (links["instagram"] == null || links["twitter"] == null) {
+            if (links["instagram"] == null || links["facebook"] == null || links["twitter"] == null) {
                 valid = false
             }
 
@@ -293,8 +312,10 @@ class ReportActivity : AppCompatActivity() {
                     put("shortcode", shortcodeVal ?: "")
                     put("user_id", userId)
                     put("instagram_link", links["instagram"])
+                    put("facebook_link", links["facebook"])
                     put("twitter_link", links["twitter"])
                     put("tiktok_link", links["tiktok"])
+                    put("youtube_link", links["youtube"])
                 }
                 val body = json.toString().toRequestBody("application/json".toMediaType())
                 val client = OkHttpClient()
@@ -339,8 +360,10 @@ class ReportActivity : AppCompatActivity() {
 
             Laporan Link Pelaksanaan Sebagai Berikut :
             1. ${links["instagram"] ?: "-"},
-            2. ${links["twitter"] ?: "-"},
-            3. ${links["tiktok"] ?: "-"},
+            2. ${links["facebook"] ?: "-"},
+            3. ${links["twitter"] ?: "-"},
+            4. ${links["tiktok"] ?: "-"},
+            5. ${links["youtube"] ?: "-"},
 
             DUMM.
         """.trimIndent()

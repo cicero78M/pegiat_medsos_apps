@@ -70,16 +70,28 @@ class UserProfileFragment : Fragment(R.layout.activity_profile) {
                                 null
                             }
                             val insta = data?.optString("insta") ?: ""
+                            val rank = data?.optString("title") ?: ""
+                            val name = data?.optString("nama") ?: ""
+                            val satfung = data?.optString("divisi") ?: ""
+                            val nrp = data?.optString("user_id") ?: userId
+
+                            val authPrefs = requireContext().getSharedPreferences("auth", Context.MODE_PRIVATE)
+                            authPrefs.edit()
+                                .putString("rank", rank)
+                                .putString("name", name)
+                                .putString("satfung", satfung)
+                                .apply()
+
                             rootView.findViewById<TextView>(R.id.text_username).text =
                                 "@$insta"
                             rootView.findViewById<TextView>(R.id.text_name).text =
-                                (data?.optString("title") ?: "") + " " + (data?.optString("nama") ?: "")
+                                "$rank $name"
                             rootView.findViewById<TextView>(R.id.text_nrp).text =
-                                (data?.optString("user_id") ?: userId)
+                                nrp
                             rootView.findViewById<TextView>(R.id.text_client_id).text =
                                 (data?.optString("client_id") ?: "")
                             rootView.findViewById<TextView>(R.id.text_satfung).text =
-                                (data?.optString("divisi") ?: "")
+                                satfung
                             rootView.findViewById<TextView>(R.id.text_jabatan).text =
                                 (data?.optString("jabatan") ?: "")
                             rootView.findViewById<TextView>(R.id.text_tiktok).text =

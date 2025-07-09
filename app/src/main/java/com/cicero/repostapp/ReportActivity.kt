@@ -349,23 +349,34 @@ class ReportActivity : AppCompatActivity() {
         val today = java.time.LocalDate.now()
         val day = today.format(java.time.format.DateTimeFormatter.ofPattern("EEEE", locale))
         val dateStr = today.format(java.time.format.DateTimeFormatter.ofPattern("dd MMMM yyyy", locale))
+        val prefsAuth = getSharedPreferences("auth", MODE_PRIVATE)
+        val rank = prefsAuth.getString("rank", "") ?: ""
+        val name = prefsAuth.getString("name", "") ?: ""
+        val satfung = prefsAuth.getString("satfung", "") ?: ""
+        val nrp = prefsAuth.getString("userId", userId) ?: userId
+        val userInfo = """
+            Nama : $rank $name
+            NRP / NIP : $nrp
+            Satfung : $satfung
+        """.trimIndent()
+
         val message = """
             Mohon ijin, Mengirimkan Laporan repost konten,
 
             Hari : $day,
             Tanggal : $dateStr
 
+            $userInfo
+
             dari Source Link Konten Instagram berikut :
             https://instagram.com/p/$shortcode
 
             Laporan Link Pelaksanaan Sebagai Berikut :
-            1. ${links["instagram"] ?: "-"},
-            2. ${links["facebook"] ?: "-"},
-            3. ${links["twitter"] ?: "-"},
-            4. ${links["tiktok"] ?: "-"},
-            5. ${links["youtube"] ?: "-"},
-
-            DUMM.
+            1. ${links["instagram"] ?: "Nihil"},
+            2. ${links["facebook"] ?: "Nihil"},
+            3. ${links["twitter"] ?: "Nihil"},
+            4. ${links["tiktok"] ?: "Nihil"},
+            5. ${links["youtube"] ?: "Nihil"}
         """.trimIndent()
         val intent = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
             type = "text/plain"

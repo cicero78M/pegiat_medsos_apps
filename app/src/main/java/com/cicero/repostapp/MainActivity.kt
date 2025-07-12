@@ -84,7 +84,7 @@ class MainActivity : AppCompatActivity() {
                     val body = resp.body?.string()
                     if (resp.isSuccessful && body != null) {
                         val json = JSONObject(body)
-                        val tag = json.getString("tag_name")
+                        val tag = json.getString("tag_name").removePrefix("v")
                         if (tag != BuildConfig.VERSION_NAME) {
                             val assets = json.getJSONArray("assets")
                             if (assets.length() > 0) {

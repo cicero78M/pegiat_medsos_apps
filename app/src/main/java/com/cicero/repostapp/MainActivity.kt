@@ -14,7 +14,6 @@ import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import org.json.JSONObject
-import com.cicero.repostapp.BuildConfig
 
 class MainActivity : AppCompatActivity() {
 

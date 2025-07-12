@@ -165,10 +165,10 @@ class InstagramPostService : AccessibilityService() {
         val keywords = listOf(
             "Tambahkan keterangan",
             "Tulis keterangan",
-            "Tulis Keterangan dan Tambahkan Pagar",
-            "Tulis keterangan dan tambahkan tagar",
+            "Tulis keterangan dan tambahkan tagar...",
             "Add caption",
-            "Write a caption"
+            "Write a caption",
+            "Write a caption..."
         )
         val target = findNodeByText(node, keywords)
         var current: AccessibilityNodeInfo? = target

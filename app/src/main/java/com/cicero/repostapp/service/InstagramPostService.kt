@@ -84,7 +84,7 @@ class InstagramPostService : AccessibilityService() {
         }
 
         if (!captionInserted) {
-            val editNode = findEditText(root)
+            val editNode = findCaptionEditText(root) ?: findEditText(root)
             if (editNode != null) {
                 val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
                 val text = clipboard.primaryClip?.getItemAt(0)?.text
@@ -159,6 +159,16 @@ class InstagramPostService : AccessibilityService() {
             if (result != null) return result
         }
         return null
+    }
+
+    private fun findCaptionEditText(node: AccessibilityNodeInfo?): AccessibilityNodeInfo? {
+        val keywords = listOf("Tambahkan keterangan", "Tulis keterangan", "Add caption", "Write a caption")
+        val target = findNodeByText(node, keywords)
+        var current: AccessibilityNodeInfo? = target
+        while (current != null && "android.widget.EditText" != current.className && !current.isEditable) {
+            current = current.parent
+        }
+        return if (current != null && ("android.widget.EditText" == current.className || current.isEditable)) current else null
     }
 
     private fun findNodeByText(node: AccessibilityNodeInfo?, keywords: List<String>): AccessibilityNodeInfo? {

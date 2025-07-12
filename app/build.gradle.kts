@@ -1,16 +1,8 @@
-import java.util.Properties
-
 plugins {
     id("com.android.application")
     kotlin("android")
 }
 
-val envProps = Properties().apply {
-    val envFile = rootProject.file(".env")
-    if (envFile.exists()) {
-        envFile.inputStream().use { load(it) }
-    }
-}
 
 android {
     namespace = "com.cicero.repostapp"
@@ -23,8 +15,6 @@ android {
         targetSdk = 34
         versionCode = 1
         versionName = "1.5.2"
-        buildConfigField("String", "TWITTER_CONSUMER_KEY", "\"${envProps["TWITTER_CONSUMER_KEY"] ?: ""}\"")
-        buildConfigField("String", "TWITTER_CONSUMER_SECRET", "\"${envProps["TWITTER_CONSUMER_SECRET"] ?: ""}\"")
     }
 
     buildFeatures {
@@ -60,7 +50,6 @@ dependencies {
     implementation("androidx.constraintlayout:constraintlayout:2.1.4")
     implementation("com.github.bumptech.glide:glide:4.16.0")
     implementation("androidx.security:security-crypto:1.1.0-alpha06")
-    implementation("org.twitter4j:twitter4j-core:4.0.7")
     
 
 }

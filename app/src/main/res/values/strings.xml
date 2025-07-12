@@ -33,11 +33,6 @@
     <string name="confirm">Konfirmasi</string>
     <string name="cancel">Batal</string>
     <string name="active_subscription_status">Status Subscription anda saat ini aktif sampai dengan tanggal %1$s</string>
-    <string name="login_twitter">Login dengan Twitter</string>
-    <string name="verify_pin">Verifikasi PIN</string>
-    <string name="enter_pin">Masukkan PIN</string>
-    <string name="not_logged_in">Belum login</string>
-    <string name="login_failed">Login gagal</string>
     <string name="loading">Memuat…</string>
     <string name="start">Start</string>
     <string name="whatsapp_message_registration">userrequest</string>

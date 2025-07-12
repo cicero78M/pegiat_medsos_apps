@@ -22,9 +22,6 @@ and allow reporting of content links.
      backend API.
    - `InstaLoginFragment` – handles Instagram login and automation features.
    - `DashboardFragment` – lists Instagram posts fetched for the logged in user.
-  - `TwitterFragment` – provides login using the `twitter4j` library to access
-    Twitter via an OAuth flow that redirects back to `repostapp://twitter-callback`. The API keys are loaded from
-    `BuildConfig` fields defined via a `.env` file.
 5. **ReportActivity** – A standalone screen to paste links from various social
    media platforms for reporting purposes.
 

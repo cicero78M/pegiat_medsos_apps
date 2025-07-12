@@ -78,6 +78,11 @@ class InstagramPostService : AccessibilityService() {
             return
         }
 
+        if (!containsText(root, listOf("Postingan Baru"))) {
+            handler.postDelayed(clickRunnable, stepDelayMs)
+            return
+        }
+
         if (!captionInserted) {
             val editNode = findEditText(root)
             if (editNode != null) {

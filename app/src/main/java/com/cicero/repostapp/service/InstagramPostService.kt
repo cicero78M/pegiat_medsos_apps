@@ -48,6 +48,15 @@ class InstagramPostService : AccessibilityService() {
     private fun performActions() {
         val root = rootInActiveWindow ?: return
 
+        if (containsText(root, listOf("Buat Stiker"))) {
+            val laterNode = findClickableNodeByText(root, listOf("Lain Kali"))
+            if (laterNode != null) {
+                laterNode.performAction(AccessibilityNodeInfo.ACTION_CLICK)
+                handler.postDelayed(clickRunnable, stepDelayMs)
+            }
+            return
+        }
+
         if (!captionInserted) {
             val editNode = findEditText(root)
             if (editNode != null) {
@@ -94,6 +103,19 @@ class InstagramPostService : AccessibilityService() {
             }
         }
         return null
+    }
+
+    private fun containsText(node: AccessibilityNodeInfo?, keywords: List<String>): Boolean {
+        if (node == null) return false
+        for (k in keywords) {
+            if (node.text?.toString()?.contains(k, true) == true) return true
+            if (node.contentDescription?.toString()?.contains(k, true) == true) return true
+        }
+        for (i in 0 until node.childCount) {
+            val child = node.getChild(i)
+            if (containsText(child, keywords)) return true
+        }
+        return false
     }
 
     private fun findEditText(node: AccessibilityNodeInfo?): AccessibilityNodeInfo? {

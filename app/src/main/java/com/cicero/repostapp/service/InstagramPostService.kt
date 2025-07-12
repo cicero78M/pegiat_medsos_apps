@@ -19,9 +19,12 @@ class InstagramPostService : AccessibilityService() {
 
     private var captionInserted = false
     private var shareClicked = false
+    private var waitingUpload = false
     private val handler = Handler(Looper.getMainLooper())
     private val clickRunnable = Runnable { performActions() }
+    private val finishRunnable = Runnable { finishUpload() }
     private val stepDelayMs = 4000L
+    private val uploadTimeoutMs = 30000L
 
     override fun onServiceConnected() {
         serviceInfo = AccessibilityServiceInfo().apply {
@@ -95,14 +98,20 @@ class InstagramPostService : AccessibilityService() {
             }
         }
 
+        if (waitingUpload) {
+            // wait for Instagram to finish uploading the post
+            handler.postDelayed(clickRunnable, stepDelayMs)
+            return
+        }
+
         if (!shareClicked) {
             val node = findClickableNodeByText(root, listOf("Bagikan", "Share"))
             if (node != null) {
                 shareClicked = true
+                waitingUpload = true
                 node.performAction(AccessibilityNodeInfo.ACTION_CLICK)
-                sendBroadcast(Intent(ACTION_UPLOAD_FINISHED))
-                performGlobalAction(GLOBAL_ACTION_HOME)
-                stopSelf()
+                handler.postDelayed(finishRunnable, uploadTimeoutMs)
+                handler.postDelayed(clickRunnable, stepDelayMs)
             }
         }
     }
@@ -181,6 +190,13 @@ class InstagramPostService : AccessibilityService() {
             target = target.parent
         }
         target?.performAction(AccessibilityNodeInfo.ACTION_CLICK)
+    }
+
+    private fun finishUpload() {
+        waitingUpload = false
+        sendBroadcast(Intent(ACTION_UPLOAD_FINISHED))
+        performGlobalAction(GLOBAL_ACTION_HOME)
+        stopSelf()
     }
 
     override fun onInterrupt() {}

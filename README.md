@@ -80,6 +80,14 @@ python scripts/tiktok_post.py <device-serial> /sdcard/video.mp4 --caption "Hello
 This will open TikTok, select the first video in the gallery, optionally set the
 caption and publish the post.
 
+## Instagram Automation
+
+The application includes an accessibility service that can automate posting to
+Instagram. When triggered it opens the *Postingan Baru* screen, pastes the
+caption into the "Tulis Keterangan dan tambahkan tagar..." field, presses the
+**Bagikan** button and waits until the upload process completes before returning
+to the home screen.
+
 
 
 

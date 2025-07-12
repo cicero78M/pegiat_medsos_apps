@@ -4,6 +4,7 @@ import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
+import android.provider.Settings
 import android.os.Bundle
 import android.view.View
 import android.widget.Button
@@ -21,6 +22,13 @@ import okhttp3.Request
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.File
+import java.time.LocalDate
+import java.time.LocalDateTime
+import java.time.OffsetDateTime
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
+import com.cicero.repostapp.service.InstagramPostService
+import com.cicero.repostapp.util.AccessibilityUtils
 
 class AutopostFragment : Fragment(R.layout.fragment_autopost) {
 
@@ -56,11 +64,19 @@ class AutopostFragment : Fragment(R.layout.fragment_autopost) {
         console.append("$message\n")
     }
 
+    private fun ensureInstagramAccessibility() {
+        if (!AccessibilityUtils.isServiceEnabled(requireContext(), InstagramPostService::class.java)) {
+            Toast.makeText(requireContext(), getString(R.string.enable_accessibility_service), Toast.LENGTH_LONG).show()
+            startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
+        }
+    }
+
     private fun startAutopost() {
         if (token.isBlank() || userId.isBlank()) {
             Toast.makeText(requireContext(), "Token/UserId kosong", Toast.LENGTH_SHORT).show()
             return
         }
+        ensureInstagramAccessibility()
         console.text = ""
         lifecycleScope.launch {
             val posts = fetchPosts() // get posts from server
@@ -121,19 +137,33 @@ class AutopostFragment : Fragment(R.layout.fragment_autopost) {
                             val arr = try {
                                 JSONObject(body ?: "{}").optJSONArray("data") ?: JSONArray()
                             } catch (_: Exception) { JSONArray() }
+                            val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
+                            val today = LocalDate.now()
                             for (i in 0 until arr.length()) {
                                 val obj = arr.optJSONObject(i) ?: continue
-                                posts.add(
-                                    InstaPost(
-                                        id = obj.optString("shortcode"),
-                                        caption = obj.optString("caption"),
-                                        imageUrl = obj.optString("image_url"),
-                                        createdAt = obj.optString("created_at"),
-                                        isVideo = obj.optBoolean("is_video"),
-                                        videoUrl = obj.optString("video_url"),
-                                        sourceUrl = obj.optString("source_url"),
+                                val created = obj.optString("created_at")
+                                val createdDate = try {
+                                    if (created.contains("T")) {
+                                        OffsetDateTime.parse(created)
+                                            .atZoneSameInstant(ZoneId.systemDefault())
+                                            .toLocalDate()
+                                    } else {
+                                        LocalDateTime.parse(created, formatter).toLocalDate()
+                                    }
+                                } catch (_: Exception) { null }
+                                if (createdDate == today) {
+                                    posts.add(
+                                        InstaPost(
+                                            id = obj.optString("shortcode"),
+                                            caption = obj.optString("caption"),
+                                            imageUrl = obj.optString("image_url"),
+                                            createdAt = obj.optString("created_at"),
+                                            isVideo = obj.optBoolean("is_video"),
+                                            videoUrl = obj.optString("video_url"),
+                                            sourceUrl = obj.optString("source_url"),
+                                        )
                                     )
-                                )
+                                }
                             }
                         }
                     }
@@ -153,6 +183,7 @@ class AutopostFragment : Fragment(R.layout.fragment_autopost) {
     }
 
     private fun shareToInstagram(post: InstaPost) {
+        ensureInstagramAccessibility()
         val fileName = post.id + if (post.isVideo) ".mp4" else ".jpg"
         val dir = File(requireContext().getExternalFilesDir(null), "CiceroReposterApp")
         val file = if (!post.localPath.isNullOrBlank()) {

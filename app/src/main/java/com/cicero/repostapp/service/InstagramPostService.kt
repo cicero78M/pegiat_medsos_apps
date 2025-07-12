@@ -1,0 +1,111 @@
+package com.cicero.repostapp.service
+
+import android.accessibilityservice.AccessibilityService
+import android.accessibilityservice.AccessibilityServiceInfo
+import android.content.ClipboardManager
+import android.content.Context
+import android.content.Intent
+import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
+import android.view.accessibility.AccessibilityEvent
+import android.view.accessibility.AccessibilityNodeInfo
+
+class InstagramPostService : AccessibilityService() {
+
+    companion object {
+        const val ACTION_UPLOAD_FINISHED = "com.cicero.repostapp.INSTAGRAM_UPLOAD_FINISHED"
+    }
+
+    private var captionInserted = false
+    private var shareClicked = false
+    private val handler = Handler(Looper.getMainLooper())
+    private val clickRunnable = Runnable { performActions() }
+    private val stepDelayMs = 4000L
+
+    override fun onServiceConnected() {
+        serviceInfo = AccessibilityServiceInfo().apply {
+            packageNames = arrayOf("com.instagram.android")
+            eventTypes = AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED or
+                    AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED
+            feedbackType = AccessibilityServiceInfo.FEEDBACK_GENERIC
+        }
+    }
+
+    override fun onAccessibilityEvent(event: AccessibilityEvent?) {
+        when (event?.eventType) {
+            AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED -> {
+                captionInserted = false
+                shareClicked = false
+                handler.postDelayed(clickRunnable, stepDelayMs)
+            }
+            AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED -> {
+                handler.postDelayed(clickRunnable, stepDelayMs)
+            }
+        }
+    }
+
+    private fun performActions() {
+        val root = rootInActiveWindow ?: return
+
+        if (!captionInserted) {
+            val editNode = findEditText(root)
+            if (editNode != null) {
+                val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                val text = clipboard.primaryClip?.getItemAt(0)?.text
+                if (!text.isNullOrBlank()) {
+                    val args = Bundle()
+                    args.putCharSequence(AccessibilityNodeInfo.ACTION_ARGUMENT_SET_TEXT_CHARSEQUENCE, text)
+                    editNode.performAction(AccessibilityNodeInfo.ACTION_FOCUS)
+                    editNode.performAction(AccessibilityNodeInfo.ACTION_SET_TEXT, args)
+                    if (editNode.text.isNullOrBlank()) {
+                        editNode.performAction(AccessibilityNodeInfo.ACTION_PASTE)
+                    }
+                    captionInserted = true
+                    handler.postDelayed(clickRunnable, stepDelayMs)
+                    return
+                }
+            }
+        }
+
+        if (!shareClicked) {
+            val node = findClickableNodeByText(root, listOf("Bagikan", "Share"))
+            if (node != null) {
+                shareClicked = true
+                node.performAction(AccessibilityNodeInfo.ACTION_CLICK)
+                sendBroadcast(Intent(ACTION_UPLOAD_FINISHED))
+                performGlobalAction(GLOBAL_ACTION_HOME)
+                stopSelf()
+            }
+        }
+    }
+
+    private fun findClickableNodeByText(root: AccessibilityNodeInfo, texts: List<String>): AccessibilityNodeInfo? {
+        for (t in texts) {
+            val nodes = root.findAccessibilityNodeInfosByText(t)
+            for (n in nodes) {
+                var current: AccessibilityNodeInfo? = n
+                while (current != null && !current.isClickable) {
+                    current = current.parent
+                }
+                if (current != null && current.isClickable) {
+                    return current
+                }
+            }
+        }
+        return null
+    }
+
+    private fun findEditText(node: AccessibilityNodeInfo?): AccessibilityNodeInfo? {
+        if (node == null) return null
+        if ("android.widget.EditText" == node.className || node.isEditable) return node
+        for (i in 0 until node.childCount) {
+            val child = node.getChild(i)
+            val result = findEditText(child)
+            if (result != null) return result
+        }
+        return null
+    }
+
+    override fun onInterrupt() {}
+}

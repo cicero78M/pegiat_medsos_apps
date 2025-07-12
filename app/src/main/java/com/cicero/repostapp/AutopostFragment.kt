@@ -13,10 +13,14 @@ import android.widget.Toast
 import androidx.core.content.FileProvider
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
+import androidx.viewpager2.widget.ViewPager2
+import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import org.json.JSONArray
@@ -36,6 +40,7 @@ class AutopostFragment : Fragment(R.layout.fragment_autopost) {
     companion object {
         private const val ARG_USER_ID = "userId"
         private const val ARG_TOKEN = "token"
+        private const val PAGE_INDEX = 2
 
         fun newInstance(userId: String?, token: String?): AutopostFragment {
             val frag = AutopostFragment()
@@ -59,6 +64,8 @@ class AutopostFragment : Fragment(R.layout.fragment_autopost) {
         }
         token = arguments?.getString(ARG_TOKEN) ?: ""
         userId = arguments?.getString(ARG_USER_ID) ?: ""
+
+        collectPageChanges()
     }
 
     private fun log(message: String) {
@@ -79,6 +86,23 @@ class AutopostFragment : Fragment(R.layout.fragment_autopost) {
         }
     }
 
+    private fun collectPageChanges() {
+        val vp = activity?.findViewById<ViewPager2>(R.id.view_pager) ?: return
+        pageChangeFlow(vp)
+            .onEach { pos -> if (pos == PAGE_INDEX) startAutopost() }
+            .launchIn(viewLifecycleOwner.lifecycleScope)
+    }
+
+    private fun pageChangeFlow(viewPager: ViewPager2) = callbackFlow<Int> {
+        val cb = object : ViewPager2.OnPageChangeCallback() {
+            override fun onPageSelected(position: Int) {
+                trySend(position).isSuccess
+            }
+        }
+        viewPager.registerOnPageChangeCallback(cb)
+        awaitClose { viewPager.unregisterOnPageChangeCallback(cb) }
+    }
+
     private fun startAutopost() {
         if (token.isBlank() || userId.isBlank()) {
             Toast.makeText(requireContext(), "Token/UserId kosong", Toast.LENGTH_SHORT).show()
@@ -87,30 +111,22 @@ class AutopostFragment : Fragment(R.layout.fragment_autopost) {
         ensureAccessibilityServices()
         console.text = ""
         lifecycleScope.launch {
-            val posts = fetchPosts() // get posts from server
+            val posts = fetchPosts()
             if (posts.isEmpty()) {
                 log("Tidak ada konten")
                 return@launch
             }
-            log("Memulai autopost ${posts.size} konten")
-            for (post in posts) {
-                log("Proses ${post.id}")
-                if (!checkIfFileExists(post)) {
-                    log("Downloading konten ...")
-                    downloadPost(post)
-                    delay(5000)
-                } else {
-                    log("Konten sudah diunduh")
-                }
-                delay(5000)
-                copyCaption(post.caption)
-                log("Membuka Instagram")
-                shareToInstagram(post)
-                delay(5000)
-                log("Silakan selesaikan posting, lalu salin link hasilnya")
-                // Placeholder to wait for user
-                delay(15000)
+            val post = posts.first()
+            log("Proses ${post.id}")
+            if (!checkIfFileExists(post)) {
+                log("Downloading konten ...")
+                downloadPost(post)
+            } else {
+                log("Konten sudah diunduh")
             }
+            copyCaption(post.caption)
+            log("Membuka Instagram")
+            shareToInstagram(post)
             log("Autopost selesai")
         }
     }
@@ -206,10 +222,15 @@ class AutopostFragment : Fragment(R.layout.fragment_autopost) {
             intent.putExtra(Intent.EXTRA_STREAM, uri)
             intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
         }
+        intent.setPackage("com.instagram.android")
+        intent.setClassName(
+            "com.instagram.android",
+            "com.instagram.share.handleractivity.ShareHandlerActivity"
+        )
         try {
-            startActivity(Intent.createChooser(intent, "Share via"))
-        } catch (_: Exception) {
             startActivity(intent)
+        } catch (_: Exception) {
+            startActivity(Intent.createChooser(intent, "Share via"))
         }
     }
 

@@ -162,7 +162,14 @@ class InstagramPostService : AccessibilityService() {
     }
 
     private fun findCaptionEditText(node: AccessibilityNodeInfo?): AccessibilityNodeInfo? {
-        val keywords = listOf("Tambahkan keterangan", "Tulis keterangan", "Add caption", "Write a caption")
+        val keywords = listOf(
+            "Tambahkan keterangan",
+            "Tulis keterangan",
+            "Tulis Keterangan dan Tambahkan Pagar",
+            "Tulis keterangan dan tambahkan tagar",
+            "Add caption",
+            "Write a caption"
+        )
         val target = findNodeByText(node, keywords)
         var current: AccessibilityNodeInfo? = target
         while (current != null && "android.widget.EditText" != current.className && !current.isEditable) {

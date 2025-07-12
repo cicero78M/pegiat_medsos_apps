@@ -31,6 +31,8 @@ class InstagramPostService : AccessibilityService() {
             eventTypes = AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED or
                     AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED
             feedbackType = AccessibilityServiceInfo.FEEDBACK_GENERIC
+            flags = AccessibilityServiceInfo.FLAG_REPORT_VIEW_IDS or
+                    AccessibilityServiceInfo.FLAG_RETRIEVE_INTERACTIVE_WINDOWS
         }
     }
 
@@ -78,7 +80,7 @@ class InstagramPostService : AccessibilityService() {
             return
         }
 
-        if (!containsText(root, listOf("Postingan Baru"))) {
+        if (!containsText(root, listOf("Postingan Baru", "New Post"))) {
             handler.postDelayed(clickRunnable, stepDelayMs)
             return
         }
@@ -96,7 +98,7 @@ class InstagramPostService : AccessibilityService() {
                     if (editNode.text.isNullOrBlank()) {
                         editNode.performAction(AccessibilityNodeInfo.ACTION_PASTE)
                     }
-                    captionInserted = true
+                    captionInserted = !editNode.text.isNullOrBlank()
                     handler.postDelayed(clickRunnable, stepDelayMs)
                     return
                 }

@@ -28,6 +28,7 @@ import java.time.OffsetDateTime
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import com.cicero.repostapp.service.InstagramPostService
+import com.cicero.repostapp.service.ShareChooserService
 import com.cicero.repostapp.util.AccessibilityUtils
 
 class AutopostFragment : Fragment(R.layout.fragment_autopost) {
@@ -64,8 +65,15 @@ class AutopostFragment : Fragment(R.layout.fragment_autopost) {
         console.append("$message\n")
     }
 
-    private fun ensureInstagramAccessibility() {
-        if (!AccessibilityUtils.isServiceEnabled(requireContext(), InstagramPostService::class.java)) {
+    private fun ensureAccessibilityServices() {
+        val services = listOf(
+            InstagramPostService::class.java,
+            ShareChooserService::class.java
+        )
+        val enabled = services.all {
+            AccessibilityUtils.isServiceEnabled(requireContext(), it)
+        }
+        if (!enabled) {
             Toast.makeText(requireContext(), getString(R.string.enable_accessibility_service), Toast.LENGTH_LONG).show()
             startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
         }
@@ -76,7 +84,7 @@ class AutopostFragment : Fragment(R.layout.fragment_autopost) {
             Toast.makeText(requireContext(), "Token/UserId kosong", Toast.LENGTH_SHORT).show()
             return
         }
-        ensureInstagramAccessibility()
+        ensureAccessibilityServices()
         console.text = ""
         lifecycleScope.launch {
             val posts = fetchPosts() // get posts from server
@@ -183,7 +191,7 @@ class AutopostFragment : Fragment(R.layout.fragment_autopost) {
     }
 
     private fun shareToInstagram(post: InstaPost) {
-        ensureInstagramAccessibility()
+        ensureAccessibilityServices()
         val fileName = post.id + if (post.isVideo) ".mp4" else ".jpg"
         val dir = File(requireContext().getExternalFilesDir(null), "CiceroReposterApp")
         val file = if (!post.localPath.isNullOrBlank()) {
@@ -198,11 +206,10 @@ class AutopostFragment : Fragment(R.layout.fragment_autopost) {
             intent.putExtra(Intent.EXTRA_STREAM, uri)
             intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
         }
-        intent.setPackage("com.instagram.android")
         try {
-            startActivity(intent)
-        } catch (_: Exception) {
             startActivity(Intent.createChooser(intent, "Share via"))
+        } catch (_: Exception) {
+            startActivity(intent)
         }
     }
 

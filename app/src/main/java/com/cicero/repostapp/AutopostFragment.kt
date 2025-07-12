@@ -32,7 +32,6 @@ import java.time.OffsetDateTime
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import com.cicero.repostapp.service.InstagramPostService
-import com.cicero.repostapp.service.ShareChooserService
 import com.cicero.repostapp.util.AccessibilityUtils
 
 class AutopostFragment : Fragment(R.layout.fragment_autopost) {
@@ -74,8 +73,7 @@ class AutopostFragment : Fragment(R.layout.fragment_autopost) {
 
     private fun ensureAccessibilityServices() {
         val services = listOf(
-            InstagramPostService::class.java,
-            ShareChooserService::class.java
+            InstagramPostService::class.java
         )
         val enabled = services.all {
             AccessibilityUtils.isServiceEnabled(requireContext(), it)

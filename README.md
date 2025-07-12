@@ -19,6 +19,18 @@ The project uses Gradle Kotlin DSL. To build the project you would typically run
 ./gradlew assembleDebug
 ```
 
+Before running the build you must point Gradle to a valid Android SDK
+installation.  Create a file named `local.properties` in the project root with
+the following content (adjust the path to match your environment):
+
+```properties
+sdk.dir=/path/to/Android/Sdk
+```
+
+Without this file the Android plugin cannot generate sources such as
+`BuildConfig`, which leads to errors like `Unresolved reference: BuildConfig` at
+compile time.
+
 ## Update from GitHub Releases
 
 `MainActivity` includes a **Perbarui Aplikasi** button that queries the latest

@@ -83,9 +83,10 @@ caption and publish the post.
 ## Instagram Automation
 
 The application includes an accessibility service that can automate posting to
-Instagram. When triggered it opens the *Postingan Baru* screen, pastes the
-caption into the "Tulis Keterangan dan tambahkan tagar..." field, presses the
-**Bagikan** button and waits until the upload process completes before returning
+Instagram. When triggered it opens the *Postingan Baru* screen, then looks for
+the "Tulis Keterangan dan Tambahkan Pagar" prompt. It clicks the caption field,
+pastes the clipboard text, presses the **Bagikan** button and waits until the
+upload process completes before returning
 to the home screen.
 
 

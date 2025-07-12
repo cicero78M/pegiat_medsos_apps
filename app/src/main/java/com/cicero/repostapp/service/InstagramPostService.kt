@@ -57,6 +57,15 @@ class InstagramPostService : AccessibilityService() {
             return
         }
 
+        if (containsText(root, listOf("edit video")) && containsText(root, listOf("berikutnya"))) {
+            val nextNode = findClickableNodeByText(root, listOf("Berikutnya"))
+            if (nextNode != null) {
+                nextNode.performAction(AccessibilityNodeInfo.ACTION_CLICK)
+                handler.postDelayed(clickRunnable, stepDelayMs)
+            }
+            return
+        }
+
         if (!captionInserted) {
             val editNode = findEditText(root)
             if (editNode != null) {

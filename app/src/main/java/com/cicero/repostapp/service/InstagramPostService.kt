@@ -17,6 +17,7 @@ class InstagramPostService : AccessibilityService() {
     companion object {
         const val ACTION_UPLOAD_FINISHED = "com.cicero.repostapp.INSTAGRAM_UPLOAD_FINISHED"
         const val CAPTION_INPUT_ID = "com.instagram.android:id/caption_input_text_view"
+        const val SHARE_BUTTON_ID = "com.instagram.android:id/share_footer_button"
     }
 
     private var captionInserted = false
@@ -127,7 +128,8 @@ class InstagramPostService : AccessibilityService() {
         }
 
         if (!shareClicked) {
-            val node = findClickableNodeByText(root, listOf("Bagikan", "Share"))
+            val node = findNodeById(root, SHARE_BUTTON_ID)
+                ?: findClickableNodeByText(root, listOf("Bagikan", "Share"))
             if (node != null) {
                 shareClicked = true
                 waitingUpload = true

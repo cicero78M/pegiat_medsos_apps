@@ -37,6 +37,7 @@
     <string name="start">Start</string>
     <string name="whatsapp_message_registration">userrequest</string>
     <string name="instagram_service_description">Instagram posting automation</string>
+    <string name="twitter_service_description">Twitter posting automation</string>
     <string name="accessibility_settings">Accessibility Service</string>
     <string name="enable_accessibility_service">Please enable accessibility service for auto posting</string>
 </resources>

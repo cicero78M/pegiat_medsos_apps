@@ -21,16 +21,15 @@ class InstagramPostService : AccessibilityService() {
         const val SHARE_BUTTON_ALT_ID = "com.instagram.android:id/share_button"
     }
 
+    private val handler = Handler(Looper.getMainLooper())
+    private val stepDelayMs = 2000L
+    private val uploadTimeoutMs = 30000L
+
     private var captionInserted = false
     private var shareClicked = false
     private var waitingUpload = false
     private var isVideoPost = false
     private var scrolledForVideo = false
-    private val handler = Handler(Looper.getMainLooper())
-    private val clickRunnable = Runnable { performActions() }
-    private val finishRunnable = Runnable { finishUpload() }
-    private val stepDelayMs = 4000L
-    private val uploadTimeoutMs = 30000L
 
     override fun onServiceConnected() {
         serviceInfo = AccessibilityServiceInfo().apply {
@@ -40,294 +39,142 @@ class InstagramPostService : AccessibilityService() {
             flags = AccessibilityServiceInfo.FLAG_REPORT_VIEW_IDS or
                     AccessibilityServiceInfo.FLAG_RETRIEVE_INTERACTIVE_WINDOWS
             packageNames = arrayOf("com.instagram.android")
-            notificationTimeout = 100
+            notificationTimeout = 200
         }
     }
 
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {
-        val root = rootInActiveWindow ?: return
-
-        if (event?.packageName != "com.instagram.android") {
-            if (containsText(root, listOf("Bagikan", "Share"))) {
-                checkRememberChoice(root)
-                clickInstagramFeed(root)
-            }
-            return
-        }
-
-        when (event.eventType) {
-            AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED -> {
-                captionInserted = false
-                shareClicked = false
-                isVideoPost = false
-                scrolledForVideo = false
-                handler.postDelayed(clickRunnable, stepDelayMs)
-            }
-            AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED -> {
-                handler.postDelayed(clickRunnable, stepDelayMs)
-            }
-        }
+        if (event?.packageName != "com.instagram.android") return
+        handler.removeCallbacksAndMessages(null)
+        handler.postDelayed({ performActions() }, stepDelayMs)
     }
+
+    override fun onInterrupt() {}
 
     private fun performActions() {
         val root = rootInActiveWindow ?: return
 
-        if (containsText(root, listOf("Buat Stiker"))) {
-            val laterNode = findClickableNodeByText(root, listOf("Lain Kali"))
-            if (laterNode != null) {
-                laterNode.performAction(AccessibilityNodeInfo.ACTION_CLICK)
-                handler.postDelayed(clickRunnable, stepDelayMs)
-            }
-            return
+        // Dismiss sticker prompt
+        findClickableByText(root, listOf("Buat Stiker", "Not Now", "Lain Kali"))?.run {
+            performAction(AccessibilityNodeInfo.ACTION_CLICK)
+            return handler.postDelayed({ performActions() }, stepDelayMs)
         }
 
-        if (containsText(root, listOf("berikutnya", "selanjutnya", "next"))) {
-            val nextNode = findClickableNodeByText(root, listOf("Berikutnya", "Selanjutnya", "Next"))
-            if (nextNode != null) {
-                nextNode.performAction(AccessibilityNodeInfo.ACTION_CLICK)
-                isVideoPost = true
-                handler.postDelayed(clickRunnable, stepDelayMs)
-            }
-            return
+        // Next for video posts
+        findClickableByText(root, listOf("Berikutnya", "Selanjutnya", "Next"))?.run {
+            performAction(AccessibilityNodeInfo.ACTION_CLICK)
+            isVideoPost = true
+            return handler.postDelayed({ performActions() }, stepDelayMs)
         }
 
-        if (!containsText(
-                root,
-                listOf(
-                    "Tambahkan keterangan",
-                    "Tulis keterangan",
-                    "Tulis keterangan dan tambahkan tagar...",
-                    "Add caption",
-                    "Write a caption",
-                    "Write a caption..."
-                )
-            )) {
-            handler.postDelayed(clickRunnable, stepDelayMs)
-            return
-        }
-
+        // Scroll video preview once
         if (isVideoPost && !scrolledForVideo) {
-            scrollDownAndUp(root)
+            scrollPreview(root)
             scrolledForVideo = true
-            handler.postDelayed(clickRunnable, stepDelayMs)
-            return
+            return handler.postDelayed({ performActions() }, stepDelayMs)
         }
 
+        // Wait for caption field
+        val captionField = findCaptionField(root) ?: return handler.postDelayed({ performActions() }, stepDelayMs)
+
+        // Insert caption once
         if (!captionInserted) {
-            val editNode = waitForCaptionEditText()
-            if (editNode != null && insertCaption(editNode)) {
-                handler.postDelayed(clickRunnable, stepDelayMs)
-                return
-            }
+            captionInserted = insertCaption(captionField)
+            return handler.postDelayed({ performActions() }, stepDelayMs)
         }
 
-        if (captionInserted) {
-            val editNode = waitForCaptionEditText()
-            if (editNode == null || editNode.text.isNullOrBlank()) {
-                // caption was not inserted successfully, retry instead of sharing
-                captionInserted = false
-                handler.postDelayed(clickRunnable, stepDelayMs)
-                return
-            }
-        }
-
-        if (waitingUpload) {
-            // wait for Instagram to finish uploading the post
-            handler.postDelayed(clickRunnable, stepDelayMs)
-            return
-        }
-
-        if (!shareClicked) {
-            val node = if (isVideoPost) {
-                findNodeById(root, SHARE_BUTTON_ALT_ID)
-                    ?: findNodeById(root, SHARE_BUTTON_ID)
-                    ?: findClickableNodeByText(root, listOf("Bagikan", "Share"))
-            } else {
-                findNodeById(root, SHARE_BUTTON_ID)
-                    ?: findNodeById(root, SHARE_BUTTON_ALT_ID)
-                    ?: findClickableNodeByText(root, listOf("Bagikan", "Share"))
-            }
-            if (node != null) {
-                shareClicked = true
-                waitingUpload = true
-                node.performAction(AccessibilityNodeInfo.ACTION_CLICK)
-                handler.postDelayed(finishRunnable, uploadTimeoutMs)
-                handler.postDelayed(clickRunnable, stepDelayMs)
-            }
-        }
-    }
-
-    private fun findClickableNodeByText(root: AccessibilityNodeInfo, texts: List<String>): AccessibilityNodeInfo? {
-        for (t in texts) {
-            val nodes = root.findAccessibilityNodeInfosByText(t)
-            for (n in nodes) {
-                var current: AccessibilityNodeInfo? = n
-                while (current != null && !current.isClickable) {
-                    current = current.parent
-                }
-                if (current != null && current.isClickable) {
-                    return current
+        // Verify caption and click share
+        if (captionInserted && !shareClicked) {
+            captionField.text?.let {
+                if (it.isNotBlank()) {
+                    findShareButton(root)?.run {
+                        shareClicked = true
+                        waitingUpload = true
+                        performAction(AccessibilityNodeInfo.ACTION_CLICK)
+                        handler.postDelayed({ onUploadTimeout() }, uploadTimeoutMs)
+                        return handler.postDelayed({ performActions() }, stepDelayMs)
+                    }
                 }
             }
         }
-        return null
     }
 
-    private fun containsText(node: AccessibilityNodeInfo?, keywords: List<String>): Boolean {
-        if (node == null) return false
-        for (k in keywords) {
-            if (node.text?.toString()?.contains(k, true) == true) return true
-            if (node.contentDescription?.toString()?.contains(k, true) == true) return true
-        }
-        for (i in 0 until node.childCount) {
-            val child = node.getChild(i)
-            if (containsText(child, keywords)) return true
-        }
-        return false
-    }
-
-    private fun findEditText(node: AccessibilityNodeInfo?): AccessibilityNodeInfo? {
-        if (node == null) return null
-        if ("android.widget.EditText" == node.className || node.isEditable) return node
-        for (i in 0 until node.childCount) {
-            val child = node.getChild(i)
-            val result = findEditText(child)
-            if (result != null) return result
-        }
-        return null
-    }
-
-    private fun findNodeById(node: AccessibilityNodeInfo?, id: String): AccessibilityNodeInfo? {
-        if (node == null) return null
-        if (id == node.viewIdResourceName) return node
-        for (i in 0 until node.childCount) {
-            val child = node.getChild(i)
-            val result = findNodeById(child, id)
-            if (result != null) return result
-        }
-        return null
-    }
-
-    private fun findCaptionEditText(node: AccessibilityNodeInfo?): AccessibilityNodeInfo? {
-        val keywords = listOf(
-            "Tambahkan keterangan",
-            "Tulis keterangan",
-            "Tulis keterangan dan tambahkan tagar...",
-            "Add caption",
-            "Write a caption",
-            "Write a caption..."
-        )
-        val target = findNodeByText(node, keywords)
-        var current: AccessibilityNodeInfo? = target
-        while (current != null && "android.widget.EditText" != current.className && !current.isEditable) {
-            current = current.parent
-        }
-        return if (current != null && ("android.widget.EditText" == current.className || current.isEditable)) current else null
-    }
-
-    private fun waitForCaptionEditText(): AccessibilityNodeInfo? {
-        var attempts = 0
-        while (attempts < 5) {
-            val root = rootInActiveWindow ?: return null
-            val node =
-                findNodeById(root, CAPTION_INPUT_ID) ?: findCaptionEditText(root) ?: findEditText(root)
-            if (node != null) return node
-            try {
-                Thread.sleep(250)
-            } catch (_: InterruptedException) {
-                break
+    private fun findClickableByText(root: AccessibilityNodeInfo, texts: List<String>): AccessibilityNodeInfo? {
+        texts.forEach { t ->
+            root.findAccessibilityNodeInfosByText(t)?.forEach { node ->
+                var cur: AccessibilityNodeInfo? = node
+                while (cur != null && !cur.isClickable) cur = cur.parent
+                if (cur?.isClickable == true) return cur
             }
-            attempts++
+        }
+        return null
+    }
+
+    private fun findCaptionField(root: AccessibilityNodeInfo): AccessibilityNodeInfo? {
+        // Try by view ID first
+        findById(root, CAPTION_INPUT_ID)?.let { return it }
+        // Otherwise find EditText
+        return findEditable(root)
+    }
+
+    private fun findById(node: AccessibilityNodeInfo?, id: String): AccessibilityNodeInfo? {
+        if (node == null) return null
+        if (node.viewIdResourceName == id) return node
+        for (i in 0 until node.childCount) {
+            findById(node.getChild(i), id)?.let { return it }
+        }
+        return null
+    }
+
+    private fun findEditable(node: AccessibilityNodeInfo?): AccessibilityNodeInfo? {
+        if (node == null) return null
+        if (node.className == "android.widget.EditText" || node.isEditable) return node
+        for (i in 0 until node.childCount) {
+            findEditable(node.getChild(i))?.let { return it }
         }
         return null
     }
 
     private fun insertCaption(node: AccessibilityNodeInfo): Boolean {
-        val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-        val text = clipboard.primaryClip?.getItemAt(0)?.text ?: return false
-
+        val clip = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+        val text = clip.primaryClip?.getItemAt(0)?.text ?: return false
         val args = Bundle().apply {
             putCharSequence(AccessibilityNodeInfo.ACTION_ARGUMENT_SET_TEXT_CHARSEQUENCE, text)
         }
-
         node.performAction(AccessibilityNodeInfo.ACTION_FOCUS)
-
-        val setResult = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+        val success = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP)
             node.performAction(AccessibilityNodeInfo.ACTION_SET_TEXT, args)
-        } else false
-
-        if (!setResult || node.text.isNullOrBlank()) {
+        else
             node.performAction(AccessibilityNodeInfo.ACTION_PASTE)
-        }
-
-        val confirmed = !node.text.isNullOrBlank()
-        captionInserted = confirmed
-        return confirmed
+        if (!success) node.performAction(AccessibilityNodeInfo.ACTION_PASTE)
+        return !node.text.isNullOrBlank()
     }
 
-    private fun findNodeByText(node: AccessibilityNodeInfo?, keywords: List<String>): AccessibilityNodeInfo? {
-        if (node == null) return null
-        for (k in keywords) {
-            if (node.text?.toString()?.contains(k, true) == true ||
-                node.contentDescription?.toString()?.contains(k, true) == true) {
-                return node
-            }
-        }
-        for (i in 0 until node.childCount) {
-            val child = node.getChild(i)
-            val res = findNodeByText(child, keywords)
-            if (res != null) return res
-        }
-        return null
+    private fun findShareButton(root: AccessibilityNodeInfo): AccessibilityNodeInfo? {
+        return findById(root, SHARE_BUTTON_ID)
+            ?: findById(root, SHARE_BUTTON_ALT_ID)
+            ?: findClickableByText(root, listOf("Bagikan", "Share"))
     }
 
-    private fun findScrollableNode(node: AccessibilityNodeInfo?): AccessibilityNodeInfo? {
+    private fun scrollPreview(root: AccessibilityNodeInfo) {
+        findScrollable(root)?.run {
+            performAction(AccessibilityNodeInfo.ACTION_SCROLL_FORWARD)
+            performAction(AccessibilityNodeInfo.ACTION_SCROLL_BACKWARD)
+        }
+    }
+
+    private fun findScrollable(node: AccessibilityNodeInfo?): AccessibilityNodeInfo? {
         if (node == null) return null
         if (node.isScrollable) return node
         for (i in 0 until node.childCount) {
-            val child = node.getChild(i)
-            val res = findScrollableNode(child)
-            if (res != null) return res
+            findScrollable(node.getChild(i))?.let { return it }
         }
         return null
     }
 
-    private fun scrollDownAndUp(root: AccessibilityNodeInfo) {
-        val scrollNode = findScrollableNode(root) ?: return
-        scrollNode.performAction(AccessibilityNodeInfo.ACTION_SCROLL_FORWARD)
-        try {
-            Thread.sleep(500)
-        } catch (_: InterruptedException) {
-        }
-        scrollNode.performAction(AccessibilityNodeInfo.ACTION_SCROLL_BACKWARD)
-    }
-
-    private fun checkRememberChoice(root: AccessibilityNodeInfo) {
-        val node = findNodeByText(root, listOf("Ingat pilihan saya", "Remember my choice"))
-        var target = node
-        while (target != null && !target.isCheckable && !target.isClickable) {
-            target = target.parent
-        }
-        if (target != null && !target.isChecked) {
-            target.performAction(AccessibilityNodeInfo.ACTION_CLICK)
-        }
-    }
-
-    private fun clickInstagramFeed(root: AccessibilityNodeInfo) {
-        val node = findNodeByText(root, listOf("Instagram", "Feed")) ?: return
-        var target: AccessibilityNodeInfo? = node
-        while (target != null && !target.isClickable) {
-            target = target.parent
-        }
-        target?.performAction(AccessibilityNodeInfo.ACTION_CLICK)
-    }
-
-    private fun finishUpload() {
+    private fun onUploadTimeout() {
         waitingUpload = false
         sendBroadcast(Intent(ACTION_UPLOAD_FINISHED))
         performGlobalAction(GLOBAL_ACTION_HOME)
         stopSelf()
     }
-
-    override fun onInterrupt() {}
-}

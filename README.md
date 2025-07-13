@@ -80,14 +80,18 @@ python scripts/tiktok_post.py <device-serial> /sdcard/video.mp4 --caption "Hello
 This will open TikTok, select the first video in the gallery, optionally set the
 caption and publish the post.
 
-## Instagram Automation
+## Macro Automation
 
-The application includes an accessibility service that can automate posting to
-Instagram. When triggered it opens the *Postingan Baru* screen, then looks for
-the "Tulis Keterangan dan Tambahkan Pagar" prompt. It clicks the caption field,
-pastes the clipboard text, presses the **Bagikan** button and waits until the
-upload process completes before returning
-to the home screen.
+This version replaces the old Instagram and Twitter auto repost implementation
+with a generic macro system. A single accessibility service reads a saved macro
+and performs the recorded gestures such as click, swipe and set text. Macros are
+managed through a simple ViewPager UI where actions can be added or removed and
+persisted with `SharedPreferences`.
+
+Macros now also support a **Repost** action that downloads media from a URL and
+automatically shares it to Instagram, X/Twitter, TikTok and YouTube with a given
+caption. This enables cross‑platform reposting workflows triggered via the
+accessibility service.
 
 
 

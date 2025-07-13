@@ -6,7 +6,6 @@ import android.provider.Settings
 import androidx.appcompat.app.AppCompatActivity
 import androidx.viewpager2.widget.ViewPager2
 import com.google.android.material.bottomnavigation.BottomNavigationView
-import androidx.fragment.app.Fragment
 import androidx.viewpager2.adapter.FragmentStateAdapter
 import android.view.Menu
 import android.view.MenuItem
@@ -25,7 +24,7 @@ class DashboardActivity : AppCompatActivity() {
         val fragments = listOf(
             UserProfileFragment.newInstance(userId, token),
             DashboardFragment.newInstance(userId, token),
-            AutopostFragment.newInstance(userId, token)
+            MacroFragment.newInstance(userId, token)
         )
 
         val viewPager = findViewById<ViewPager2>(R.id.view_pager)
@@ -40,7 +39,7 @@ class DashboardActivity : AppCompatActivity() {
             when (item.itemId) {
                 R.id.nav_profile -> { viewPager.currentItem = 0; true }
                 R.id.nav_insta -> { viewPager.currentItem = 1; true }
-                R.id.nav_autopost -> { viewPager.currentItem = 2; true }
+                R.id.nav_macro -> { viewPager.currentItem = 2; true }
                 else -> false
             }
         }
@@ -50,7 +49,7 @@ class DashboardActivity : AppCompatActivity() {
                 when (position) {
                     0 -> bottomNav.selectedItemId = R.id.nav_profile
                     1 -> bottomNav.selectedItemId = R.id.nav_insta
-                    2 -> bottomNav.selectedItemId = R.id.nav_autopost
+                    2 -> bottomNav.selectedItemId = R.id.nav_macro
                 }
             }
         })

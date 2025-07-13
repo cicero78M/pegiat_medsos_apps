@@ -81,8 +81,8 @@ class InstagramPostService : AccessibilityService() {
             return
         }
 
-        if (containsText(root, listOf("edit video")) && containsText(root, listOf("berikutnya"))) {
-            val nextNode = findClickableNodeByText(root, listOf("Berikutnya"))
+        if (containsText(root, listOf("berikutnya", "selanjutnya", "next"))) {
+            val nextNode = findClickableNodeByText(root, listOf("Berikutnya", "Selanjutnya", "Next"))
             if (nextNode != null) {
                 nextNode.performAction(AccessibilityNodeInfo.ACTION_CLICK)
                 isVideoPost = true
@@ -115,25 +115,9 @@ class InstagramPostService : AccessibilityService() {
 
         if (!captionInserted) {
             val editNode = waitForCaptionEditText()
-            if (editNode != null) {
-                val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-                val text = clipboard.primaryClip?.getItemAt(0)?.text
-                if (!text.isNullOrBlank()) {
-                    val args = Bundle().apply {
-                        putCharSequence(AccessibilityNodeInfo.ACTION_ARGUMENT_SET_TEXT_CHARSEQUENCE, text)
-                    }
-                    editNode.performAction(AccessibilityNodeInfo.ACTION_FOCUS)
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                        editNode.performAction(AccessibilityNodeInfo.ACTION_SET_TEXT, args)
-                    }
-                    editNode.performAction(AccessibilityNodeInfo.ACTION_PASTE)
-
-                    // verify the caption text was actually inserted
-                    val confirmed = !editNode.text.isNullOrBlank()
-                    captionInserted = confirmed
-                    handler.postDelayed(clickRunnable, stepDelayMs)
-                    return
-                }
+            if (editNode != null && insertCaption(editNode)) {
+                handler.postDelayed(clickRunnable, stepDelayMs)
+                return
             }
         }
 
@@ -256,6 +240,29 @@ class InstagramPostService : AccessibilityService() {
             attempts++
         }
         return null
+    }
+
+    private fun insertCaption(node: AccessibilityNodeInfo): Boolean {
+        val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+        val text = clipboard.primaryClip?.getItemAt(0)?.text ?: return false
+
+        val args = Bundle().apply {
+            putCharSequence(AccessibilityNodeInfo.ACTION_ARGUMENT_SET_TEXT_CHARSEQUENCE, text)
+        }
+
+        node.performAction(AccessibilityNodeInfo.ACTION_FOCUS)
+
+        val setResult = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            node.performAction(AccessibilityNodeInfo.ACTION_SET_TEXT, args)
+        } else false
+
+        if (!setResult || node.text.isNullOrBlank()) {
+            node.performAction(AccessibilityNodeInfo.ACTION_PASTE)
+        }
+
+        val confirmed = !node.text.isNullOrBlank()
+        captionInserted = confirmed
+        return confirmed
     }
 
     private fun findNodeByText(node: AccessibilityNodeInfo?, keywords: List<String>): AccessibilityNodeInfo? {

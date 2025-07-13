@@ -6,6 +6,7 @@ import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
+import android.os.Build
 import android.os.Handler
 import android.os.Looper
 import android.view.accessibility.AccessibilityEvent
@@ -33,6 +34,8 @@ class InstagramPostService : AccessibilityService() {
             feedbackType = AccessibilityServiceInfo.FEEDBACK_GENERIC
             flags = AccessibilityServiceInfo.FLAG_REPORT_VIEW_IDS or
                     AccessibilityServiceInfo.FLAG_RETRIEVE_INTERACTIVE_WINDOWS
+            packageNames = arrayOf("com.instagram.android")
+            notificationTimeout = 100
         }
     }
 
@@ -96,7 +99,7 @@ class InstagramPostService : AccessibilityService() {
         }
 
         if (!captionInserted) {
-            val editNode = findCaptionEditText(root) ?: findEditText(root)
+            val editNode = waitForCaptionEditText()
             if (editNode != null) {
                 val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
                 val text = clipboard.primaryClip?.getItemAt(0)?.text
@@ -104,8 +107,12 @@ class InstagramPostService : AccessibilityService() {
                     val args = Bundle()
                     args.putCharSequence(AccessibilityNodeInfo.ACTION_ARGUMENT_SET_TEXT_CHARSEQUENCE, text)
                     editNode.performAction(AccessibilityNodeInfo.ACTION_FOCUS)
-                    editNode.performAction(AccessibilityNodeInfo.ACTION_SET_TEXT, args)
-                    if (editNode.text.isNullOrBlank()) {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                        editNode.performAction(AccessibilityNodeInfo.ACTION_SET_TEXT, args)
+                        if (editNode.text.isNullOrBlank()) {
+                            editNode.performAction(AccessibilityNodeInfo.ACTION_PASTE)
+                        }
+                    } else {
                         editNode.performAction(AccessibilityNodeInfo.ACTION_PASTE)
                     }
                     captionInserted = !editNode.text.isNullOrBlank()
@@ -188,6 +195,22 @@ class InstagramPostService : AccessibilityService() {
             current = current.parent
         }
         return if (current != null && ("android.widget.EditText" == current.className || current.isEditable)) current else null
+    }
+
+    private fun waitForCaptionEditText(): AccessibilityNodeInfo? {
+        var attempts = 0
+        while (attempts < 5) {
+            val root = rootInActiveWindow ?: return null
+            val node = findCaptionEditText(root) ?: findEditText(root)
+            if (node != null) return node
+            try {
+                Thread.sleep(250)
+            } catch (_: InterruptedException) {
+                break
+            }
+            attempts++
+        }
+        return null
     }
 
     private fun findNodeByText(node: AccessibilityNodeInfo?, keywords: List<String>): AccessibilityNodeInfo? {

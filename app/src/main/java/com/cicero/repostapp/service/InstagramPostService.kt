@@ -83,10 +83,12 @@ class InstagramPostService : AccessibilityService() {
         if (!containsText(
                 root,
                 listOf(
-                    "Postingan Baru",
-                    "New Post",
+                    "Tambahkan keterangan",
                     "Tulis keterangan",
-                    "Write a caption"
+                    "Tulis keterangan dan tambahkan tagar...",
+                    "Add caption",
+                    "Write a caption",
+                    "Write a caption..."
                 )
             )) {
             handler.postDelayed(clickRunnable, stepDelayMs)

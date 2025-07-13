@@ -326,8 +326,14 @@ class InstagramPostService : AccessibilityService() {
         waitingUpload = false
         sendBroadcast(Intent(ACTION_UPLOAD_FINISHED))
         performGlobalAction(GLOBAL_ACTION_HOME)
-        stopSelf()
+        disableSelf()
     }
 
     override fun onInterrupt() {}
+
+    override fun onDestroy() {
+        handler.removeCallbacks(clickRunnable)
+        handler.removeCallbacks(finishRunnable)
+        super.onDestroy()
+    }
 }

@@ -355,6 +355,9 @@ class DashboardFragment : Fragment(R.layout.fragment_dashboard) {
             val url = if (post.isVideo) post.videoUrl else post.imageUrl ?: post.sourceUrl
             if (!url.isNullOrBlank()) intent.putExtra(Intent.EXTRA_TEXT, url)
         }
+        if (!post.caption.isNullOrBlank()) {
+            intent.putExtra(Intent.EXTRA_TEXT, post.caption)
+        }
         val clipboard = requireContext().getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
         clipboard.setPrimaryClip(ClipData.newPlainText("caption", post.caption ?: ""))
         startActivity(Intent.createChooser(intent, "Share via"))

@@ -18,11 +18,14 @@ class InstagramPostService : AccessibilityService() {
         const val ACTION_UPLOAD_FINISHED = "com.cicero.repostapp.INSTAGRAM_UPLOAD_FINISHED"
         const val CAPTION_INPUT_ID = "com.instagram.android:id/caption_input_text_view"
         const val SHARE_BUTTON_ID = "com.instagram.android:id/share_footer_button"
+        const val SHARE_BUTTON_ALT_ID = "com.instagram.android:id/share_button"
     }
 
     private var captionInserted = false
     private var shareClicked = false
     private var waitingUpload = false
+    private var isVideoPost = false
+    private var scrolledForVideo = false
     private val handler = Handler(Looper.getMainLooper())
     private val clickRunnable = Runnable { performActions() }
     private val finishRunnable = Runnable { finishUpload() }
@@ -56,6 +59,8 @@ class InstagramPostService : AccessibilityService() {
             AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED -> {
                 captionInserted = false
                 shareClicked = false
+                isVideoPost = false
+                scrolledForVideo = false
                 handler.postDelayed(clickRunnable, stepDelayMs)
             }
             AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED -> {
@@ -80,6 +85,7 @@ class InstagramPostService : AccessibilityService() {
             val nextNode = findClickableNodeByText(root, listOf("Berikutnya"))
             if (nextNode != null) {
                 nextNode.performAction(AccessibilityNodeInfo.ACTION_CLICK)
+                isVideoPost = true
                 handler.postDelayed(clickRunnable, stepDelayMs)
             }
             return
@@ -96,6 +102,13 @@ class InstagramPostService : AccessibilityService() {
                     "Write a caption..."
                 )
             )) {
+            handler.postDelayed(clickRunnable, stepDelayMs)
+            return
+        }
+
+        if (isVideoPost && !scrolledForVideo) {
+            scrollDownAndUp(root)
+            scrolledForVideo = true
             handler.postDelayed(clickRunnable, stepDelayMs)
             return
         }
@@ -128,8 +141,15 @@ class InstagramPostService : AccessibilityService() {
         }
 
         if (!shareClicked) {
-            val node = findNodeById(root, SHARE_BUTTON_ID)
-                ?: findClickableNodeByText(root, listOf("Bagikan", "Share"))
+            val node = if (isVideoPost) {
+                findNodeById(root, SHARE_BUTTON_ALT_ID)
+                    ?: findNodeById(root, SHARE_BUTTON_ID)
+                    ?: findClickableNodeByText(root, listOf("Bagikan", "Share"))
+            } else {
+                findNodeById(root, SHARE_BUTTON_ID)
+                    ?: findNodeById(root, SHARE_BUTTON_ALT_ID)
+                    ?: findClickableNodeByText(root, listOf("Bagikan", "Share"))
+            }
             if (node != null) {
                 shareClicked = true
                 waitingUpload = true
@@ -239,6 +259,27 @@ class InstagramPostService : AccessibilityService() {
             if (res != null) return res
         }
         return null
+    }
+
+    private fun findScrollableNode(node: AccessibilityNodeInfo?): AccessibilityNodeInfo? {
+        if (node == null) return null
+        if (node.isScrollable) return node
+        for (i in 0 until node.childCount) {
+            val child = node.getChild(i)
+            val res = findScrollableNode(child)
+            if (res != null) return res
+        }
+        return null
+    }
+
+    private fun scrollDownAndUp(root: AccessibilityNodeInfo) {
+        val scrollNode = findScrollableNode(root) ?: return
+        scrollNode.performAction(AccessibilityNodeInfo.ACTION_SCROLL_FORWARD)
+        try {
+            Thread.sleep(500)
+        } catch (_: InterruptedException) {
+        }
+        scrollNode.performAction(AccessibilityNodeInfo.ACTION_SCROLL_BACKWARD)
     }
 
     private fun checkRememberChoice(root: AccessibilityNodeInfo) {

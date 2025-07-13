@@ -88,6 +88,11 @@ and performs the recorded gestures such as click, swipe and set text. Macros are
 managed through a simple ViewPager UI where actions can be added or removed and
 persisted with `SharedPreferences`.
 
+Macros now also support a **Repost** action that downloads media from a URL and
+automatically shares it to Instagram, X/Twitter, TikTok and YouTube with a given
+caption. This enables cross‑platform reposting workflows triggered via the
+accessibility service.
+
 
 
 

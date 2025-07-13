@@ -27,7 +27,13 @@ class MacroPagerAdapter(private val fragment: Fragment) : RecyclerView.Adapter<M
     override fun getItemCount(): Int = macro.actions.size
 
     fun addAction() {
-        macro.actions.add(com.cicero.repostapp.macro.MacroAction.Click(0, 0))
+        // For demo purposes we append a Repost action with dummy URL and caption
+        macro.actions.add(
+            com.cicero.repostapp.macro.MacroAction.Repost(
+                "https://example.com/image.jpg",
+                "#cicero"
+            )
+        )
         MacroManager.save(fragment.requireContext(), macro)
         notifyDataSetChanged()
     }

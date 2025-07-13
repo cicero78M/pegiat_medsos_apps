@@ -3,6 +3,13 @@ package com.cicero.repostapp.macro
 import android.accessibilityservice.AccessibilityService
 import android.accessibilityservice.GestureDescription
 import android.content.Intent
+import androidx.core.content.FileProvider
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import okhttp3.OkHttpClient
+import okhttp3.Request
 import android.graphics.Path
 import android.view.accessibility.AccessibilityEvent
 
@@ -50,6 +57,12 @@ class MacroAccessibilityService : AccessibilityService() {
                 // not implemented: requires focused field
                 executeNext()
             }
+            is MacroAction.Repost -> {
+                CoroutineScope(Dispatchers.IO).launch {
+                    handleRepost(act.url, act.caption)
+                    withContext(Dispatchers.Main) { executeNext() }
+                }
+            }
         }
     }
 
@@ -78,5 +91,84 @@ class MacroAccessibilityService : AccessibilityService() {
         p.lineTo(a.endX.toFloat(), a.endY.toFloat())
         val s = GestureDescription.StrokeDescription(p, 0, 300)
         return GestureDescription.Builder().addStroke(s).build()
+    }
+
+    /** Download the media then share it to all supported platforms. */
+    private suspend fun handleRepost(url: String, caption: String) {
+        val file = withContext(Dispatchers.IO) { downloadFile(url) } ?: return
+        shareToInstagram(file, caption)
+        shareToTwitter(file, caption)
+        shareToTikTok(file, caption)
+        shareToYouTube(file, caption)
+    }
+
+    private fun downloadFile(url: String): java.io.File? {
+        return try {
+            val client = OkHttpClient()
+            val req = Request.Builder().url(url).build()
+            client.newCall(req).execute().use { resp ->
+                if (!resp.isSuccessful) return null
+                val dir = java.io.File(externalCacheDir, "macro")
+                if (!dir.exists()) dir.mkdirs()
+                val ext = if (url.endsWith(".mp4")) ".mp4" else ".jpg"
+                val file = java.io.File(dir, System.currentTimeMillis().toString() + ext)
+                resp.body?.byteStream()?.use { input ->
+                    file.outputStream().use { out ->
+                        input.copyTo(out)
+                    }
+                }
+                file
+            }
+        } catch (_: Exception) {
+            null
+        }
+    }
+
+    private fun shareToInstagram(file: java.io.File, caption: String) {
+        val uri = FileProvider.getUriForFile(this, "$packageName.fileprovider", file)
+        val intent = Intent(Intent.ACTION_SEND).apply {
+            setPackage("com.instagram.android")
+            type = if (file.extension == "mp4") "video/*" else "image/*"
+            putExtra(Intent.EXTRA_STREAM, uri)
+            putExtra(Intent.EXTRA_TEXT, caption)
+            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        }
+        startActivity(intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+    }
+
+    private fun shareToTwitter(file: java.io.File, caption: String) {
+        val uri = FileProvider.getUriForFile(this, "$packageName.fileprovider", file)
+        val intent = Intent(Intent.ACTION_SEND).apply {
+            setPackage("com.twitter.android")
+            type = if (file.extension == "mp4") "video/*" else "image/*"
+            putExtra(Intent.EXTRA_STREAM, uri)
+            putExtra(Intent.EXTRA_TEXT, caption)
+            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        }
+        startActivity(intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+    }
+
+    private fun shareToTikTok(file: java.io.File, caption: String) {
+        val uri = FileProvider.getUriForFile(this, "$packageName.fileprovider", file)
+        val intent = Intent(Intent.ACTION_SEND).apply {
+            setPackage("com.zhiliaoapp.musically")
+            type = if (file.extension == "mp4") "video/*" else "image/*"
+            putExtra(Intent.EXTRA_STREAM, uri)
+            putExtra("android.intent.extra.TEXT", caption)
+            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        }
+        startActivity(intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+    }
+
+    private fun shareToYouTube(file: java.io.File, caption: String) {
+        val uri = FileProvider.getUriForFile(this, "$packageName.fileprovider", file)
+        val intent = Intent(Intent.ACTION_SEND).apply {
+            setPackage("com.google.android.youtube")
+            type = if (file.extension == "mp4") "video/*" else "image/*"
+            putExtra(Intent.EXTRA_STREAM, uri)
+            putExtra(Intent.EXTRA_TEXT, caption)
+            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        }
+        startActivity(intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
     }
 }

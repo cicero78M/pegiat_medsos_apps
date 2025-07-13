@@ -46,8 +46,8 @@ class MacroFragment : Fragment() {
 
         view.findViewById<FloatingActionButton>(R.id.run_macro)
             .setOnClickListener {
-                val intent = Intent(requireContext(), macro.MacroAccessibilityService::class.java)
-                intent.action = macro.MacroAccessibilityService.ACTION_RUN
+                val intent = Intent(requireContext(), MacroAccessibilityService::class.java)
+                intent.action = MacroAccessibilityService.ACTION_RUN
                 requireContext().startService(intent)
             }
     }

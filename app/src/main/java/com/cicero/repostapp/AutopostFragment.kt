@@ -31,7 +31,10 @@ import java.time.LocalDateTime
 import java.time.OffsetDateTime
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
+import android.content.BroadcastReceiver
+import android.content.IntentFilter
 import com.cicero.repostapp.service.InstagramPostService
+import com.cicero.repostapp.service.TwitterPostService
 import com.cicero.repostapp.util.AccessibilityUtils
 
 class AutopostFragment : Fragment(R.layout.fragment_autopost) {
@@ -54,6 +57,8 @@ class AutopostFragment : Fragment(R.layout.fragment_autopost) {
     private lateinit var console: TextView
     private var token: String = ""
     private var userId: String = ""
+    private var currentPost: InstaPost? = null
+    private var receiver: BroadcastReceiver? = null
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -64,6 +69,25 @@ class AutopostFragment : Fragment(R.layout.fragment_autopost) {
         token = arguments?.getString(ARG_TOKEN) ?: ""
         userId = arguments?.getString(ARG_USER_ID) ?: ""
 
+        receiver = object : BroadcastReceiver() {
+            override fun onReceive(context: Context?, intent: Intent?) {
+                when (intent?.action) {
+                    InstagramPostService.ACTION_UPLOAD_FINISHED -> {
+                        log("Instagram upload finished")
+                        currentPost?.let { shareToTwitter(it) }
+                    }
+                    TwitterPostService.ACTION_UPLOAD_FINISHED -> {
+                        log("Twitter upload finished")
+                    }
+                }
+            }
+        }
+        val filter = IntentFilter().apply {
+            addAction(InstagramPostService.ACTION_UPLOAD_FINISHED)
+            addAction(TwitterPostService.ACTION_UPLOAD_FINISHED)
+        }
+        requireContext().registerReceiver(receiver, filter)
+
         collectPageChanges()
     }
 
@@ -73,7 +97,8 @@ class AutopostFragment : Fragment(R.layout.fragment_autopost) {
 
     private fun ensureAccessibilityServices() {
         val services = listOf(
-            InstagramPostService::class.java
+            InstagramPostService::class.java,
+            TwitterPostService::class.java
         )
         val enabled = services.all {
             AccessibilityUtils.isServiceEnabled(requireContext(), it)
@@ -115,6 +140,7 @@ class AutopostFragment : Fragment(R.layout.fragment_autopost) {
                 return@launch
             }
             val post = posts.first()
+            currentPost = post
             log("Proses ${post.id}")
             if (!checkIfFileExists(post)) {
                 log("Downloading konten ...")
@@ -125,7 +151,6 @@ class AutopostFragment : Fragment(R.layout.fragment_autopost) {
             copyCaption(post.caption)
             log("Membuka Instagram")
             shareToInstagram(post)
-            log("Autopost selesai")
         }
     }
 
@@ -235,6 +260,43 @@ class AutopostFragment : Fragment(R.layout.fragment_autopost) {
         }
     }
 
+    private fun shareToTwitter(post: InstaPost) {
+        ensureAccessibilityServices()
+        val fileName = post.id + if (post.isVideo) ".mp4" else ".jpg"
+        val dir = File(requireContext().getExternalFilesDir(null), "CiceroReposterApp")
+        val file = if (!post.localPath.isNullOrBlank()) {
+            File(post.localPath!!)
+        } else {
+            File(dir, fileName)
+        }
+        val caption = post.caption ?: ""
+        val tweetText = if (caption.length > 240) caption.substring(0, 210) else caption
+        val leftover = if (caption.length > 240) caption.substring(210) else ""
+        copyCaption(tweetText)
+        TwitterPostService.replyText = leftover
+
+        val intent = Intent(Intent.ACTION_SEND)
+        intent.type = if (post.isVideo) "video/*" else "image/*"
+        if (file.exists()) {
+            val uri = FileProvider.getUriForFile(requireContext(), requireContext().packageName + ".fileprovider", file)
+            intent.putExtra(Intent.EXTRA_STREAM, uri)
+            intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        }
+        if (tweetText.isNotBlank()) {
+            intent.putExtra(Intent.EXTRA_TEXT, tweetText)
+        }
+        intent.setPackage("com.twitter.android")
+        intent.setClassName(
+            "com.twitter.android",
+            "com.twitter.composer.ComposerActivity"
+        )
+        try {
+            startActivity(intent)
+        } catch (_: Exception) {
+            startActivity(Intent.createChooser(intent, "Share via"))
+        }
+    }
+
     private fun checkIfFileExists(post: InstaPost): Boolean {
         val fileName = post.id + if (post.isVideo) ".mp4" else ".jpg"
         val dir = File(requireContext().getExternalFilesDir(null), "CiceroReposterApp")
@@ -271,5 +333,11 @@ class AutopostFragment : Fragment(R.layout.fragment_autopost) {
                 log("Gagal download: ${e.message}")
             }
         }
+    }
+
+    override fun onDestroyView() {
+        receiver?.let { requireContext().unregisterReceiver(it) }
+        receiver = null
+        super.onDestroyView()
     }
 }

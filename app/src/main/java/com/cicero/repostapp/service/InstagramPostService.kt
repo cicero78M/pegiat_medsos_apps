@@ -16,6 +16,7 @@ class InstagramPostService : AccessibilityService() {
 
     companion object {
         const val ACTION_UPLOAD_FINISHED = "com.cicero.repostapp.INSTAGRAM_UPLOAD_FINISHED"
+        const val CAPTION_INPUT_ID = "com.instagram.android:id/caption_input_text_view"
     }
 
     private var captionInserted = false
@@ -104,18 +105,15 @@ class InstagramPostService : AccessibilityService() {
                 val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
                 val text = clipboard.primaryClip?.getItemAt(0)?.text
                 if (!text.isNullOrBlank()) {
-                    val args = Bundle()
-                    args.putCharSequence(AccessibilityNodeInfo.ACTION_ARGUMENT_SET_TEXT_CHARSEQUENCE, text)
+                    val args = Bundle().apply {
+                        putCharSequence(AccessibilityNodeInfo.ACTION_ARGUMENT_SET_TEXT_CHARSEQUENCE, text)
+                    }
                     editNode.performAction(AccessibilityNodeInfo.ACTION_FOCUS)
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
                         editNode.performAction(AccessibilityNodeInfo.ACTION_SET_TEXT, args)
-                        if (editNode.text.isNullOrBlank()) {
-                            editNode.performAction(AccessibilityNodeInfo.ACTION_PASTE)
-                        }
-                    } else {
-                        editNode.performAction(AccessibilityNodeInfo.ACTION_PASTE)
                     }
-                    captionInserted = !editNode.text.isNullOrBlank()
+                    editNode.performAction(AccessibilityNodeInfo.ACTION_PASTE)
+                    captionInserted = true
                     handler.postDelayed(clickRunnable, stepDelayMs)
                     return
                 }
@@ -180,6 +178,17 @@ class InstagramPostService : AccessibilityService() {
         return null
     }
 
+    private fun findNodeById(node: AccessibilityNodeInfo?, id: String): AccessibilityNodeInfo? {
+        if (node == null) return null
+        if (id == node.viewIdResourceName) return node
+        for (i in 0 until node.childCount) {
+            val child = node.getChild(i)
+            val result = findNodeById(child, id)
+            if (result != null) return result
+        }
+        return null
+    }
+
     private fun findCaptionEditText(node: AccessibilityNodeInfo?): AccessibilityNodeInfo? {
         val keywords = listOf(
             "Tambahkan keterangan",
@@ -201,7 +210,8 @@ class InstagramPostService : AccessibilityService() {
         var attempts = 0
         while (attempts < 5) {
             val root = rootInActiveWindow ?: return null
-            val node = findCaptionEditText(root) ?: findEditText(root)
+            val node =
+                findNodeById(root, CAPTION_INPUT_ID) ?: findCaptionEditText(root) ?: findEditText(root)
             if (node != null) return node
             try {
                 Thread.sleep(250)

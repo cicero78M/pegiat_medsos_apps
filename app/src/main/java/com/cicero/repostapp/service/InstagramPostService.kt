@@ -80,7 +80,15 @@ class InstagramPostService : AccessibilityService() {
             return
         }
 
-        if (!containsText(root, listOf("Postingan Baru", "New Post"))) {
+        if (!containsText(
+                root,
+                listOf(
+                    "Postingan Baru",
+                    "New Post",
+                    "Tulis keterangan",
+                    "Write a caption"
+                )
+            )) {
             handler.postDelayed(clickRunnable, stepDelayMs)
             return
         }

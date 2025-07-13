@@ -220,6 +220,9 @@ class AutopostFragment : Fragment(R.layout.fragment_autopost) {
             intent.putExtra(Intent.EXTRA_STREAM, uri)
             intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
         }
+        if (!post.caption.isNullOrBlank()) {
+            intent.putExtra(Intent.EXTRA_TEXT, post.caption)
+        }
         intent.setPackage("com.instagram.android")
         intent.setClassName(
             "com.instagram.android",

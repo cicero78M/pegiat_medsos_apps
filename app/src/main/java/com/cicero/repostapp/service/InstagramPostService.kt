@@ -127,10 +127,23 @@ class InstagramPostService : AccessibilityService() {
                         editNode.performAction(AccessibilityNodeInfo.ACTION_SET_TEXT, args)
                     }
                     editNode.performAction(AccessibilityNodeInfo.ACTION_PASTE)
-                    captionInserted = true
+
+                    // verify the caption text was actually inserted
+                    val confirmed = !editNode.text.isNullOrBlank()
+                    captionInserted = confirmed
                     handler.postDelayed(clickRunnable, stepDelayMs)
                     return
                 }
+            }
+        }
+
+        if (captionInserted) {
+            val editNode = waitForCaptionEditText()
+            if (editNode == null || editNode.text.isNullOrBlank()) {
+                // caption was not inserted successfully, retry instead of sharing
+                captionInserted = false
+                handler.postDelayed(clickRunnable, stepDelayMs)
+                return
             }
         }
 

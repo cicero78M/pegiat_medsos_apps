@@ -14,7 +14,7 @@
         android:padding="16dp"
         android:textColor="#00FF00"
         android:typeface="monospace"
-        android:text="> user@android:~$\n> echo \"Hello World\"\nHello World" />
+        android:text="@string/console_header_text" />
 
     <LinearLayout
         android:layout_width="wrap_content"

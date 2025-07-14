@@ -9,8 +9,8 @@
         android:icon="@android:drawable/ic_menu_gallery"
         android:title="Konten" />
     <item
-        android:id="@+id/nav_macro"
+        android:id="@+id/nav_autopost"
         android:icon="@android:drawable/ic_menu_upload"
-        android:title="Macro" />
+        android:title="Autopost" />
     <!-- Removed YouTube and Facebook pages -->
 </menu>

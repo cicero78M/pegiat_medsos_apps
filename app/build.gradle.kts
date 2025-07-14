@@ -15,6 +15,9 @@ android {
         targetSdk = 34
         versionCode = 1
         versionName = "1.5.2"
+        buildConfigField("String", "TWITTER_CONSUMER_KEY", "\"\"")
+        buildConfigField("String", "TWITTER_CONSUMER_SECRET", "\"\"")
+        buildConfigField("String", "TWITTER_CALLBACK_URL", "\"repostapp-twitter://callback\"")
     }
 
     buildFeatures {
@@ -52,6 +55,7 @@ dependencies {
     implementation("androidx.security:security-crypto:1.1.0-alpha06")
     implementation("com.google.code.gson:gson:2.10.1")
     implementation("com.github.instagram4j:instagram4j:2.0.7")
+    implementation("org.twitter4j:twitter4j-core:4.1.1")
     // Align with the version pulled in by the Android Gradle plugin to avoid
     // dependency resolution conflicts during the build.
     compileOnly("com.google.errorprone:error_prone_annotations:2.15.0")

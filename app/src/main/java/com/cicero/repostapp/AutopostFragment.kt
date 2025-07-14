@@ -15,11 +15,12 @@ import com.bumptech.glide.Glide
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import okhttp3.MediaType.Companion.toMediaType
-import okhttp3.OkHttpClient
-import okhttp3.Request
-import okhttp3.RequestBody.Companion.toRequestBody
-import org.json.JSONObject
+import com.github.instagram4j.instagram4j.IGClient
+import com.github.instagram4j.instagram4j.exceptions.IGLoginException
+import com.github.instagram4j.instagram4j.utils.IGChallengeUtils
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlin.coroutines.resume
 
 class AutopostFragment : Fragment() {
 
@@ -27,7 +28,7 @@ class AutopostFragment : Fragment() {
         fun newInstance(): AutopostFragment = AutopostFragment()
     }
 
-    private val serverUrl = "http://10.0.2.2:3000" // change to your server
+    private var igClient: IGClient? = null
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -71,138 +72,66 @@ class AutopostFragment : Fragment() {
 
     private fun performLogin(username: String, password: String, icon: ImageView, check: ImageView) {
         lifecycleScope.launch(Dispatchers.IO) {
-            val client = OkHttpClient()
-            val body = JSONObject().apply {
-                put("username", username)
-                put("password", password)
-            }.toString().toRequestBody("application/json".toMediaType())
-            val request = Request.Builder()
-                .url("$serverUrl/login")
-                .post(body)
-                .build()
             try {
-                client.newCall(request).execute().use { resp ->
-                    val text = resp.body?.string()
-                    val obj = JSONObject(text ?: "{}")
-                    when {
-                        resp.isSuccessful -> {
-                            val pic = obj.getJSONObject("user").getString("profilePic")
-                            withContext(Dispatchers.Main) {
-                                Glide.with(this@AutopostFragment).load(pic).into(icon)
-                                check.visibility = View.VISIBLE
-                            }
-                        }
-                        obj.optBoolean("twoFactorRequired") -> {
-                            val ident = obj.optString("twoFactorIdentifier")
-                            withContext(Dispatchers.Main) { showTwoFactorDialog(username, ident, icon, check) }
-                        }
-                        obj.optBoolean("checkpoint") -> {
-                            withContext(Dispatchers.Main) { showCheckpointDialog(username, icon, check) }
-                        }
-                        else -> {
-                            val err = obj.optString("error", "Login gagal")
-                            withContext(Dispatchers.Main) { Toast.makeText(requireContext(), err, Toast.LENGTH_SHORT).show() }
-                        }
-                    }
+                val twoFactor = IGClient.Builder.LoginHandler { client, resp ->
+                    val code = runBlocking { promptTwoFactorCode() }
+                    if (code.isNullOrEmpty()) return@LoginHandler resp
+                    IGChallengeUtils.resolveTwoFactor(client, resp) { code }
                 }
+                val checkpoint = IGClient.Builder.LoginHandler { client, resp ->
+                    val code = runBlocking { promptCheckpointCode() }
+                    if (code.isNullOrEmpty()) return@LoginHandler resp
+                    IGChallengeUtils.resolveChallenge(client, resp) { code }
+                }
+
+                val client = IGClient.builder()
+                    .username(username)
+                    .password(password)
+                    .onTwoFactor(twoFactor)
+                    .onChallenge(checkpoint)
+                    .login()
+
+                igClient = client
+                val pic = client.selfProfile.profile_pic_url
+                withContext(Dispatchers.Main) {
+                    Glide.with(this@AutopostFragment).load(pic).into(icon)
+                    check.visibility = View.VISIBLE
+                }
+            } catch (e: IGLoginException) {
+                withContext(Dispatchers.Main) { Toast.makeText(requireContext(), "Login gagal", Toast.LENGTH_SHORT).show() }
             } catch (_: Exception) {
                 withContext(Dispatchers.Main) { Toast.makeText(requireContext(), "Gagal terhubung", Toast.LENGTH_SHORT).show() }
             }
         }
     }
 
-    private fun showTwoFactorDialog(username: String, identifier: String, icon: ImageView, check: ImageView) {
-        val view = layoutInflater.inflate(R.layout.dialog_two_factor, null)
-        val codeInput = view.findViewById<EditText>(R.id.edit_code)
-        AlertDialog.Builder(requireContext())
-            .setView(view)
-            .setPositiveButton("Verify") { _, _ ->
-                val code = codeInput.text.toString().trim()
-                if (code.isNotEmpty()) {
-                    verifyTwoFactor(username, identifier, code, icon, check)
+    private suspend fun promptTwoFactorCode(): String? = suspendCancellableCoroutine { cont ->
+        requireActivity().runOnUiThread {
+            val view = layoutInflater.inflate(R.layout.dialog_two_factor, null)
+            val codeInput = view.findViewById<EditText>(R.id.edit_code)
+            AlertDialog.Builder(requireContext())
+                .setView(view)
+                .setPositiveButton("Verify") { _, _ ->
+                    cont.resume(codeInput.text.toString().trim())
                 }
-            }
-            .setNegativeButton("Batal", null)
-            .show()
-    }
-
-    private fun verifyTwoFactor(username: String, identifier: String, code: String, icon: ImageView, check: ImageView) {
-        lifecycleScope.launch(Dispatchers.IO) {
-            val client = OkHttpClient()
-            val body = JSONObject().apply {
-                put("username", username)
-                put("twoFactorIdentifier", identifier)
-                put("twoFactorCode", code)
-            }.toString().toRequestBody("application/json".toMediaType())
-            val request = Request.Builder()
-                .url("$serverUrl/login")
-                .post(body)
-                .build()
-            try {
-                client.newCall(request).execute().use { resp ->
-                    val text = resp.body?.string()
-                    val obj = JSONObject(text ?: "{}")
-                    if (resp.isSuccessful) {
-                        val pic = obj.getJSONObject("user").getString("profilePic")
-                        withContext(Dispatchers.Main) {
-                            Glide.with(this@AutopostFragment).load(pic).into(icon)
-                            check.visibility = View.VISIBLE
-                        }
-                    } else {
-                        val err = obj.optString("error", "Verifikasi gagal")
-                        withContext(Dispatchers.Main) { Toast.makeText(requireContext(), err, Toast.LENGTH_SHORT).show() }
-                    }
-                }
-            } catch (_: Exception) {
-                withContext(Dispatchers.Main) { Toast.makeText(requireContext(), "Gagal terhubung", Toast.LENGTH_SHORT).show() }
-            }
+                .setNegativeButton("Batal") { _, _ -> cont.resume(null) }
+                .setOnCancelListener { cont.resume(null) }
+                .show()
         }
     }
 
-    private fun showCheckpointDialog(username: String, icon: ImageView, check: ImageView) {
-        val view = layoutInflater.inflate(R.layout.dialog_checkpoint, null)
-        val codeInput = view.findViewById<EditText>(R.id.edit_checkpoint)
-        AlertDialog.Builder(requireContext())
-            .setView(view)
-            .setPositiveButton("Submit") { _, _ ->
-                val code = codeInput.text.toString().trim()
-                if (code.isNotEmpty()) {
-                    verifyCheckpoint(username, code, icon, check)
+    private suspend fun promptCheckpointCode(): String? = suspendCancellableCoroutine { cont ->
+        requireActivity().runOnUiThread {
+            val view = layoutInflater.inflate(R.layout.dialog_checkpoint, null)
+            val codeInput = view.findViewById<EditText>(R.id.edit_checkpoint)
+            AlertDialog.Builder(requireContext())
+                .setView(view)
+                .setPositiveButton("Submit") { _, _ ->
+                    cont.resume(codeInput.text.toString().trim())
                 }
-            }
-            .setNegativeButton("Batal", null)
-            .show()
-    }
-
-    private fun verifyCheckpoint(username: String, code: String, icon: ImageView, check: ImageView) {
-        lifecycleScope.launch(Dispatchers.IO) {
-            val client = OkHttpClient()
-            val body = JSONObject().apply {
-                put("username", username)
-                put("checkpointCode", code)
-            }.toString().toRequestBody("application/json".toMediaType())
-            val request = Request.Builder()
-                .url("$serverUrl/login")
-                .post(body)
-                .build()
-            try {
-                client.newCall(request).execute().use { resp ->
-                    val text = resp.body?.string()
-                    val obj = JSONObject(text ?: "{}")
-                    if (resp.isSuccessful) {
-                        val pic = obj.getJSONObject("user").getString("profilePic")
-                        withContext(Dispatchers.Main) {
-                            Glide.with(this@AutopostFragment).load(pic).into(icon)
-                            check.visibility = View.VISIBLE
-                        }
-                    } else {
-                        val err = obj.optString("error", "Checkpoint gagal")
-                        withContext(Dispatchers.Main) { Toast.makeText(requireContext(), err, Toast.LENGTH_SHORT).show() }
-                    }
-                }
-            } catch (_: Exception) {
-                withContext(Dispatchers.Main) { Toast.makeText(requireContext(), "Gagal terhubung", Toast.LENGTH_SHORT).show() }
-            }
+                .setNegativeButton("Batal") { _, _ -> cont.resume(null) }
+                .setOnCancelListener { cont.resume(null) }
+                .show()
         }
     }
 }

@@ -63,6 +63,35 @@ class AutopostFragment : Fragment() {
         return if (t != null && s != null) Triple(AccessToken(t, s), p, true) else Triple(null, null, false)
     }
 
+    private fun fbSessionFile(): File = File(requireContext().filesDir, "fb_session.txt")
+
+    private fun saveFbSession(userId: String, cookie: String) {
+        try {
+            fbSessionFile().writeText("$userId\n$cookie")
+        } catch (_: Exception) {
+        }
+    }
+
+    private suspend fun loadFbSession(icon: ImageView, check: ImageView) {
+        val file = fbSessionFile()
+        if (!file.exists()) return
+        try {
+            val lines = file.readLines()
+            if (lines.size < 2) return
+            val userId = lines[0]
+            val pic = "https://graph.facebook.com/$userId/picture?type=normal"
+            withContext(Dispatchers.Main) {
+                Glide.with(this@AutopostFragment)
+                    .load(pic)
+                    .circleCrop()
+                    .into(icon)
+                check.visibility = View.VISIBLE
+            }
+        } catch (_: Exception) {
+            file.delete()
+        }
+    }
+
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -76,6 +105,8 @@ class AutopostFragment : Fragment() {
 
         val icon = view.findViewById<ImageView>(R.id.instagram_icon)
         val check = view.findViewById<ImageView>(R.id.check_mark)
+        val fbIcon = view.findViewById<ImageView>(R.id.facebook_icon)
+        val fbCheck = view.findViewById<ImageView>(R.id.facebook_check)
         val twitterIcon = view.findViewById<ImageView>(R.id.twitter_icon)
         val twitterCheck = view.findViewById<ImageView>(R.id.twitter_check)
         val start = view.findViewById<Button>(R.id.button_start)
@@ -83,10 +114,12 @@ class AutopostFragment : Fragment() {
         // attempt to load saved session
         lifecycleScope.launch(Dispatchers.IO) {
             loadSavedSession(icon, check)
+            loadFbSession(fbIcon, fbCheck)
             loadTwitterSession(twitterIcon, twitterCheck)
         }
 
         icon.setOnClickListener { showLoginDialog(icon, check) }
+        fbIcon.setOnClickListener { showFbLoginDialog(fbIcon, fbCheck) }
         twitterIcon.setOnClickListener { launchTwitterLogin() }
         start.setOnClickListener {
             lifecycleScope.launch(Dispatchers.IO) { runAutopostWorkflow() }
@@ -106,6 +139,25 @@ class AutopostFragment : Fragment() {
                     Toast.makeText(requireContext(), "Username dan password wajib diisi", Toast.LENGTH_SHORT).show()
                 } else {
                     performLogin(user, pass, icon, check)
+                }
+            }
+            .setNegativeButton("Batal", null)
+            .show()
+    }
+
+    private fun showFbLoginDialog(icon: ImageView, check: ImageView) {
+        val view = layoutInflater.inflate(R.layout.dialog_login, null)
+        val userInput = view.findViewById<EditText>(R.id.edit_username)
+        val passInput = view.findViewById<EditText>(R.id.edit_password)
+        AlertDialog.Builder(requireContext())
+            .setView(view)
+            .setPositiveButton("Login") { _, _ ->
+                val user = userInput.text.toString().trim()
+                val pass = passInput.text.toString().trim()
+                if (user.isBlank() || pass.isBlank()) {
+                    Toast.makeText(requireContext(), "Username dan password wajib diisi", Toast.LENGTH_SHORT).show()
+                } else {
+                    performFbLogin(user, pass, icon, check)
                 }
             }
             .setNegativeButton("Batal", null)
@@ -145,6 +197,45 @@ class AutopostFragment : Fragment() {
                 }
             } catch (e: IGLoginException) {
                 withContext(Dispatchers.Main) { Toast.makeText(requireContext(), "Login gagal", Toast.LENGTH_SHORT).show() }
+            } catch (_: Exception) {
+                withContext(Dispatchers.Main) { Toast.makeText(requireContext(), "Gagal terhubung", Toast.LENGTH_SHORT).show() }
+            }
+        }
+    }
+
+    private fun performFbLogin(username: String, password: String, icon: ImageView, check: ImageView) {
+        lifecycleScope.launch(Dispatchers.IO) {
+            try {
+                val client = OkHttpClient.Builder()
+                    .followRedirects(false)
+                    .build()
+                val body = "email=$username&pass=$password".toRequestBody("application/x-www-form-urlencoded".toMediaType())
+                val req = Request.Builder()
+                    .url("https://m.facebook.com/login.php?login_attempt=1")
+                    .post(body)
+                    .header("User-Agent", "Mozilla/5.0")
+                    .build()
+                client.newCall(req).execute().use { resp ->
+                    val cookies = resp.headers("Set-Cookie")
+                    val cookie = cookies.joinToString("; ")
+                    val userId = cookies.firstOrNull { it.startsWith("c_user=") }
+                        ?.substringAfter("c_user=")?.substringBefore(";")
+                    if (userId != null && cookie.isNotBlank()) {
+                        saveFbSession(userId, cookie)
+                        val pic = "https://graph.facebook.com/$userId/picture?type=normal"
+                        withContext(Dispatchers.Main) {
+                            Glide.with(this@AutopostFragment)
+                                .load(pic)
+                                .circleCrop()
+                                .into(icon)
+                            check.visibility = View.VISIBLE
+                        }
+                    } else {
+                        withContext(Dispatchers.Main) {
+                            Toast.makeText(requireContext(), "Login gagal", Toast.LENGTH_SHORT).show()
+                        }
+                    }
+                }
             } catch (_: Exception) {
                 withContext(Dispatchers.Main) { Toast.makeText(requireContext(), "Gagal terhubung", Toast.LENGTH_SHORT).show() }
             }

@@ -282,6 +282,12 @@ class AutopostFragment : Fragment() {
             return File(dir, name)
         }
 
+        fun coverFileForPost(post: InstaPost): File {
+            val dir = File(requireContext().getExternalFilesDir(null), "CiceroReposterApp")
+            if (!dir.exists()) dir.mkdirs()
+            return File(dir, post.id + ".jpg")
+        }
+
         suspend fun downloadIfNeeded(post: InstaPost): File? {
             val out = fileForPost(post)
             if (out.exists()) return out
@@ -297,18 +303,42 @@ class AutopostFragment : Fragment() {
                     out.outputStream().use { outStream ->
                         body.byteStream().copyTo(outStream)
                     }
+                    if (post.isVideo) {
+                        downloadCoverIfNeeded(post)
+                    }
                     out
                 }
             } catch (_: Exception) { null }
         }
 
-        suspend fun uploadToInstagram(file: File, caption: String?): String? {
+        suspend fun downloadCoverIfNeeded(post: InstaPost): File? {
+            val cover = coverFileForPost(post)
+            if (cover.exists()) return cover
+            val url = post.imageUrl ?: post.sourceUrl
+            if (url.isNullOrBlank()) return null
+            appendLog("Mengunduh thumbnail…")
+            val client = okhttp3.OkHttpClient()
+            val req = okhttp3.Request.Builder().url(url).build()
+            return try {
+                client.newCall(req).execute().use { resp ->
+                    if (!resp.isSuccessful) return null
+                    val body = resp.body ?: return null
+                    cover.outputStream().use { outStream ->
+                        body.byteStream().copyTo(outStream)
+                    }
+                    cover
+                }
+            } catch (_: Exception) { null }
+        }
+
+        suspend fun uploadToInstagram(post: InstaPost, file: File): String? {
             appendLog("Mengunggah konten…")
             return try {
-                val result = if (file.extension == "mp4") {
-                    igClient!!.actions().timeline().uploadVideo(file, caption ?: "").join()
+                val result = if (post.isVideo) {
+                    val cover = downloadCoverIfNeeded(post) ?: return null
+                    igClient!!.actions().timeline().uploadVideo(file, cover, post.caption ?: "").join()
                 } else {
-                    igClient!!.actions().timeline().uploadPhoto(file, caption ?: "").join()
+                    igClient!!.actions().timeline().uploadPhoto(file, post.caption ?: "").join()
                 }
                 result.media?.code?.let { "https://instagram.com/p/$it" }
             } catch (_: Exception) { null }
@@ -342,7 +372,7 @@ class AutopostFragment : Fragment() {
             kotlinx.coroutines.delay(3000)
             val file = downloadIfNeeded(post) ?: continue
             kotlinx.coroutines.delay(3000)
-            val link = uploadToInstagram(file, post.caption) ?: continue
+            val link = uploadToInstagram(post, file) ?: continue
             kotlinx.coroutines.delay(3000)
             appendLog("Link: $link")
             sendLink(post.id, link)

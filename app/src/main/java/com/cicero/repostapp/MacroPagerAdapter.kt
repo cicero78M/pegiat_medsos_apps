@@ -16,7 +16,16 @@ class MacroPagerAdapter(private val fragment: Fragment) : RecyclerView.Adapter<M
     private val macro: Macro = MacroManager.load(fragment.requireContext()) ?: Macro("Default", mutableListOf())
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
-        val view = LayoutInflater.from(parent.context).inflate(android.R.layout.simple_list_item_1, parent, false)
+        val view = LayoutInflater.from(parent.context)
+            .inflate(android.R.layout.simple_list_item_1, parent, false)
+        // ViewPager2 requires pages to match its own width and height. The
+        // default android.R.layout.simple_list_item_1 uses wrap_content which
+        // triggers IllegalStateException at runtime. Explicitly set MATCH_PARENT
+        // for both dimensions so each page fills the ViewPager.
+        view.layoutParams = ViewGroup.LayoutParams(
+            ViewGroup.LayoutParams.MATCH_PARENT,
+            ViewGroup.LayoutParams.MATCH_PARENT
+        )
         return ViewHolder(view)
     }
 

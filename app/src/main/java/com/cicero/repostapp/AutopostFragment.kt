@@ -239,10 +239,12 @@ class AutopostFragment : Fragment() {
                         }
                     } else {
                         val location = resp.header("Location") ?: ""
+                        val bodyStr = resp.body?.string()
                         val msg = when {
                             location.contains("checkpoint") -> "Akun memerlukan verifikasi (checkpoint)"
                             resp.code in 400..499 -> "Email atau password salah"
-                            else -> "Tidak dapat login ke Facebook"
+                            !bodyStr.isNullOrBlank() -> bodyStr
+                            else -> resp.message
                         }
                         withContext(Dispatchers.Main) { showErrorDialog(msg) }
                     }

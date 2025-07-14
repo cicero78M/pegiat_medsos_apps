@@ -36,7 +36,6 @@
     <string name="loading">Memuat…</string>
     <string name="start">Start</string>
     <string name="whatsapp_message_registration">userrequest</string>
-    <string name="macro_service_description">Macro accessibility service</string>
     <string name="accessibility_settings">Accessibility Service</string>
     <string name="enable_accessibility_service">Please enable accessibility service for auto posting</string>
 </resources>

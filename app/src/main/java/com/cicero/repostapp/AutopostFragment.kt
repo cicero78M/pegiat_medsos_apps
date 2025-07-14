@@ -39,6 +39,7 @@ class AutopostFragment : Fragment() {
 
     private var igClient: IGClient? = null
     private var twitterToken: AccessToken? = null
+    private var tiktokUsername: String? = null
 
     private fun showErrorDialog(message: String) {
         AlertDialog.Builder(requireContext())
@@ -116,6 +117,8 @@ class AutopostFragment : Fragment() {
         val fbCheck = view.findViewById<ImageView>(R.id.facebook_check)
         val twitterIcon = view.findViewById<ImageView>(R.id.twitter_icon)
         val twitterCheck = view.findViewById<ImageView>(R.id.twitter_check)
+        val tiktokIcon = view.findViewById<ImageView>(R.id.tiktok_icon)
+        val tiktokCheck = view.findViewById<ImageView>(R.id.tiktok_check)
         val start = view.findViewById<Button>(R.id.button_start)
 
         // attempt to load saved session
@@ -128,6 +131,7 @@ class AutopostFragment : Fragment() {
         icon.setOnClickListener { showLoginDialog(icon, check) }
         fbIcon.setOnClickListener { showFbLoginDialog(fbIcon, fbCheck) }
         twitterIcon.setOnClickListener { launchTwitterLogin() }
+        tiktokIcon.setOnClickListener { showTiktokDialog(tiktokIcon, tiktokCheck) }
         start.setOnClickListener {
             lifecycleScope.launch(Dispatchers.IO) { runAutopostWorkflow() }
         }
@@ -165,6 +169,25 @@ class AutopostFragment : Fragment() {
                     Toast.makeText(requireContext(), "Username dan password wajib diisi", Toast.LENGTH_SHORT).show()
                 } else {
                     performFbLogin(user, pass, icon, check)
+                }
+            }
+            .setNegativeButton("Batal", null)
+            .show()
+    }
+
+    private fun showTiktokDialog(icon: ImageView, check: ImageView) {
+        val view = layoutInflater.inflate(R.layout.dialog_username, null)
+        val userInput = view.findViewById<EditText>(R.id.edit_username)
+        AlertDialog.Builder(requireContext())
+            .setView(view)
+            .setPositiveButton("Save") { _, _ ->
+                val user = userInput.text.toString().trim()
+                if (user.isBlank()) {
+                    Toast.makeText(requireContext(), "Username wajib diisi", Toast.LENGTH_SHORT).show()
+                } else {
+                    tiktokUsername = user
+                    check.visibility = View.VISIBLE
+                    // TODO: Integrate TikTok4J to fetch profile picture
                 }
             }
             .setNegativeButton("Batal", null)

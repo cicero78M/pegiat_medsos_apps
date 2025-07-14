@@ -3,6 +3,43 @@
 <head>
     <meta charset="utf-8">
     <title>AutoPost Login</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background: #f7f7f7;
+            padding: 40px;
+        }
+        form {
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,.1);
+            display: inline-block;
+        }
+        input {
+            margin: 8px 0;
+            padding: 8px;
+            width: 200px;
+        }
+        button {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            background: #4CAF50;
+            color: #fff;
+            cursor: pointer;
+        }
+        #profile {
+            margin-top: 20px;
+        }
+        #profile img {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+    </style>
 </head>
 <body>
     <h1>AutoPost Login</h1>
@@ -12,6 +49,7 @@
         <button type="submit">Login</button>
     </form>
     <div id="profile" style="display:none;">
+        <img id="pPic" src="" alt="Profile Picture"><br>
         <h2 id="pUser"></h2>
         <p id="pName"></p>
         <p>Followers: <span id="pFollowers"></span></p>
@@ -29,6 +67,7 @@
         const data = await resp.json();
         if (resp.ok) {
             document.getElementById('loginForm').style.display = 'none';
+            document.getElementById('pPic').src = data.user.profilePic;
             document.getElementById('pUser').textContent = data.user.username;
             document.getElementById('pName').textContent = data.user.fullName;
             document.getElementById('pFollowers').textContent = data.user.followerCount;

@@ -31,6 +31,14 @@ Without this file the Android plugin cannot generate sources such as
 `BuildConfig`, which leads to errors like `Unresolved reference: BuildConfig` at
 compile time.
 
+The Twitter API keys used for login are loaded from a `.env` file in the project
+root. Copy `.env.example` to `.env` and fill in your credentials:
+
+```bash
+cp .env.example .env
+# edit .env and set TWITTER_CONSUMER_KEY and TWITTER_CONSUMER_SECRET
+```
+
 ## Update from GitHub Releases
 
 `MainActivity` includes a **Perbarui Aplikasi** button that queries the latest

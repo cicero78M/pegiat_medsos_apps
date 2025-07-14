@@ -8,6 +8,7 @@ import android.widget.Button
 import android.widget.EditText
 import android.widget.ImageView
 import android.widget.Toast
+import java.io.File
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
@@ -30,6 +31,11 @@ class AutopostFragment : Fragment() {
 
     private var igClient: IGClient? = null
 
+    private fun sessionFiles(): Pair<File, File> {
+        val dir = requireContext().filesDir
+        return Pair(File(dir, "igclient.ser"), File(dir, "cookie.ser"))
+    }
+
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -44,6 +50,11 @@ class AutopostFragment : Fragment() {
         val icon = view.findViewById<ImageView>(R.id.instagram_icon)
         val check = view.findViewById<ImageView>(R.id.check_mark)
         val start = view.findViewById<Button>(R.id.button_start)
+
+        // attempt to load saved session
+        lifecycleScope.launch(Dispatchers.IO) {
+            loadSavedSession(icon, check)
+        }
 
         icon.setOnClickListener { showLoginDialog(icon, check) }
         start.setOnClickListener {
@@ -92,6 +103,7 @@ class AutopostFragment : Fragment() {
                     .login()
 
                 igClient = client
+                saveSession(client)
                 val pic = client.selfProfile.profile_pic_url
                 withContext(Dispatchers.Main) {
                     Glide.with(this@AutopostFragment).load(pic).into(icon)
@@ -132,6 +144,33 @@ class AutopostFragment : Fragment() {
                 .setNegativeButton("Batal") { _, _ -> cont.resume(null) }
                 .setOnCancelListener { cont.resume(null) }
                 .show()
+        }
+    }
+
+    private fun saveSession(client: IGClient) {
+        try {
+            val (clientFile, cookieFile) = sessionFiles()
+            client.serialize(clientFile, cookieFile)
+        } catch (_: Exception) {
+        }
+    }
+
+    private suspend fun loadSavedSession(icon: ImageView, check: ImageView) {
+        val (clientFile, cookieFile) = sessionFiles()
+        if (!clientFile.exists() || !cookieFile.exists()) return
+        try {
+            val client = IGClient.deserialize(clientFile, cookieFile)
+            // simple request to verify session
+            client.actions().users().info(client.selfProfile.pk).join()
+            igClient = client
+            val pic = client.selfProfile.profile_pic_url
+            withContext(Dispatchers.Main) {
+                Glide.with(this@AutopostFragment).load(pic).into(icon)
+                check.visibility = View.VISIBLE
+            }
+        } catch (_: Exception) {
+            clientFile.delete()
+            cookieFile.delete()
         }
     }
 }

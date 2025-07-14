@@ -9,7 +9,8 @@
     <TextView
         android:id="@+id/console_header"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="0dp"
+        android:layout_weight="1"
         android:background="@drawable/console_frame"
         android:padding="16dp"
         android:textColor="#00FF00"
@@ -17,11 +18,17 @@
         android:text="@string/console_header_text" />
 
     <LinearLayout
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:gravity="center"
-        android:layout_marginTop="16dp">
+        android:orientation="vertical"
+        android:gravity="center_horizontal">
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center"
+            android:layout_marginTop="16dp">
 
         <FrameLayout
             android:id="@+id/icon_wrapper"
@@ -58,9 +65,9 @@
             android:background="@drawable/icon_border"
             android:scaleType="centerCrop" />
 
-    </LinearLayout>
+        </LinearLayout>
 
-    <Button
+        <Button
         android:id="@+id/button_start"
         android:layout_width="match_parent"
         android:layout_height="48dp"
@@ -72,5 +79,7 @@
         android:textAllCaps="true"
         android:textColor="#1f1f1f"
         android:background="@drawable/button_green" />
+
+    </LinearLayout>
 
 </LinearLayout>

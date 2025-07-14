@@ -1,43 +1,75 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:orientation="vertical"
-    android:gravity="center"
+    android:gravity="center_horizontal"
     android:background="#1f1f1f"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <FrameLayout
-        android:id="@+id/icon_wrapper"
-        android:layout_width="120dp"
-        android:layout_height="120dp">
+    <TextView
+        android:id="@+id/console_header"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@drawable/console_frame"
+        android:padding="16dp"
+        android:textColor="#00FF00"
+        android:typeface="monospace"
+        android:text="> user@android:~$\n> echo \"Hello World\"\nHello World" />
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center"
+        android:layout_marginTop="16dp">
+
+        <FrameLayout
+            android:id="@+id/icon_wrapper"
+            android:layout_width="48dp"
+            android:layout_height="48dp">
+
+            <ImageView
+                android:id="@+id/instagram_icon"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:src="@drawable/ic_instagram"
+                android:background="@drawable/icon_border"
+                android:scaleType="centerCrop" />
+
+            <ImageView
+                android:id="@+id/check_mark"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:layout_gravity="bottom|end"
+                android:layout_margin="2dp"
+                android:background="@drawable/check_mark_background"
+                android:src="@drawable/ic_status_true"
+                android:tint="@android:color/black"
+                android:visibility="gone" />
+
+        </FrameLayout>
 
         <ImageView
-            android:id="@+id/instagram_icon"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:src="@drawable/ic_instagram"
+            android:id="@+id/youtube_icon"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_marginStart="24dp"
+            android:src="@drawable/ic_youtube"
             android:background="@drawable/icon_border"
             android:scaleType="centerCrop" />
 
-        <ImageView
-            android:id="@+id/check_mark"
-            android:layout_width="24dp"
-            android:layout_height="24dp"
-            android:layout_gravity="bottom|end"
-            android:layout_margin="2dp"
-            android:background="@drawable/check_mark_background"
-            android:src="@drawable/ic_status_true"
-            android:tint="@android:color/black"
-            android:visibility="gone" />
-
-    </FrameLayout>
+    </LinearLayout>
 
     <Button
         android:id="@+id/button_start"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:layout_marginStart="32dp"
+        android:layout_marginEnd="32dp"
         android:layout_marginTop="24dp"
-        android:text="Start"
+        android:text="START"
+        android:textStyle="bold"
+        android:textAllCaps="true"
         android:textColor="#1f1f1f"
         android:background="@drawable/button_green" />
 

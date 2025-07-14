@@ -31,6 +31,7 @@ app.post('/login', async (req, res) => {
         username: info.username,
         fullName: info.full_name,
         followerCount: info.follower_count,
+        profilePic: info.profile_pic_url,
       },
     });
   } catch (e) {

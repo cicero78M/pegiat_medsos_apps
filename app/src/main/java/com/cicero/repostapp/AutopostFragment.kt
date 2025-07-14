@@ -111,7 +111,10 @@ class AutopostFragment : Fragment() {
                 saveSession(client)
                 val pic = client.selfProfile.profile_pic_url
                 withContext(Dispatchers.Main) {
-                    Glide.with(this@AutopostFragment).load(pic).into(icon)
+                    Glide.with(this@AutopostFragment)
+                        .load(pic)
+                        .circleCrop()
+                        .into(icon)
                     check.visibility = View.VISIBLE
                 }
             } catch (e: IGLoginException) {
@@ -170,7 +173,10 @@ class AutopostFragment : Fragment() {
             igClient = client
             val pic = client.selfProfile.profile_pic_url
             withContext(Dispatchers.Main) {
-                Glide.with(this@AutopostFragment).load(pic).into(icon)
+                Glide.with(this@AutopostFragment)
+                    .load(pic)
+                    .circleCrop()
+                    .into(icon)
                 check.visibility = View.VISIBLE
             }
         } catch (_: Exception) {

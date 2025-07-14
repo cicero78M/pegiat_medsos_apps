@@ -41,7 +41,8 @@
                 android:layout_height="match_parent"
                 android:src="@drawable/ic_instagram"
                 android:background="@drawable/icon_border"
-                android:scaleType="centerCrop" />
+                android:scaleType="centerCrop"
+                android:clipToOutline="true" />
 
             <ImageView
                 android:id="@+id/check_mark"

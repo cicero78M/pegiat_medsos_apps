@@ -16,6 +16,11 @@ import com.bumptech.glide.Glide
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.delay
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.RequestBody.Companion.toRequestBody
 import com.github.instagram4j.instagram4j.IGClient
 import com.github.instagram4j.instagram4j.exceptions.IGLoginException
 import com.github.instagram4j.instagram4j.utils.IGChallengeUtils
@@ -58,7 +63,7 @@ class AutopostFragment : Fragment() {
 
         icon.setOnClickListener { showLoginDialog(icon, check) }
         start.setOnClickListener {
-            Toast.makeText(requireContext(), "Start pressed", Toast.LENGTH_SHORT).show()
+            lifecycleScope.launch(Dispatchers.IO) { runAutopostWorkflow() }
         }
     }
 
@@ -172,5 +177,177 @@ class AutopostFragment : Fragment() {
             clientFile.delete()
             cookieFile.delete()
         }
+    }
+
+    private suspend fun runAutopostWorkflow() {
+        val logView = requireView().findViewById<android.widget.TextView>(R.id.console_header)
+        fun appendLog(msg: String) {
+            lifecycleScope.launch(Dispatchers.Main) {
+                logView.append("\n$msg")
+            }
+        }
+
+        val prefs = requireContext().getSharedPreferences("auth", android.content.Context.MODE_PRIVATE)
+        val token = prefs.getString("token", "") ?: ""
+        val userId = prefs.getString("userId", "") ?: ""
+        if (token.isBlank() || userId.isBlank() || igClient == null) {
+            appendLog("Autentikasi diperlukan")
+            return
+        }
+
+        suspend fun fetchClientId(): String? {
+            val client = okhttp3.OkHttpClient()
+            val req = okhttp3.Request.Builder()
+                .url("https://papiqo.com/api/users/$userId")
+                .header("Authorization", "Bearer $token")
+                .build()
+            return try {
+                client.newCall(req).execute().use { resp ->
+                    if (!resp.isSuccessful) return null
+                    val body = resp.body?.string()
+                    try {
+                        org.json.JSONObject(body ?: "{}").optJSONObject("data")?.optString("client_id")
+                    } catch (_: Exception) { null }
+                }
+            } catch (_: Exception) { null }
+        }
+
+        suspend fun fetchPosts(clientId: String): List<InstaPost> {
+            val posts = mutableListOf<InstaPost>()
+            val client = okhttp3.OkHttpClient()
+            val url = "https://papiqo.com/api/insta/posts?client_id=$clientId"
+            val req = okhttp3.Request.Builder().url(url).header("Authorization", "Bearer $token").build()
+            try {
+                client.newCall(req).execute().use { resp ->
+                    if (!resp.isSuccessful) return emptyList()
+                    val body = resp.body?.string()
+                    val arr = try { org.json.JSONObject(body ?: "{}").optJSONArray("data") ?: org.json.JSONArray() } catch (_: Exception) { org.json.JSONArray() }
+                    val formatter = java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
+                    val today = java.time.LocalDate.now()
+                    for (i in 0 until arr.length()) {
+                        val obj = arr.optJSONObject(i) ?: continue
+                        val created = obj.optString("created_at")
+                        val createdDate = try {
+                            if (created.contains("T")) {
+                                java.time.OffsetDateTime.parse(created).atZoneSameInstant(java.time.ZoneId.systemDefault()).toLocalDate()
+                            } else {
+                                java.time.LocalDateTime.parse(created, formatter).toLocalDate()
+                            }
+                        } catch (_: Exception) { null }
+                        if (createdDate == today) {
+                            val id = obj.optString("shortcode")
+                            posts.add(
+                                InstaPost(
+                                    id = id,
+                                    caption = obj.optString("caption"),
+                                    imageUrl = obj.optString("image_url").ifBlank { obj.optString("thumbnail_url") },
+                                    createdAt = created,
+                                    isVideo = obj.optBoolean("is_video"),
+                                    videoUrl = obj.optString("video_url"),
+                                    sourceUrl = obj.optString("source_url")
+                                )
+                            )
+                        }
+                    }
+                }
+            } catch (_: Exception) {}
+            return posts
+        }
+
+        suspend fun fetchReported(): Set<String> {
+            val set = mutableSetOf<String>()
+            val client = okhttp3.OkHttpClient()
+            val req = okhttp3.Request.Builder()
+                .url("https://papiqo.com/api/link-reports")
+                .header("Authorization", "Bearer $token")
+                .build()
+            try {
+                client.newCall(req).execute().use { resp ->
+                    if (!resp.isSuccessful) return emptySet()
+                    val body = resp.body?.string()
+                    val arr = try { org.json.JSONObject(body ?: "{}").optJSONArray("data") ?: org.json.JSONArray() } catch (_: Exception) { org.json.JSONArray() }
+                    for (i in 0 until arr.length()) {
+                        val o = arr.optJSONObject(i) ?: continue
+                        if (o.optString("user_id") == userId) set.add(o.optString("shortcode"))
+                    }
+                }
+            } catch (_: Exception) {}
+            return set
+        }
+
+        fun fileForPost(post: InstaPost): File {
+            val dir = File(requireContext().getExternalFilesDir(null), "CiceroReposterApp")
+            if (!dir.exists()) dir.mkdirs()
+            val name = post.id + if (post.isVideo) ".mp4" else ".jpg"
+            return File(dir, name)
+        }
+
+        suspend fun downloadIfNeeded(post: InstaPost): File? {
+            val out = fileForPost(post)
+            if (out.exists()) return out
+            val url = if (post.isVideo) post.videoUrl else post.imageUrl ?: post.sourceUrl
+            if (url.isNullOrBlank()) return null
+            appendLog("Mengunduh konten…")
+            val client = okhttp3.OkHttpClient()
+            val req = okhttp3.Request.Builder().url(url).build()
+            return try {
+                client.newCall(req).execute().use { resp ->
+                    if (!resp.isSuccessful) return null
+                    val body = resp.body ?: return null
+                    out.outputStream().use { outStream ->
+                        body.byteStream().copyTo(outStream)
+                    }
+                    out
+                }
+            } catch (_: Exception) { null }
+        }
+
+        suspend fun uploadToInstagram(file: File, caption: String?): String? {
+            appendLog("Mengunggah konten…")
+            return try {
+                val result = if (file.extension == "mp4") {
+                    igClient!!.actions().timeline().uploadVideo(file, caption ?: "").join()
+                } else {
+                    igClient!!.actions().timeline().uploadPhoto(file, caption ?: "").join()
+                }
+                result.media?.code?.let { "https://instagram.com/p/$it" }
+            } catch (_: Exception) { null }
+        }
+
+        suspend fun sendLink(shortcode: String, link: String) {
+            val json = org.json.JSONObject().apply {
+                put("shortcode", shortcode)
+                put("user_id", userId)
+                put("instagram_link", link)
+            }
+            val body = json.toString().toRequestBody("application/json".toMediaType())
+            val client = okhttp3.OkHttpClient()
+            val req = okhttp3.Request.Builder()
+                .url("https://papiqo.com/api/link-reports")
+                .header("Authorization", "Bearer $token")
+                .post(body)
+                .build()
+            try {
+                client.newCall(req).execute().use { }
+            } catch (_: Exception) {}
+        }
+
+        appendLog("Memulai autopost…")
+        val clientId = fetchClientId() ?: run { appendLog("Gagal mengambil client id"); return }
+        val reported = fetchReported()
+        val posts = fetchPosts(clientId)
+        for (post in posts) {
+            if (reported.contains(post.id)) continue
+            appendLog("Memeriksa download…")
+            kotlinx.coroutines.delay(3000)
+            val file = downloadIfNeeded(post) ?: continue
+            kotlinx.coroutines.delay(3000)
+            val link = uploadToInstagram(file, post.caption) ?: continue
+            kotlinx.coroutines.delay(3000)
+            appendLog("Link: $link")
+            sendLink(post.id, link)
+            kotlinx.coroutines.delay(3000)
+        }
+        appendLog("Selesai")
     }
 }

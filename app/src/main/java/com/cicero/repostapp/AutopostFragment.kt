@@ -12,6 +12,7 @@ import java.io.File
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
+import androidx.activity.result.contract.ActivityResultContracts
 import com.bumptech.glide.Glide
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -27,6 +28,8 @@ import com.github.instagram4j.instagram4j.utils.IGChallengeUtils
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlin.coroutines.resume
+import twitter4j.TwitterFactory
+import twitter4j.auth.AccessToken
 
 class AutopostFragment : Fragment() {
 
@@ -35,10 +38,29 @@ class AutopostFragment : Fragment() {
     }
 
     private var igClient: IGClient? = null
+    private var twitterToken: AccessToken? = null
 
     private fun sessionFiles(): Pair<File, File> {
         val dir = requireContext().filesDir
         return Pair(File(dir, "igclient.ser"), File(dir, "cookie.ser"))
+    }
+
+    private fun twitterPrefs() = requireContext().getSharedPreferences("twitter_auth", android.content.Context.MODE_PRIVATE)
+
+    private fun saveTwitterToken(token: AccessToken, profile: String?) {
+        twitterPrefs().edit().apply {
+            putString("token", token.token)
+            putString("secret", token.tokenSecret)
+            if (profile != null) putString("profile", profile)
+        }.apply()
+    }
+
+    private fun loadTwitterToken(): Triple<AccessToken?, String?, Boolean> {
+        val prefs = twitterPrefs()
+        val t = prefs.getString("token", null)
+        val s = prefs.getString("secret", null)
+        val p = prefs.getString("profile", null)
+        return if (t != null && s != null) Triple(AccessToken(t, s), p, true) else Triple(null, null, false)
     }
 
     override fun onCreateView(
@@ -54,14 +76,18 @@ class AutopostFragment : Fragment() {
 
         val icon = view.findViewById<ImageView>(R.id.instagram_icon)
         val check = view.findViewById<ImageView>(R.id.check_mark)
+        val twitterIcon = view.findViewById<ImageView>(R.id.twitter_icon)
+        val twitterCheck = view.findViewById<ImageView>(R.id.twitter_check)
         val start = view.findViewById<Button>(R.id.button_start)
 
         // attempt to load saved session
         lifecycleScope.launch(Dispatchers.IO) {
             loadSavedSession(icon, check)
+            loadTwitterSession(twitterIcon, twitterCheck)
         }
 
         icon.setOnClickListener { showLoginDialog(icon, check) }
+        twitterIcon.setOnClickListener { launchTwitterLogin() }
         start.setOnClickListener {
             lifecycleScope.launch(Dispatchers.IO) { runAutopostWorkflow() }
         }
@@ -182,6 +208,55 @@ class AutopostFragment : Fragment() {
         } catch (_: Exception) {
             clientFile.delete()
             cookieFile.delete()
+        }
+    }
+
+    private suspend fun loadTwitterSession(icon: ImageView, check: ImageView) {
+        val (token, profile, ok) = loadTwitterToken()
+        if (!ok || token == null) return
+        val twitter = TwitterFactory.getSingleton().apply {
+            setOAuthConsumer(BuildConfig.TWITTER_CONSUMER_KEY, BuildConfig.TWITTER_CONSUMER_SECRET)
+            oAuthAccessToken = token
+        }
+        try {
+            val user = withContext(Dispatchers.IO) { twitter.verifyCredentials() }
+            twitterToken = token
+            val pic = profile ?: user.profileImageURLHttps
+            withContext(Dispatchers.Main) {
+                Glide.with(this@AutopostFragment)
+                    .load(pic)
+                    .circleCrop()
+                    .into(icon)
+                check.visibility = View.VISIBLE
+            }
+        } catch (_: Exception) {
+            twitterPrefs().edit().clear().apply()
+        }
+    }
+
+    private fun launchTwitterLogin() {
+        val intent = android.content.Intent(requireContext(), TwitterLoginActivity::class.java)
+        twitterLoginLauncher.launch(intent)
+    }
+
+    private val twitterLoginLauncher = registerForActivityResult(androidx.activity.result.contract.ActivityResultContracts.StartActivityForResult()) { result ->
+        if (result.resultCode == android.app.Activity.RESULT_OK) {
+            val data = result.data ?: return@registerForActivityResult
+            val token = data.getStringExtra("token") ?: return@registerForActivityResult
+            val secret = data.getStringExtra("secret") ?: return@registerForActivityResult
+            val profile = data.getStringExtra("profile")
+            val access = AccessToken(token, secret)
+            twitterToken = access
+            saveTwitterToken(access, profile)
+            val icon = view?.findViewById<ImageView>(R.id.twitter_icon)
+            val check = view?.findViewById<ImageView>(R.id.twitter_check)
+            if (icon != null && check != null) {
+                Glide.with(this)
+                    .load(profile)
+                    .circleCrop()
+                    .into(icon)
+                check.visibility = View.VISIBLE
+            }
         }
     }
 

@@ -40,6 +40,13 @@ class AutopostFragment : Fragment() {
     private var igClient: IGClient? = null
     private var twitterToken: AccessToken? = null
 
+    private fun showErrorDialog(message: String) {
+        AlertDialog.Builder(requireContext())
+            .setMessage(message)
+            .setPositiveButton("OK", null)
+            .show()
+    }
+
     private fun sessionFiles(): Pair<File, File> {
         val dir = requireContext().filesDir
         return Pair(File(dir, "igclient.ser"), File(dir, "cookie.ser"))
@@ -231,13 +238,17 @@ class AutopostFragment : Fragment() {
                             check.visibility = View.VISIBLE
                         }
                     } else {
-                        withContext(Dispatchers.Main) {
-                            Toast.makeText(requireContext(), "Login gagal", Toast.LENGTH_SHORT).show()
+                        val location = resp.header("Location") ?: ""
+                        val msg = when {
+                            location.contains("checkpoint") -> "Akun memerlukan verifikasi (checkpoint)"
+                            resp.code in 400..499 -> "Email atau password salah"
+                            else -> "Tidak dapat login ke Facebook"
                         }
+                        withContext(Dispatchers.Main) { showErrorDialog(msg) }
                     }
                 }
             } catch (_: Exception) {
-                withContext(Dispatchers.Main) { Toast.makeText(requireContext(), "Gagal terhubung", Toast.LENGTH_SHORT).show() }
+                withContext(Dispatchers.Main) { showErrorDialog("Gagal terhubung ke Facebook") }
             }
         }
     }

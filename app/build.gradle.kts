@@ -3,6 +3,17 @@ plugins {
     kotlin("android")
 }
 
+import java.util.Properties
+
+val envProps = Properties()
+val envFile = rootProject.file(".env")
+if (envFile.exists()) {
+    envFile.inputStream().use { envProps.load(it) }
+}
+
+fun env(name: String): String =
+    envProps.getProperty(name) ?: System.getenv(name) ?: ""
+
 
 android {
     namespace = "com.cicero.repostapp"
@@ -15,9 +26,10 @@ android {
         targetSdk = 34
         versionCode = 1
         versionName = "1.5.2"
-        buildConfigField("String", "TWITTER_CONSUMER_KEY", "\"\"")
-        buildConfigField("String", "TWITTER_CONSUMER_SECRET", "\"\"")
-        buildConfigField("String", "TWITTER_CALLBACK_URL", "\"repostapp-twitter://callback\"")
+        buildConfigField("String", "TWITTER_CONSUMER_KEY", "\"${env("TWITTER_CONSUMER_KEY")}\"")
+        buildConfigField("String", "TWITTER_CONSUMER_SECRET", "\"${env("TWITTER_CONSUMER_SECRET")}\"")
+        val callback = env("TWITTER_CALLBACK_URL").ifEmpty { "repostapp-twitter://callback" }
+        buildConfigField("String", "TWITTER_CALLBACK_URL", "\"$callback\"")
     }
 
     buildFeatures {

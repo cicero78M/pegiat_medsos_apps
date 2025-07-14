@@ -294,6 +294,26 @@ class AutopostFragment : Fragment() {
             return File(dir, post.id + ".jpg")
         }
 
+        suspend fun downloadCoverIfNeeded(post: InstaPost): File? {
+            val cover = coverFileForPost(post)
+            if (cover.exists()) return cover
+            val url = post.imageUrl ?: post.sourceUrl
+            if (url.isNullOrBlank()) return null
+            appendLog("Mengunduh thumbnail…")
+            val client = okhttp3.OkHttpClient()
+            val req = okhttp3.Request.Builder().url(url).build()
+            return try {
+                client.newCall(req).execute().use { resp ->
+                    if (!resp.isSuccessful) return null
+                    val body = resp.body ?: return null
+                    cover.outputStream().use { outStream ->
+                        body.byteStream().copyTo(outStream)
+                    }
+                    cover
+                }
+            } catch (_: Exception) { null }
+        }
+
         suspend fun downloadIfNeeded(post: InstaPost): File? {
             val out = fileForPost(post)
             if (out.exists()) return out
@@ -313,26 +333,6 @@ class AutopostFragment : Fragment() {
                         downloadCoverIfNeeded(post)
                     }
                     out
-                }
-            } catch (_: Exception) { null }
-        }
-
-        suspend fun downloadCoverIfNeeded(post: InstaPost): File? {
-            val cover = coverFileForPost(post)
-            if (cover.exists()) return cover
-            val url = post.imageUrl ?: post.sourceUrl
-            if (url.isNullOrBlank()) return null
-            appendLog("Mengunduh thumbnail…")
-            val client = okhttp3.OkHttpClient()
-            val req = okhttp3.Request.Builder().url(url).build()
-            return try {
-                client.newCall(req).execute().use { resp ->
-                    if (!resp.isSuccessful) return null
-                    val body = resp.body ?: return null
-                    cover.outputStream().use { outStream ->
-                        body.byteStream().copyTo(outStream)
-                    }
-                    cover
                 }
             } catch (_: Exception) { null }
         }

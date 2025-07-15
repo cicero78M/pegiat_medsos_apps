@@ -16,6 +16,8 @@
         <activity android:name=".LoginActivity" />
         <activity android:name=".TwitterLoginActivity"
             android:exported="false" />
+        <activity android:name=".FacebookLoginActivity"
+            android:exported="false" />
         <activity android:name=".PremiumRegistrationActivity" />
         <activity android:name=".SubscriptionConfirmActivity" />
         <activity

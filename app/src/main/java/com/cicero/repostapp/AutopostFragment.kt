@@ -94,6 +94,29 @@ class AutopostFragment : Fragment() {
         }
     }
 
+    private fun fetchTikTokAvatar(cookie: String): String? {
+        val req = okhttp3.Request.Builder()
+            .url("https://www.tiktok.com/api/me/")
+            .header("Cookie", cookie)
+            .header(
+                "User-Agent",
+                "Mozilla/5.0 (Linux; Android 13; SM-G990B) AppleWebKit/537.36" +
+                    " (KHTML, like Gecko) Chrome/115.0.0.0 Mobile Safari/537.36"
+            )
+            .build()
+        return try {
+            okhttp3.OkHttpClient().newCall(req).execute().use { resp ->
+                if (!resp.isSuccessful) return null
+                val body = resp.body?.string() ?: return null
+                val obj = org.json.JSONObject(body)
+                val user = obj.optJSONObject("user")
+                user?.optString("avatarLarger") ?: user?.optString("avatarThumb")
+            }
+        } catch (_: Exception) {
+            null
+        }
+    }
+
     private suspend fun loadFbSession(icon: ImageView, check: ImageView) {
         val file = fbSessionFile()
         if (!file.exists()) return
@@ -118,7 +141,15 @@ class AutopostFragment : Fragment() {
         val file = tiktokSessionFile()
         if (!file.exists()) return
         try {
+            val cookie = file.readText()
+            val pic = fetchTikTokAvatar(cookie)
             withContext(Dispatchers.Main) {
+                if (pic != null) {
+                    Glide.with(this@AutopostFragment)
+                        .load(pic)
+                        .circleCrop()
+                        .into(icon)
+                }
                 check.visibility = View.VISIBLE
             }
         } catch (_: Exception) {
@@ -369,7 +400,14 @@ class AutopostFragment : Fragment() {
             saveTikTokSession(cookie)
             val icon = view?.findViewById<ImageView>(R.id.tiktok_icon)
             val check = view?.findViewById<ImageView>(R.id.tiktok_check)
+            val pic = fetchTikTokAvatar(cookie)
             if (icon != null && check != null) {
+                if (pic != null) {
+                    Glide.with(this)
+                        .load(pic)
+                        .circleCrop()
+                        .into(icon)
+                }
                 check.visibility = View.VISIBLE
             }
         }

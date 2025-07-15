@@ -78,9 +78,18 @@ class AutopostFragment : Fragment() {
 
     private fun fbSessionFile(): File = File(requireContext().filesDir, "fb_session.txt")
 
+    private fun tiktokSessionFile(): File = File(requireContext().filesDir, "tiktok_session.txt")
+
     private fun saveFbSession(userId: String, cookie: String) {
         try {
             fbSessionFile().writeText("$userId\n$cookie")
+        } catch (_: Exception) {
+        }
+    }
+
+    private fun saveTikTokSession(cookie: String) {
+        try {
+            tiktokSessionFile().writeText(cookie)
         } catch (_: Exception) {
         }
     }
@@ -105,6 +114,18 @@ class AutopostFragment : Fragment() {
         }
     }
 
+    private suspend fun loadTikTokSession(icon: ImageView, check: ImageView) {
+        val file = tiktokSessionFile()
+        if (!file.exists()) return
+        try {
+            withContext(Dispatchers.Main) {
+                check.visibility = View.VISIBLE
+            }
+        } catch (_: Exception) {
+            file.delete()
+        }
+    }
+
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -122,6 +143,8 @@ class AutopostFragment : Fragment() {
         val fbCheck = view.findViewById<ImageView>(R.id.facebook_check)
         val twitterIcon = view.findViewById<ImageView>(R.id.twitter_icon)
         val twitterCheck = view.findViewById<ImageView>(R.id.twitter_check)
+        val tiktokIcon = view.findViewById<ImageView>(R.id.tiktok_icon)
+        val tiktokCheck = view.findViewById<ImageView>(R.id.tiktok_check)
         val start = view.findViewById<Button>(R.id.button_start)
 
         // attempt to load saved session
@@ -129,11 +152,13 @@ class AutopostFragment : Fragment() {
             loadSavedSession(icon, check)
             loadFbSession(fbIcon, fbCheck)
             loadTwitterSession(twitterIcon, twitterCheck)
+            loadTikTokSession(tiktokIcon, tiktokCheck)
         }
 
         icon.setOnClickListener { showLoginDialog(icon, check) }
         fbIcon.setOnClickListener { launchFacebookLogin() }
         twitterIcon.setOnClickListener { launchTwitterLogin() }
+        tiktokIcon.setOnClickListener { launchTikTokLogin() }
         start.setOnClickListener {
             lifecycleScope.launch(Dispatchers.IO) { runAutopostWorkflow() }
         }
@@ -327,6 +352,24 @@ class AutopostFragment : Fragment() {
                     .load(pic)
                     .circleCrop()
                     .into(icon)
+                check.visibility = View.VISIBLE
+            }
+        }
+    }
+
+    private fun launchTikTokLogin() {
+        val intent = android.content.Intent(requireContext(), TikTokLoginActivity::class.java)
+        tiktokLoginLauncher.launch(intent)
+    }
+
+    private val tiktokLoginLauncher = registerForActivityResult(androidx.activity.result.contract.ActivityResultContracts.StartActivityForResult()) { result ->
+        if (result.resultCode == android.app.Activity.RESULT_OK) {
+            val data = result.data ?: return@registerForActivityResult
+            val cookie = data.getStringExtra("cookie") ?: return@registerForActivityResult
+            saveTikTokSession(cookie)
+            val icon = view?.findViewById<ImageView>(R.id.tiktok_icon)
+            val check = view?.findViewById<ImageView>(R.id.tiktok_check)
+            if (icon != null && check != null) {
                 check.visibility = View.VISIBLE
             }
         }

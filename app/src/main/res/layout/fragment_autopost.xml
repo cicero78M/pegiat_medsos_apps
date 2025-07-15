@@ -114,14 +114,33 @@
 
         </FrameLayout>
 
-        <ImageView
-            android:id="@+id/tiktok_icon"
+        <FrameLayout
+            android:id="@+id/tiktok_wrapper"
             android:layout_width="36dp"
             android:layout_height="36dp"
-            android:layout_marginStart="12dp"
-            android:src="@drawable/ic_tiktok"
-            android:background="@drawable/icon_border"
-            android:scaleType="centerCrop" />
+            android:layout_marginStart="12dp">
+
+            <ImageView
+                android:id="@+id/tiktok_icon"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:src="@drawable/ic_tiktok"
+                android:background="@drawable/icon_border"
+                android:scaleType="centerCrop"
+                android:clipToOutline="true" />
+
+            <ImageView
+                android:id="@+id/tiktok_check"
+                android:layout_width="18dp"
+                android:layout_height="18dp"
+                android:layout_gravity="bottom|end"
+                android:layout_margin="2dp"
+                android:background="@drawable/check_mark_background"
+                android:src="@drawable/ic_status_true"
+                android:tint="@android:color/black"
+                android:visibility="gone" />
+
+        </FrameLayout>
 
         <ImageView
             android:id="@+id/youtube_icon"

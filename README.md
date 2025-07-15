@@ -98,3 +98,23 @@ application can be extended to perform automatic posting.
 
 
 
+
+## Fetching Facebook Pages
+
+The repository includes a script that fetches pages from Facebook while
+emulating a real mobile browser. The script sends common headers such as
+`Accept`, `Accept-Language`, and `Connection` so Facebook does not display the
+"Facebook tidak tersedia di browser ini" warning. It also handles login tokens
+(`lsd`, `jazoest`) and cookies automatically.
+
+Run the script with Node.js and provide the URL you want to fetch. If you set
+`FB_EMAIL` and `FB_PASS` environment variables, the script will attempt to log
+in before requesting the page.
+
+```bash
+FB_EMAIL=myuser@example.com \
+FB_PASS=secretpass \
+node scripts/fetch_facebook.js https://m.facebook.com
+```
+
+The HTML contents will be printed to standard output.

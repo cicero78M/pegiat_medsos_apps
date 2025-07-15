@@ -8,6 +8,8 @@ import android.widget.Button
 import android.widget.EditText
 import android.widget.ImageView
 import android.widget.Toast
+import android.content.ClipData
+import android.content.ClipboardManager
 import java.io.File
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
@@ -44,6 +46,12 @@ class AutopostFragment : Fragment() {
         AlertDialog.Builder(requireContext())
             .setMessage(message)
             .setPositiveButton("OK", null)
+            .setNeutralButton("Copy") { _, _ ->
+                val clipboard = requireContext().getSystemService(android.content.Context.CLIPBOARD_SERVICE) as ClipboardManager
+                val clip = ClipData.newPlainText("response", message)
+                clipboard.setPrimaryClip(clip)
+                Toast.makeText(requireContext(), "Tersalin", Toast.LENGTH_SHORT).show()
+            }
             .show()
     }
 

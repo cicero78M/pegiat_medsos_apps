@@ -19,6 +19,11 @@ The project uses Gradle Kotlin DSL. To build the project you would typically run
 ./gradlew assembleDebug
 ```
 
+The wrapper downloads **Gradle 8.7** the first time it runs. If you see an error
+such as `Minimum supported Gradle version is 8.4` make sure you are invoking the
+provided `./gradlew` script or update `gradle/wrapper/gradle-wrapper.properties`
+to use a Gradle distribution newer than 8.4.
+
 Before running the build you must point Gradle to a valid Android SDK
 installation.  Create a file named `local.properties` in the project root with
 the following content (adjust the path to match your environment):

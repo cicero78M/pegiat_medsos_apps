@@ -20,8 +20,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.delay
-import okhttp3.OkHttpClient
-import okhttp3.Request
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.RequestBody.Companion.toRequestBody
 import com.github.instagram4j.instagram4j.IGClient
@@ -134,7 +132,7 @@ class AutopostFragment : Fragment() {
         }
 
         icon.setOnClickListener { showLoginDialog(icon, check) }
-        fbIcon.setOnClickListener { showFbLoginDialog(fbIcon, fbCheck) }
+        fbIcon.setOnClickListener { launchFacebookLogin() }
         twitterIcon.setOnClickListener { launchTwitterLogin() }
         start.setOnClickListener {
             lifecycleScope.launch(Dispatchers.IO) { runAutopostWorkflow() }
@@ -160,24 +158,6 @@ class AutopostFragment : Fragment() {
             .show()
     }
 
-    private fun showFbLoginDialog(icon: ImageView, check: ImageView) {
-        val view = layoutInflater.inflate(R.layout.dialog_login, null)
-        val userInput = view.findViewById<EditText>(R.id.edit_username)
-        val passInput = view.findViewById<EditText>(R.id.edit_password)
-        AlertDialog.Builder(requireContext())
-            .setView(view)
-            .setPositiveButton("Login") { _, _ ->
-                val user = userInput.text.toString().trim()
-                val pass = passInput.text.toString().trim()
-                if (user.isBlank() || pass.isBlank()) {
-                    Toast.makeText(requireContext(), "Username dan password wajib diisi", Toast.LENGTH_SHORT).show()
-                } else {
-                    performFbLogin(user, pass, icon, check)
-                }
-            }
-            .setNegativeButton("Batal", null)
-            .show()
-    }
 
     private fun performLogin(username: String, password: String, icon: ImageView, check: ImageView) {
         lifecycleScope.launch(Dispatchers.IO) {
@@ -218,50 +198,6 @@ class AutopostFragment : Fragment() {
         }
     }
 
-    private fun performFbLogin(username: String, password: String, icon: ImageView, check: ImageView) {
-        lifecycleScope.launch(Dispatchers.IO) {
-            try {
-                val client = OkHttpClient.Builder()
-                    .followRedirects(false)
-                    .build()
-                val body = "email=$username&pass=$password".toRequestBody("application/x-www-form-urlencoded".toMediaType())
-                val req = Request.Builder()
-                    .url("https://m.facebook.com/login.php?login_attempt=1")
-                    .post(body)
-                    .header("User-Agent", "Mozilla/5.0")
-                    .build()
-                client.newCall(req).execute().use { resp ->
-                    val cookies = resp.headers("Set-Cookie")
-                    val cookie = cookies.joinToString("; ")
-                    val userId = cookies.firstOrNull { it.startsWith("c_user=") }
-                        ?.substringAfter("c_user=")?.substringBefore(";")
-                    if (userId != null && cookie.isNotBlank()) {
-                        saveFbSession(userId, cookie)
-                        val pic = "https://graph.facebook.com/$userId/picture?type=normal"
-                        withContext(Dispatchers.Main) {
-                            Glide.with(this@AutopostFragment)
-                                .load(pic)
-                                .circleCrop()
-                                .into(icon)
-                            check.visibility = View.VISIBLE
-                        }
-                    } else {
-                        val location = resp.header("Location") ?: ""
-                        val bodyStr = resp.body?.string()
-                        val msg = when {
-                            location.contains("checkpoint") -> "Akun memerlukan verifikasi (checkpoint)"
-                            resp.code in 400..499 -> "Email atau password salah"
-                            !bodyStr.isNullOrBlank() -> bodyStr
-                            else -> resp.message
-                        }
-                        withContext(Dispatchers.Main) { showErrorDialog(msg) }
-                    }
-                }
-            } catch (_: Exception) {
-                withContext(Dispatchers.Main) { showErrorDialog("Gagal terhubung ke Facebook") }
-            }
-        }
-    }
 
     private suspend fun promptTwoFactorCode(): String? = suspendCancellableCoroutine { cont ->
         requireActivity().runOnUiThread {
@@ -365,6 +301,30 @@ class AutopostFragment : Fragment() {
             if (icon != null && check != null) {
                 Glide.with(this)
                     .load(profile)
+                    .circleCrop()
+                    .into(icon)
+                check.visibility = View.VISIBLE
+            }
+        }
+    }
+
+    private fun launchFacebookLogin() {
+        val intent = android.content.Intent(requireContext(), FacebookLoginActivity::class.java)
+        facebookLoginLauncher.launch(intent)
+    }
+
+    private val facebookLoginLauncher = registerForActivityResult(androidx.activity.result.contract.ActivityResultContracts.StartActivityForResult()) { result ->
+        if (result.resultCode == android.app.Activity.RESULT_OK) {
+            val data = result.data ?: return@registerForActivityResult
+            val userId = data.getStringExtra("userId") ?: return@registerForActivityResult
+            val cookie = data.getStringExtra("cookie") ?: return@registerForActivityResult
+            saveFbSession(userId, cookie)
+            val icon = view?.findViewById<ImageView>(R.id.facebook_icon)
+            val check = view?.findViewById<ImageView>(R.id.facebook_check)
+            val pic = "https://graph.facebook.com/$userId/picture?type=normal"
+            if (icon != null && check != null) {
+                Glide.with(this)
+                    .load(pic)
                     .circleCrop()
                     .into(icon)
                 check.visibility = View.VISIBLE

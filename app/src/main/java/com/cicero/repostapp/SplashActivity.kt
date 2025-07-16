@@ -31,7 +31,7 @@ class SplashActivity : AppCompatActivity() {
         CoroutineScope(Dispatchers.IO).launch {
             val client = OkHttpClient()
             val request = Request.Builder()
-                .url("https://papiqo.com/api/users/$userId")
+                .url("${BuildConfig.API_BASE_URL}/api/users/$userId")
                 .header("Authorization", "Bearer $token")
                 .build()
             try {

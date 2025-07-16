@@ -10,6 +10,8 @@ import android.widget.ImageView
 import android.widget.Toast
 import android.content.ClipData
 import android.content.ClipboardManager
+import android.content.Context
+import android.content.Intent
 import java.io.File
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
@@ -470,15 +472,26 @@ class AutopostFragment : Fragment() {
                         } catch (_: Exception) { null }
                         if (createdDate == today) {
                             val id = obj.optString("shortcode")
+                            val carouselArr = obj.optJSONArray("image_urls")
+                                ?: obj.optJSONArray("carousel")
+                                ?: obj.optJSONArray("carousel_images")
+                            val carousel = mutableListOf<String>()
+                            if (carouselArr != null) {
+                                for (j in 0 until carouselArr.length()) {
+                                    val u = carouselArr.optString(j)
+                                    if (u.isNotBlank()) carousel.add(u)
+                                }
+                            }
                             posts.add(
                                 InstaPost(
                                     id = id,
                                     caption = obj.optString("caption"),
-                                    imageUrl = obj.optString("image_url").ifBlank { obj.optString("thumbnail_url") },
+                                    imageUrl = obj.optString("image_url").ifBlank { obj.optString("thumbnail_url") }.ifBlank { carousel.firstOrNull() },
                                     createdAt = created,
                                     isVideo = obj.optBoolean("is_video"),
                                     videoUrl = obj.optString("video_url"),
-                                    sourceUrl = obj.optString("source_url")
+                                    sourceUrl = obj.optString("source_url"),
+                                    carouselImages = carousel
                                 )
                             )
                         }
@@ -520,6 +533,12 @@ class AutopostFragment : Fragment() {
             val dir = File(requireContext().getExternalFilesDir(null), "CiceroReposterApp")
             if (!dir.exists()) dir.mkdirs()
             return File(dir, post.id + ".jpg")
+        }
+
+        fun carouselFileForPost(post: InstaPost, index: Int): File {
+            val dir = File(requireContext().getExternalFilesDir(null), "CiceroReposterApp")
+            if (!dir.exists()) dir.mkdirs()
+            return File(dir, "${post.id}_${index}.jpg")
         }
 
         suspend fun downloadCoverIfNeeded(post: InstaPost): File? {
@@ -565,6 +584,68 @@ class AutopostFragment : Fragment() {
             } catch (_: Exception) { null }
         }
 
+        suspend fun downloadCarouselImagesIfNeeded(post: InstaPost): List<File> {
+            val files = mutableListOf<File>()
+            if (post.carouselImages.size <= 1 || post.isVideo) return files
+            val client = okhttp3.OkHttpClient()
+            for ((idx, url) in post.carouselImages.withIndex()) {
+                val f = carouselFileForPost(post, idx)
+                if (f.exists()) { files.add(f); continue }
+                if (url.isBlank()) continue
+                appendLog("Mengunduh gambar ${idx + 1}/${post.carouselImages.size}…")
+                val req = okhttp3.Request.Builder().url(url).build()
+                try {
+                    client.newCall(req).execute().use { resp ->
+                        if (!resp.isSuccessful) return@use
+                        val body = resp.body ?: return@use
+                        f.outputStream().use { out ->
+                            body.byteStream().copyTo(out)
+                        }
+                    }
+                } catch (_: Exception) {}
+                if (f.exists()) files.add(f)
+            }
+            return files
+        }
+
+        fun shareCarousel(post: InstaPost) {
+            val dir = File(requireContext().getExternalFilesDir(null), "CiceroReposterApp")
+            val files: List<File> = if (!post.isVideo && post.carouselImages.size > 1) {
+                post.carouselImages.indices.map { carouselFileForPost(post, it) }
+            } else {
+                listOf(fileForPost(post))
+            }
+
+            val intent = if (files.size > 1) Intent(Intent.ACTION_SEND_MULTIPLE) else Intent(Intent.ACTION_SEND)
+            intent.type = if (post.isVideo) "video/*" else "image/*"
+            val uris = ArrayList<android.net.Uri>()
+            files.filter { it.exists() }.forEach { f ->
+                val uri = androidx.core.content.FileProvider.getUriForFile(
+                    requireContext(),
+                    requireContext().packageName + ".fileprovider",
+                    f
+                )
+                uris.add(uri)
+            }
+            if (uris.isNotEmpty()) {
+                if (uris.size == 1) {
+                    intent.putExtra(Intent.EXTRA_STREAM, uris[0])
+                } else {
+                    intent.putParcelableArrayListExtra(Intent.EXTRA_STREAM, uris)
+                }
+                intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            } else {
+                val url = if (post.isVideo) post.videoUrl else post.imageUrl ?: post.sourceUrl
+                if (!url.isNullOrBlank()) intent.putExtra(Intent.EXTRA_TEXT, url)
+            }
+            if (!post.caption.isNullOrBlank()) {
+                intent.putExtra(Intent.EXTRA_TEXT, post.caption)
+            }
+            val clipboard = requireContext().getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+            clipboard.setPrimaryClip(ClipData.newPlainText("caption", post.caption ?: ""))
+            startActivity(Intent.createChooser(intent, "Share via"))
+        }
+
         suspend fun uploadToInstagram(post: InstaPost, file: File): String? {
             appendLog("Mengunggah konten…")
             return try {
@@ -605,11 +686,15 @@ class AutopostFragment : Fragment() {
             appendLog("Memeriksa download…")
             kotlinx.coroutines.delay(3000)
             val file = downloadIfNeeded(post) ?: continue
+            if (!post.isVideo && post.carouselImages.size > 1) {
+                downloadCarouselImagesIfNeeded(post)
+            }
             kotlinx.coroutines.delay(3000)
             val link = uploadToInstagram(post, file) ?: continue
             kotlinx.coroutines.delay(3000)
             appendLog("Link: $link")
             sendLink(post.id, link)
+            withContext(Dispatchers.Main) { shareCarousel(post) }
             kotlinx.coroutines.delay(3000)
         }
         appendLog("Selesai")

@@ -84,6 +84,14 @@ class AutopostFragment : Fragment() {
 
     private fun youtubePrefs() = requireContext().getSharedPreferences("youtube_auth", Context.MODE_PRIVATE)
 
+    private fun instagramPrefs() = requireContext().getSharedPreferences("instagram_auth", Context.MODE_PRIVATE)
+
+    private fun saveInstagramUsername(username: String) {
+        instagramPrefs().edit().putString("username", username).apply()
+    }
+
+    private fun loadInstagramUsername(): String? = instagramPrefs().getString("username", null)
+
     private fun saveYoutubeToken(token: String) {
         youtubePrefs().edit().putString("token", token).apply()
     }
@@ -214,7 +222,24 @@ class AutopostFragment : Fragment() {
         tiktokIcon.setOnClickListener { launchTikTokLogin() }
         youtubeIcon.setOnClickListener { launchYoutubeLogin() }
         start.setOnClickListener {
-            lifecycleScope.launch(Dispatchers.IO) { runAutopostWorkflow() }
+            lifecycleScope.launch(Dispatchers.IO) {
+                val prefs = requireContext().getSharedPreferences("auth", Context.MODE_PRIVATE)
+                val token = prefs.getString("token", "") ?: ""
+                val username = loadInstagramUsername() ?: ""
+                val premium = if (token.isNotBlank() && username.isNotBlank()) {
+                    hasActiveSubscription(token, username)
+                } else false
+                if (!premium) {
+                    withContext(Dispatchers.Main) {
+                        Toast.makeText(requireContext(), getString(R.string.premium_required), Toast.LENGTH_SHORT).show()
+                        val intent = Intent(requireContext(), PremiumRegistrationActivity::class.java)
+                        intent.putExtra("username", username)
+                        startActivity(intent)
+                    }
+                } else {
+                    runAutopostWorkflow()
+                }
+            }
         }
     }
 
@@ -260,6 +285,7 @@ class AutopostFragment : Fragment() {
                     .login()
 
                 igClient = client
+                saveInstagramUsername(client.selfProfile.username)
                 saveSession(client)
                 val pic = client.selfProfile.profile_pic_url
                 withContext(Dispatchers.Main) {
@@ -324,6 +350,7 @@ class AutopostFragment : Fragment() {
             // simple request to verify session
             client.actions().users().info(client.selfProfile.pk).join()
             igClient = client
+            saveInstagramUsername(client.selfProfile.username)
             val pic = client.selfProfile.profile_pic_url
             withContext(Dispatchers.Main) {
                 Glide.with(this@AutopostFragment)
@@ -449,6 +476,25 @@ class AutopostFragment : Fragment() {
             val icon = view?.findViewById<ImageView>(R.id.youtube_icon)
             val check = view?.findViewById<ImageView>(R.id.youtube_check)
             if (check != null) check.visibility = View.VISIBLE
+        }
+    }
+
+    private suspend fun hasActiveSubscription(token: String, userId: String): Boolean {
+        val client = okhttp3.OkHttpClient()
+        val req = okhttp3.Request.Builder()
+            .url("https://papiqo.com/api/premium-subscriptions/user/$userId/active")
+            .header("Authorization", "Bearer $token")
+            .build()
+        return try {
+            client.newCall(req).execute().use { resp ->
+                val bodyStr = resp.body?.string()
+                val dataObj = try {
+                    org.json.JSONObject(bodyStr ?: "{}").optJSONObject("data")
+                } catch (_: Exception) { null }
+                resp.isSuccessful && dataObj != null
+            }
+        } catch (_: Exception) {
+            false
         }
     }
 

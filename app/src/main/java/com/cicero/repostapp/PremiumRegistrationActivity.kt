@@ -58,8 +58,7 @@ class PremiumRegistrationActivity : AppCompatActivity() {
         button.setOnClickListener {
             val prefs = getSharedPreferences("auth", MODE_PRIVATE)
             val token = prefs.getString("token", "") ?: ""
-            val userId = prefs.getString("userId", "") ?: ""
-            if (token.isBlank() || userId.isBlank()) {
+            if (token.isBlank()) {
                 Toast.makeText(this, "Anda belum login", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }

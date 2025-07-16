@@ -67,7 +67,8 @@
                         android:layout_height="wrap_content"
                         android:hint="@string/password"
                         android:layout_marginTop="16dp"
-                        app:startIconDrawable="@android:drawable/ic_lock_lock">
+                        app:startIconDrawable="@android:drawable/ic_lock_lock"
+                        app:endIconMode="password_toggle">
 
                         <com.google.android.material.textfield.TextInputEditText
                             android:id="@+id/input_password"

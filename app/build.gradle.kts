@@ -30,6 +30,10 @@ android {
         buildConfigField("String", "TWITTER_CONSUMER_SECRET", "\"${env("TWITTER_CONSUMER_SECRET")}\"")
         val callback = env("TWITTER_CALLBACK_URL").ifEmpty { "repostapp-twitter://callback" }
         buildConfigField("String", "TWITTER_CALLBACK_URL", "\"$callback\"")
+        buildConfigField("String", "YOUTUBE_CLIENT_ID", "\"${env("YOUTUBE_CLIENT_ID")}\"")
+        val ytRedirect = env("YOUTUBE_REDIRECT_URI").ifEmpty { "repostapp-youtube://oauth" }
+        buildConfigField("String", "YOUTUBE_REDIRECT_URI", "\"$ytRedirect\"")
+        buildConfigField("String", "YOUTUBE_API_KEY", "\"${env("YOUTUBE_API_KEY")}\"")
     }
 
     buildFeatures {

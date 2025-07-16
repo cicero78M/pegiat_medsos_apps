@@ -82,6 +82,17 @@ class AutopostFragment : Fragment() {
 
     private fun tiktokSessionFile(): File = File(requireContext().filesDir, "tiktok_session.txt")
 
+    private fun youtubePrefs() = requireContext().getSharedPreferences("youtube_auth", Context.MODE_PRIVATE)
+
+    private fun saveYoutubeToken(token: String) {
+        youtubePrefs().edit().putString("token", token).apply()
+    }
+
+    private fun loadYoutubeToken(): Pair<String?, Boolean> {
+        val t = youtubePrefs().getString("token", null)
+        return Pair(t, t != null)
+    }
+
     private fun saveFbSession(userId: String, cookie: String) {
         try {
             fbSessionFile().writeText("$userId\n$cookie")
@@ -117,6 +128,12 @@ class AutopostFragment : Fragment() {
         } catch (_: Exception) {
             null
         }
+    }
+
+    private suspend fun loadYoutubeSession(icon: ImageView, check: ImageView) {
+        val (token, ok) = loadYoutubeToken()
+        if (!ok || token.isNullOrEmpty()) return
+        withContext(Dispatchers.Main) { check.visibility = View.VISIBLE }
     }
 
     private suspend fun loadFbSession(icon: ImageView, check: ImageView) {
@@ -178,6 +195,8 @@ class AutopostFragment : Fragment() {
         val twitterCheck = view.findViewById<ImageView>(R.id.twitter_check)
         val tiktokIcon = view.findViewById<ImageView>(R.id.tiktok_icon)
         val tiktokCheck = view.findViewById<ImageView>(R.id.tiktok_check)
+        val youtubeIcon = view.findViewById<ImageView>(R.id.youtube_icon)
+        val youtubeCheck = view.findViewById<ImageView>(R.id.youtube_check)
         val start = view.findViewById<Button>(R.id.button_start)
 
         // attempt to load saved session
@@ -186,12 +205,14 @@ class AutopostFragment : Fragment() {
             loadFbSession(fbIcon, fbCheck)
             loadTwitterSession(twitterIcon, twitterCheck)
             loadTikTokSession(tiktokIcon, tiktokCheck)
+            loadYoutubeSession(youtubeIcon, youtubeCheck)
         }
 
         icon.setOnClickListener { showLoginDialog(icon, check) }
         fbIcon.setOnClickListener { launchFacebookLogin() }
         twitterIcon.setOnClickListener { launchTwitterLogin() }
         tiktokIcon.setOnClickListener { launchTikTokLogin() }
+        youtubeIcon.setOnClickListener { launchYoutubeLogin() }
         start.setOnClickListener {
             lifecycleScope.launch(Dispatchers.IO) { runAutopostWorkflow() }
         }
@@ -412,6 +433,22 @@ class AutopostFragment : Fragment() {
                 }
                 check.visibility = View.VISIBLE
             }
+        }
+    }
+
+    private fun launchYoutubeLogin() {
+        val intent = android.content.Intent(requireContext(), YouTubeLoginActivity::class.java)
+        youtubeLoginLauncher.launch(intent)
+    }
+
+    private val youtubeLoginLauncher = registerForActivityResult(androidx.activity.result.contract.ActivityResultContracts.StartActivityForResult()) { result ->
+        if (result.resultCode == android.app.Activity.RESULT_OK) {
+            val data = result.data ?: return@registerForActivityResult
+            val token = data.getStringExtra("token") ?: return@registerForActivityResult
+            saveYoutubeToken(token)
+            val icon = view?.findViewById<ImageView>(R.id.youtube_icon)
+            val check = view?.findViewById<ImageView>(R.id.youtube_check)
+            if (check != null) check.visibility = View.VISIBLE
         }
     }
 

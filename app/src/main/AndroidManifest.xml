@@ -20,6 +20,8 @@
             android:exported="false" />
         <activity android:name=".TikTokLoginActivity"
             android:exported="false" />
+        <activity android:name=".YouTubeLoginActivity"
+            android:exported="false" />
         <activity android:name=".PremiumRegistrationActivity" />
         <activity android:name=".SubscriptionConfirmActivity" />
         <activity

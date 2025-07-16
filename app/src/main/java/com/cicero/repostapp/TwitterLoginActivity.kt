@@ -28,7 +28,7 @@ class TwitterLoginActivity : AppCompatActivity() {
 
         lifecycleScope.launch {
             withContext(Dispatchers.IO) {
-                twitter = TwitterFactory.getSingleton().apply {
+                twitter = TwitterFactory().instance.apply {
                     setOAuthConsumer(BuildConfig.TWITTER_CONSUMER_KEY, BuildConfig.TWITTER_CONSUMER_SECRET)
                 }
                 requestToken = twitter.getOAuthRequestToken(BuildConfig.TWITTER_CALLBACK_URL)

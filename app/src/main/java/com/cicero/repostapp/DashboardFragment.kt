@@ -147,16 +147,28 @@ class DashboardFragment : Fragment(R.layout.fragment_dashboard) {
                                 } catch (_: Exception) { null }
                                 if (createdDate == today) {
                                     val id = obj.optString("shortcode")
+                                    val carouselArr = obj.optJSONArray("image_urls")
+                                        ?: obj.optJSONArray("carousel")
+                                        ?: obj.optJSONArray("carousel_images")
+                                    val carousel = mutableListOf<String>()
+                                    if (carouselArr != null) {
+                                        for (j in 0 until carouselArr.length()) {
+                                            val u = carouselArr.optString(j)
+                                            if (u.isNotBlank()) carousel.add(u)
+                                        }
+                                    }
                                     posts.add(
                                         InstaPost(
                                             id = id,
                                             caption = obj.optString("caption"),
                                             imageUrl = obj.optString("image_url")
-                                                .ifBlank { obj.optString("thumbnail_url") },
+                                                .ifBlank { obj.optString("thumbnail_url") }
+                                                .ifBlank { carousel.firstOrNull() },
                                             createdAt = created,
                                             isVideo = obj.optBoolean("is_video"),
                                             videoUrl = obj.optString("video_url"),
                                             sourceUrl = obj.optString("source_url"),
+                                            carouselImages = carousel,
                                             downloaded = downloadedIds.contains(id),
                                             reported = reportedIds.contains(id)
                                         )
@@ -231,8 +243,15 @@ class DashboardFragment : Fragment(R.layout.fragment_dashboard) {
     }
 
     private fun checkIfFileExists(post: InstaPost): Boolean {
-        val fileName = post.id + if (post.isVideo) ".mp4" else ".jpg"
         val dir = java.io.File(requireContext().getExternalFilesDir(null), "CiceroReposterApp")
+        if (post.carouselImages.size > 1 && !post.isVideo) {
+            for (i in post.carouselImages.indices) {
+                val file = java.io.File(dir, "${post.id}_${i}.jpg")
+                if (!file.exists()) return false
+            }
+            return true
+        }
+        val fileName = post.id + if (post.isVideo) ".mp4" else ".jpg"
         val file = if (!post.localPath.isNullOrBlank()) {
             java.io.File(post.localPath!!)
         } else {
@@ -258,8 +277,10 @@ class DashboardFragment : Fragment(R.layout.fragment_dashboard) {
     }
 
     private fun downloadPost(post: InstaPost) {
-        val url = if (post.isVideo) post.videoUrl else post.imageUrl ?: post.sourceUrl
-        if (url.isNullOrBlank()) return
+        val urls = if (!post.isVideo && post.carouselImages.size > 1) post.carouselImages
+            else listOf(post.videoUrl.takeIf { post.isVideo } ?: (post.imageUrl ?: post.sourceUrl)).filterNotNull()
+        if (urls.isEmpty()) return
+        val multiple = urls.size > 1 && !post.isVideo
         val fileName = post.id + if (post.isVideo) ".mp4" else ".jpg"
         progressBar.visibility = View.VISIBLE
         progressBar.isIndeterminate = true
@@ -270,38 +291,41 @@ class DashboardFragment : Fragment(R.layout.fragment_dashboard) {
         CoroutineScope(Dispatchers.IO).launch {
             try {
                 val client = OkHttpClient()
-                val req = Request.Builder().url(url).build()
-                client.newCall(req).execute().use { resp ->
-                    if (!resp.isSuccessful) {
-                        val errBody = resp.body?.string()
-                        Log.e(
-                            "DashboardFragment",
-                            "HTTP ${resp.code} ${resp.message} when downloading $url. Body: $errBody"
-                        )
-                        throw java.io.IOException("HTTP ${resp.code} ${resp.message}")
-                    }
-                    val body = resp.body ?: return@use
-                    val dir = java.io.File(requireContext().getExternalFilesDir(null), "CiceroReposterApp")
-                    if (!dir.exists()) {
-                        dir.mkdirs()
-                    }
-                    val file = java.io.File(dir, fileName)
-                    file.outputStream().use { out ->
-                        val total = body.contentLength()
-                        var downloaded = 0L
-                        val buf = ByteArray(8 * 1024)
-                        var read: Int
-                        while (body.byteStream().read(buf).also { read = it } != -1) {
-                            out.write(buf, 0, read)
-                            downloaded += read
-                            val progress = if (total > 0) (downloaded * 100 / total).toInt() else 0
-                            withContext(Dispatchers.Main) {
-                                progressBar.isIndeterminate = false
-                                progressBar.progress = progress
+                val dir = java.io.File(requireContext().getExternalFilesDir(null), "CiceroReposterApp")
+                if (!dir.exists()) dir.mkdirs()
+                var overall = 0
+                for ((index, url) in urls.withIndex()) {
+                    val req = Request.Builder().url(url).build()
+                    client.newCall(req).execute().use { resp ->
+                        if (!resp.isSuccessful) {
+                            val errBody = resp.body?.string()
+                            Log.e(
+                                "DashboardFragment",
+                                "HTTP ${resp.code} ${resp.message} when downloading $url. Body: $errBody"
+                            )
+                            throw java.io.IOException("HTTP ${resp.code} ${resp.message}")
+                        }
+                        val body = resp.body ?: return@use
+                        val name = if (multiple) "${post.id}_${index}.jpg" else fileName
+                        val file = java.io.File(dir, name)
+                        file.outputStream().use { out ->
+                            val total = body.contentLength()
+                            var downloaded = 0L
+                            val buf = ByteArray(8 * 1024)
+                            var read: Int
+                            while (body.byteStream().read(buf).also { read = it } != -1) {
+                                out.write(buf, 0, read)
+                                downloaded += read
+                                val progress = if (total > 0) (downloaded * 100 / total).toInt() else 0
+                                withContext(Dispatchers.Main) {
+                                    progressBar.isIndeterminate = false
+                                    progressBar.progress = progress
+                                }
                             }
                         }
+                        if (multiple) post.localCarouselPaths.add(file.absolutePath) else post.localPath = file.absolutePath
                     }
-                    post.localPath = file.absolutePath
+                    overall++
                 }
                 withContext(Dispatchers.Main) {
                     downloadedIds.add(post.id)
@@ -336,20 +360,36 @@ class DashboardFragment : Fragment(R.layout.fragment_dashboard) {
         if (!dir.exists()) {
             dir.mkdirs()
         }
-        val file = if (!post.localPath.isNullOrBlank()) {
-            java.io.File(post.localPath!!)
+        val files: List<java.io.File> = if (!post.isVideo && post.carouselImages.size > 1) {
+            if (post.localCarouselPaths.size == post.carouselImages.size) {
+                post.localCarouselPaths.map { java.io.File(it) }
+            } else {
+                post.carouselImages.indices.map { idx -> java.io.File(dir, "${post.id}_${idx}.jpg") }
+            }
         } else {
-            java.io.File(dir, fileName)
+            listOf(
+                if (!post.localPath.isNullOrBlank()) java.io.File(post.localPath!!)
+                else java.io.File(dir, fileName)
+            )
         }
-        val intent = Intent(Intent.ACTION_SEND)
+
+        val intent = if (files.size > 1) Intent(Intent.ACTION_SEND_MULTIPLE) else Intent(Intent.ACTION_SEND)
         intent.type = if (post.isVideo) "video/*" else "image/*"
-        if (file.exists()) {
+        val uris = ArrayList<android.net.Uri>()
+        files.filter { it.exists() }.forEach { f ->
             val uri = androidx.core.content.FileProvider.getUriForFile(
                 requireContext(),
                 requireContext().packageName + ".fileprovider",
-                file
+                f
             )
-            intent.putExtra(Intent.EXTRA_STREAM, uri)
+            uris.add(uri)
+        }
+        if (uris.isNotEmpty()) {
+            if (uris.size == 1) {
+                intent.putExtra(Intent.EXTRA_STREAM, uris[0])
+            } else {
+                intent.putParcelableArrayListExtra(Intent.EXTRA_STREAM, uris)
+            }
             intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
         } else {
             val url = if (post.isVideo) post.videoUrl else post.imageUrl ?: post.sourceUrl

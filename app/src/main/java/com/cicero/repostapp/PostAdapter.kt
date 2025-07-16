@@ -16,8 +16,16 @@ data class InstaPost(
     val isVideo: Boolean = false,
     val videoUrl: String? = null,
     val sourceUrl: String? = null,
+    /**
+     * Additional image URLs when the post is a carousel.
+     */
+    val carouselImages: List<String> = emptyList(),
     var downloaded: Boolean = false,
     var localPath: String? = null,
+    /**
+     * Paths for downloaded carousel images.
+     */
+    var localCarouselPaths: MutableList<String> = mutableListOf(),
     var reported: Boolean = false
 )
 
@@ -54,7 +62,7 @@ class PostAdapter(
 
         fun bind(post: InstaPost) {
             captionText.text = post.caption ?: ""
-            val url = post.imageUrl
+            val url = post.imageUrl ?: post.carouselImages.firstOrNull()
             if (url != null && url.isNotBlank()) {
                 Glide.with(itemView).load(url).into(imageView)
             } else {

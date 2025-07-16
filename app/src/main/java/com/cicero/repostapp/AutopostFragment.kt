@@ -482,7 +482,7 @@ class AutopostFragment : Fragment() {
     private suspend fun hasActiveSubscription(token: String, userId: String): Boolean {
         val client = okhttp3.OkHttpClient()
         val req = okhttp3.Request.Builder()
-            .url("https://papiqo.com/api/premium-subscriptions/user/$userId/active")
+            .url("${BuildConfig.API_BASE_URL}/api/premium-subscriptions/user/$userId/active")
             .header("Authorization", "Bearer $token")
             .build()
         return try {
@@ -517,7 +517,7 @@ class AutopostFragment : Fragment() {
         suspend fun fetchClientId(): String? {
             val client = okhttp3.OkHttpClient()
             val req = okhttp3.Request.Builder()
-                .url("https://papiqo.com/api/users/$userId")
+                .url("${BuildConfig.API_BASE_URL}/api/users/$userId")
                 .header("Authorization", "Bearer $token")
                 .build()
             return try {
@@ -534,7 +534,7 @@ class AutopostFragment : Fragment() {
         suspend fun fetchPosts(clientId: String): List<InstaPost> {
             val posts = mutableListOf<InstaPost>()
             val client = okhttp3.OkHttpClient()
-            val url = "https://papiqo.com/api/insta/posts?client_id=$clientId"
+            val url = "${BuildConfig.API_BASE_URL}/api/insta/posts?client_id=$clientId"
             val req = okhttp3.Request.Builder().url(url).header("Authorization", "Bearer $token").build()
             try {
                 client.newCall(req).execute().use { resp ->
@@ -588,7 +588,7 @@ class AutopostFragment : Fragment() {
             val set = mutableSetOf<String>()
             val client = okhttp3.OkHttpClient()
             val req = okhttp3.Request.Builder()
-                .url("https://papiqo.com/api/link-reports")
+                .url("${BuildConfig.API_BASE_URL}/api/link-reports")
                 .header("Authorization", "Bearer $token")
                 .build()
             try {
@@ -751,7 +751,7 @@ class AutopostFragment : Fragment() {
             val body = json.toString().toRequestBody("application/json".toMediaType())
             val client = okhttp3.OkHttpClient()
             val req = okhttp3.Request.Builder()
-                .url("https://papiqo.com/api/link-reports")
+                .url("${BuildConfig.API_BASE_URL}/api/link-reports")
                 .header("Authorization", "Bearer $token")
                 .post(body)
                 .build()

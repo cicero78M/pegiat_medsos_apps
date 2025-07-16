@@ -34,6 +34,8 @@ android {
         val ytRedirect = env("YOUTUBE_REDIRECT_URI").ifEmpty { "repostapp-youtube://oauth" }
         buildConfigField("String", "YOUTUBE_REDIRECT_URI", "\"$ytRedirect\"")
         buildConfigField("String", "YOUTUBE_API_KEY", "\"${env("YOUTUBE_API_KEY")}\"")
+        val apiBase = env("API_BASE_URL").ifEmpty { "https://papiqo.com" }
+        buildConfigField("String", "API_BASE_URL", "\"$apiBase\"")
     }
 
     buildFeatures {

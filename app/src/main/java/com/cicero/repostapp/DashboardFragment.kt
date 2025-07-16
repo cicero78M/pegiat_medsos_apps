@@ -82,7 +82,7 @@ class DashboardFragment : Fragment(R.layout.fragment_dashboard) {
         CoroutineScope(Dispatchers.IO).launch {
             val client = OkHttpClient()
             val req = Request.Builder()
-                .url("https://papiqo.com/api/users/$userId")
+                .url("${BuildConfig.API_BASE_URL}/api/users/$userId")
                 .header("Authorization", "Bearer $token")
                 .build()
             try {
@@ -116,7 +116,7 @@ class DashboardFragment : Fragment(R.layout.fragment_dashboard) {
     private fun fetchPosts(token: String, clientId: String) {
         CoroutineScope(Dispatchers.IO).launch {
             val client = OkHttpClient()
-            val url = "https://papiqo.com/api/insta/posts?client_id=$clientId"
+            val url = "${BuildConfig.API_BASE_URL}/api/insta/posts?client_id=$clientId"
             val req = Request.Builder()
                 .url(url)
                 .header("Authorization", "Bearer $token")
@@ -461,7 +461,7 @@ class DashboardFragment : Fragment(R.layout.fragment_dashboard) {
         if (token.isBlank()) return null
         val client = OkHttpClient()
         val req = Request.Builder()
-            .url("https://papiqo.com/api/link-reports")
+            .url("${BuildConfig.API_BASE_URL}/api/link-reports")
             .header("Authorization", "Bearer $token")
             .build()
         return try {
@@ -540,7 +540,7 @@ class DashboardFragment : Fragment(R.layout.fragment_dashboard) {
         if (token.isBlank() || userId.isBlank()) return emptySet()
         val client = OkHttpClient()
         val req = Request.Builder()
-            .url("https://papiqo.com/api/link-reports")
+            .url("${BuildConfig.API_BASE_URL}/api/link-reports")
             .header("Authorization", "Bearer $token")
             .build()
         return try {

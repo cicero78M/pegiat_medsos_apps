@@ -37,7 +37,7 @@ class SubscriptionConfirmActivity : AppCompatActivity() {
                 val json = JSONObject().apply { put("username", username) }
                 val body = json.toString().toRequestBody("application/json".toMediaType())
                 val req = Request.Builder()
-                    .url("https://papiqo.com/api/subscription-confirmations")
+                    .url("${BuildConfig.API_BASE_URL}/api/subscription-confirmations")
                     .header("Authorization", "Bearer $token")
                     .post(body)
                     .build()

@@ -187,7 +187,7 @@ class ReportActivity : AppCompatActivity() {
         if (token.isBlank()) return null
         val client = OkHttpClient()
         val req = Request.Builder()
-            .url("https://papiqo.com/api/link-reports")
+            .url("${BuildConfig.API_BASE_URL}/api/link-reports")
             .header("Authorization", "Bearer $token")
             .build()
         return try {
@@ -239,7 +239,7 @@ class ReportActivity : AppCompatActivity() {
         if (token.isBlank()) return false
         val client = OkHttpClient()
         val req = Request.Builder()
-            .url("https://papiqo.com/api/link-reports")
+            .url("${BuildConfig.API_BASE_URL}/api/link-reports")
             .header("Authorization", "Bearer $token")
             .build()
         return try {
@@ -320,7 +320,7 @@ class ReportActivity : AppCompatActivity() {
                 val body = json.toString().toRequestBody("application/json".toMediaType())
                 val client = OkHttpClient()
                 val req = Request.Builder()
-                    .url("https://papiqo.com/api/link-reports")
+                    .url("${BuildConfig.API_BASE_URL}/api/link-reports")
                     .header("Authorization", "Bearer $token")
                     .post(body)
                     .build()

@@ -79,7 +79,7 @@ class PremiumRegistrationActivity : AppCompatActivity() {
                 }
                 val body = json.toString().toRequestBody("application/json".toMediaType())
                 val request = Request.Builder()
-                    .url("https://papiqo.com/api/subscription-registrations")
+                    .url("${BuildConfig.API_BASE_URL}/api/subscription-registrations")
                     .header("Authorization", "Bearer $token")
                     .post(body)
                     .build()
@@ -110,7 +110,7 @@ class PremiumRegistrationActivity : AppCompatActivity() {
         CoroutineScope(Dispatchers.IO).launch {
             val client = OkHttpClient()
             val req = Request.Builder()
-                .url("https://papiqo.com/api/premium-subscriptions/user/$username/active")
+                .url("${BuildConfig.API_BASE_URL}/api/premium-subscriptions/user/$username/active")
                 .header("Authorization", "Bearer $token")
                 .build()
             try {

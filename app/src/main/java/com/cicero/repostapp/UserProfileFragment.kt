@@ -55,7 +55,7 @@ class UserProfileFragment : Fragment(R.layout.activity_profile) {
         CoroutineScope(Dispatchers.IO).launch {
             val client = OkHttpClient()
             val request = Request.Builder()
-                .url("https://papiqo.com/api/users/$userId")
+                .url("${BuildConfig.API_BASE_URL}/api/users/$userId")
                 .header("Authorization", "Bearer $token")
                 .build()
             try {
@@ -137,7 +137,7 @@ class UserProfileFragment : Fragment(R.layout.activity_profile) {
                     (stats?.optInt("following_count") ?: 0).toString()
                 val avatarUrl = stats?.optString("profile_pic_url") ?: ""
                 val fullAvatarUrl = if (avatarUrl.startsWith("http"))
-                    avatarUrl else "https://papiqo.com$avatarUrl"
+                    avatarUrl else "${BuildConfig.API_BASE_URL}$avatarUrl"
 
                 Glide.with(this@UserProfileFragment)
                     .load(fullAvatarUrl)
@@ -153,7 +153,7 @@ class UserProfileFragment : Fragment(R.layout.activity_profile) {
     private fun getStatsFromDb(token: String, username: String): Pair<JSONObject?, String?> {
         val client = OkHttpClient()
         val req = Request.Builder()
-            .url("https://papiqo.com/api/insta/profile?username=$username")
+            .url("${BuildConfig.API_BASE_URL}/api/insta/profile?username=$username")
             .header("Authorization", "Bearer $token")
             .build()
         return try {
@@ -171,7 +171,7 @@ class UserProfileFragment : Fragment(R.layout.activity_profile) {
     private fun fetchAndStoreStats(token: String, username: String) {
         val client = OkHttpClient()
         val req = Request.Builder()
-            .url("https://papiqo.com/api/insta/rapid-profile?username=$username")
+            .url("${BuildConfig.API_BASE_URL}/api/insta/rapid-profile?username=$username")
             .header("Authorization", "Bearer $token")
             .build()
         try {

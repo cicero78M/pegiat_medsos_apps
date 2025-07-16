@@ -340,7 +340,7 @@ class DashboardFragment : Fragment(R.layout.fragment_dashboard) {
             } catch (e: Exception) {
                 Log.e(
                     "DashboardFragment",
-                    "Failed to download $url to $fileName: ${e.message}",
+                    "Failed to download $fileName: ${e.message}",
                     e
                 )
                 withContext(Dispatchers.Main) {

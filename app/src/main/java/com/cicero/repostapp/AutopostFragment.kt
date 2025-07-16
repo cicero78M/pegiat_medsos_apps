@@ -318,7 +318,7 @@ class AutopostFragment : Fragment() {
     private suspend fun loadTwitterSession(icon: ImageView, check: ImageView) {
         val (token, profile, ok) = loadTwitterToken()
         if (!ok || token == null) return
-        val twitter = TwitterFactory.getSingleton().apply {
+        val twitter = TwitterFactory().instance.apply {
             setOAuthConsumer(BuildConfig.TWITTER_CONSUMER_KEY, BuildConfig.TWITTER_CONSUMER_SECRET)
             oAuthAccessToken = token
         }

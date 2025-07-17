@@ -18,7 +18,7 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent"
-            android:contentDescription="@string/todo" />
+            android:contentDescription="@string/profile_cover" />
 
         <ImageView
             android:id="@+id/image_avatar"
@@ -26,7 +26,7 @@
             android:layout_height="110dp"
             android:layout_marginTop="-55dp"
             android:background="@drawable/avatar_background"
-            android:contentDescription="@string/todo"
+            android:contentDescription="@string/profile_avatar"
             android:scaleType="centerCrop"
             android:src="@drawable/profile_avatar_placeholder"
             app:layout_constraintEnd_toEndOf="parent"
@@ -39,7 +39,7 @@
             android:layout_width="24dp"
             android:layout_height="24dp"
             android:layout_margin="4dp"
-            android:contentDescription="TODO"
+            android:contentDescription="@string/profile_status"
             android:src="@drawable/ic_status_true"
             app:layout_constraintBottom_toBottomOf="@id/image_avatar"
             app:layout_constraintEnd_toEndOf="@id/image_avatar"
@@ -51,7 +51,7 @@
             android:layout_height="24dp"
             android:layout_margin="4dp"
             android:src="@drawable/ic_badge_basic"
-            android:contentDescription="@string/todo"
+            android:contentDescription="@string/profile_badge"
             app:layout_constraintBottom_toBottomOf="@id/image_avatar"
             app:layout_constraintEnd_toStartOf="@id/image_status" />
 

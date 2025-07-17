@@ -10,7 +10,11 @@
     <string name="username_tiktok">Username TikTok</string>
     <string name="username_instagram">Username Instagram</string>
     <string name="logout">Logout</string>
-    <string name="todo">TODO</string>
+    <string name="profile_cover">Profile cover image</string>
+    <string name="profile_avatar">Profile avatar</string>
+    <string name="profile_status">Profile status indicator</string>
+    <string name="profile_badge">Profile badge</string>
+    <string name="login_logo">Application logo</string>
     <string name="_0">0</string>
     <string name="nama">Nama</string>
     <string name="nrp">NRP</string>

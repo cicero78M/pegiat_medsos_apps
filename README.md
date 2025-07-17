@@ -96,6 +96,17 @@ page. This new page relies on the unofficial Instagram Private API to sign in
 and display the authenticated user's profile information. From there the
 application can be extended to perform automatic posting.
 
+To run the Autopost page locally, first install the Node.js dependencies and
+start the bundled Express server:
+
+```bash
+npm install
+npm start
+```
+
+The server listens on port `3000` by default, so you can access the page at
+`http://localhost:3000/autopost` once it is running.
+
 
 
 

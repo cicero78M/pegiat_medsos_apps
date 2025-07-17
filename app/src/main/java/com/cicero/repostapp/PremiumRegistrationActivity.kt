@@ -38,19 +38,23 @@ class PremiumRegistrationActivity : AppCompatActivity() {
         sessionEndView.text = getString(R.string.session_end_format, sdf.format(java.util.Date(endTime)))
 
         val username = findViewById<EditText>(R.id.input_username)
-        val usernameExtra = intent.getStringExtra("username")
-        usernameExtra?.takeIf { it.isNotBlank() }?.let {
+        val userIdExtra = intent.getStringExtra("userId")
+            ?: prefs.getString("userId", "")
+        userIdExtra?.takeIf { it.isNotBlank() }?.let {
             username.setText(it)
         }
         username.isEnabled = false
         val nama = findViewById<EditText>(R.id.input_nama_rekening)
         val nomor = findViewById<EditText>(R.id.input_nomor_rekening)
         val phone = findViewById<EditText>(R.id.input_phone)
+        val loginPrefs = getSharedPreferences("login", MODE_PRIVATE)
+        val savedPhone = loginPrefs.getString("password", "")
+        savedPhone?.takeIf { it.isNotBlank() }?.let { phone.setText(it) }
         val button = findViewById<Button>(R.id.button_submit)
         val cancelButton = findViewById<Button>(R.id.button_cancel)
 
-        if (token.isNotBlank() && !usernameExtra.isNullOrBlank()) {
-            checkActiveSubscription(token, usernameExtra, activeStatusView, registrationContainer)
+        if (token.isNotBlank() && !userIdExtra.isNullOrBlank()) {
+            checkActiveSubscription(token, userIdExtra, activeStatusView, registrationContainer)
         }
 
         cancelButton.setOnClickListener { finish() }
@@ -71,7 +75,7 @@ class PremiumRegistrationActivity : AppCompatActivity() {
             CoroutineScope(Dispatchers.IO).launch {
                 val client = OkHttpClient()
                 val json = JSONObject().apply {
-                    put("username", usernameVal)
+                    put("user_id", usernameVal)
                     put("nama_rekening", namaVal)
                     put("nomor_rekening", nomorVal)
                     put("phone", phoneVal)
@@ -90,7 +94,7 @@ class PremiumRegistrationActivity : AppCompatActivity() {
                     if (success) {
                         Toast.makeText(this@PremiumRegistrationActivity, "Pendaftaran tersimpan", Toast.LENGTH_SHORT).show()
                         val intent = android.content.Intent(this@PremiumRegistrationActivity, SubscriptionConfirmActivity::class.java)
-                        intent.putExtra("username", usernameVal)
+                        intent.putExtra("userId", usernameVal)
                         startActivity(intent)
                         finish()
                     } else {
@@ -103,14 +107,14 @@ class PremiumRegistrationActivity : AppCompatActivity() {
 
     private fun checkActiveSubscription(
         token: String,
-        username: String,
+        userId: String,
         statusView: TextView,
         formContainer: LinearLayout
     ) {
         CoroutineScope(Dispatchers.IO).launch {
             val client = OkHttpClient()
             val req = Request.Builder()
-                .url("${BuildConfig.API_BASE_URL}/api/premium-subscriptions/user/$username/active")
+                .url("${BuildConfig.API_BASE_URL}/api/premium-subscriptions/user/$userId/active")
                 .header("Authorization", "Bearer $token")
                 .build()
             try {

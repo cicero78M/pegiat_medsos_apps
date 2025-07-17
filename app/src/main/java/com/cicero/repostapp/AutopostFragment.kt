@@ -41,7 +41,6 @@ class AutopostFragment : Fragment() {
 
     private var igClient: IGClient? = null
     private var twitterToken: AccessToken? = null
-    private var premiumActive: Boolean = false
 
     private fun showErrorDialog(message: String) {
         AlertDialog.Builder(requireContext())
@@ -215,14 +214,6 @@ class AutopostFragment : Fragment() {
             loadTwitterSession(twitterIcon, twitterCheck)
             loadTikTokSession(tiktokIcon, tiktokCheck)
             loadYoutubeSession(youtubeIcon, youtubeCheck)
-            val prefs = requireContext().getSharedPreferences("auth", Context.MODE_PRIVATE)
-            val token = prefs.getString("token", "") ?: ""
-            val userId = prefs.getString("userId", "") ?: ""
-            premiumActive = token.isNotBlank() && userId.isNotBlank() &&
-                hasActiveSubscription(token, userId)
-            withContext(Dispatchers.Main) {
-                start.isEnabled = premiumActive
-            }
         }
 
         icon.setOnClickListener { showLoginDialog(icon, check) }
@@ -232,11 +223,15 @@ class AutopostFragment : Fragment() {
         youtubeIcon.setOnClickListener { launchYoutubeLogin() }
         start.setOnClickListener {
             lifecycleScope.launch(Dispatchers.IO) {
-                if (!premiumActive) {
+                val prefs = requireContext().getSharedPreferences("auth", Context.MODE_PRIVATE)
+                val token = prefs.getString("token", "") ?: ""
+                val userId = prefs.getString("userId", "") ?: ""
+                val premium = if (token.isNotBlank() && userId.isNotBlank()) {
+                    hasActiveSubscription(token, userId)
+                } else false
+                if (!premium) {
                     withContext(Dispatchers.Main) {
                         Toast.makeText(requireContext(), getString(R.string.premium_required), Toast.LENGTH_SHORT).show()
-                        val prefs = requireContext().getSharedPreferences("auth", Context.MODE_PRIVATE)
-                        val userId = prefs.getString("userId", "") ?: ""
                         val intent = Intent(requireContext(), PremiumRegistrationActivity::class.java)
                         intent.putExtra("userId", userId)
                         startActivity(intent)

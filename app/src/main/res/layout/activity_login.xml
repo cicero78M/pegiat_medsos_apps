@@ -22,7 +22,7 @@
                 android:id="@+id/logo"
                 android:layout_width="240dp"
                 android:layout_height="240dp"
-                android:contentDescription="@string/todo"
+                android:contentDescription="@string/login_logo"
                 android:src="@mipmap/ic_launcher_foreground"
                 tools:ignore="ImageContrastCheck" />
 

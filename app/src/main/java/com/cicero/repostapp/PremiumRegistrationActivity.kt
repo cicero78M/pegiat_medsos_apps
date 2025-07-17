@@ -39,7 +39,9 @@ class PremiumRegistrationActivity : AppCompatActivity() {
         sessionEndView.text = getString(R.string.session_end_format, sdf.format(java.util.Date(endTime)))
 
         val username = findViewById<EditText>(R.id.input_username)
-        val userIdExtra = intent.getStringExtra("userId")
+        val instaPrefs = getSharedPreferences("instagram_auth", MODE_PRIVATE)
+        val instaUser = instaPrefs.getString("username", null)
+        val userIdExtra = instaUser ?: intent.getStringExtra("userId")
             ?: prefs.getString("userId", "")
         userIdExtra?.takeIf { it.isNotBlank() }?.let {
             username.setText(it)

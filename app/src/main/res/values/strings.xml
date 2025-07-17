@@ -8,6 +8,7 @@
     <string name="satfung">Satfung</string>
     <string name="jabatan">Jabatan</string>
     <string name="username_tiktok">Username TikTok</string>
+    <string name="username_instagram">Username Instagram</string>
     <string name="logout">Logout</string>
     <string name="todo">TODO</string>
     <string name="_0">0</string>
@@ -37,7 +38,7 @@
     <string name="start">Start</string>
     <string name="whatsapp_message_registration">userrequest</string>
     <string name="premium_request_message">Permintaan Subscription Premium
-NRP / NIP : %1$s
+Username Instagram : %1$s
 User : %2$s</string>
     <string name="accessibility_settings">Accessibility Service</string>
     <string name="enable_accessibility_service">Please enable accessibility service for auto posting</string>

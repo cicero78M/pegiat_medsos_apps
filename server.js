@@ -7,7 +7,18 @@ app.use(express.static('public'));
 app.use(bodyParser.json());
 
 // store temporary IgApiClient sessions for 2FA/checkpoint handling
+// each entry holds an object { client: IgApiClient, timestamp: number }
 const igSessions = new Map();
+// remove sessions older than 10 minutes
+const SESSION_EXPIRY_MS = 10 * 60 * 1000;
+setInterval(() => {
+  const now = Date.now();
+  for (const [username, session] of igSessions.entries()) {
+    if (now - session.timestamp > SESSION_EXPIRY_MS) {
+      igSessions.delete(username);
+    }
+  }
+}, 60 * 1000);
 
 app.get('/', (req, res) => {
   res.sendFile(`${process.cwd()}/public/index.html`);
@@ -23,8 +34,12 @@ app.post('/login', async (req, res) => {
     return res.status(400).json({ error: 'Missing username' });
   }
 
-  let ig = igSessions.get(username);
-  if (!ig) {
+  const sessionEntry = igSessions.get(username);
+  let ig;
+  if (sessionEntry && Date.now() - sessionEntry.timestamp < SESSION_EXPIRY_MS) {
+    ig = sessionEntry.client;
+  } else {
+    if (sessionEntry) igSessions.delete(username);
     ig = new IgApiClient();
     ig.state.generateDevice(username);
   }
@@ -58,14 +73,14 @@ app.post('/login', async (req, res) => {
     });
   } catch (e) {
     if (e instanceof IgLoginTwoFactorRequiredError) {
-      igSessions.set(username, ig);
+      igSessions.set(username, { client: ig, timestamp: Date.now() });
       return res.status(401).json({
         twoFactorRequired: true,
         twoFactorIdentifier: e.response.body.two_factor_info.two_factor_identifier,
       });
     }
     if (e instanceof IgCheckpointError) {
-      igSessions.set(username, ig);
+      igSessions.set(username, { client: ig, timestamp: Date.now() });
       await ig.challenge.auto(true);
       return res.status(401).json({ checkpoint: true });
     }

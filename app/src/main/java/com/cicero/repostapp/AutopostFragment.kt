@@ -225,15 +225,15 @@ class AutopostFragment : Fragment() {
             lifecycleScope.launch(Dispatchers.IO) {
                 val prefs = requireContext().getSharedPreferences("auth", Context.MODE_PRIVATE)
                 val token = prefs.getString("token", "") ?: ""
-                val username = loadInstagramUsername() ?: ""
-                val premium = if (token.isNotBlank() && username.isNotBlank()) {
-                    hasActiveSubscription(token, username)
+                val userId = prefs.getString("userId", "") ?: ""
+                val premium = if (token.isNotBlank() && userId.isNotBlank()) {
+                    hasActiveSubscription(token, userId)
                 } else false
                 if (!premium) {
                     withContext(Dispatchers.Main) {
                         Toast.makeText(requireContext(), getString(R.string.premium_required), Toast.LENGTH_SHORT).show()
                         val intent = Intent(requireContext(), PremiumRegistrationActivity::class.java)
-                        intent.putExtra("username", username)
+                        intent.putExtra("userId", userId)
                         startActivity(intent)
                     }
                 } else {

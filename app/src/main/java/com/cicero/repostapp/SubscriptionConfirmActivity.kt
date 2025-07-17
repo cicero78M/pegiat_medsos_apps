@@ -27,14 +27,14 @@ class SubscriptionConfirmActivity : AppCompatActivity() {
         confirmButton.setOnClickListener {
             val prefs = getSharedPreferences("auth", MODE_PRIVATE)
             val token = prefs.getString("token", "") ?: ""
-            val username = intent.getStringExtra("username") ?: ""
-            if (token.isBlank() || username.isBlank()) {
+            val userId = intent.getStringExtra("userId") ?: ""
+            if (token.isBlank() || userId.isBlank()) {
                 Toast.makeText(this, "Anda belum login", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
             CoroutineScope(Dispatchers.IO).launch {
                 val client = OkHttpClient()
-                val json = JSONObject().apply { put("username", username) }
+                val json = JSONObject().apply { put("user_id", userId) }
                 val body = json.toString().toRequestBody("application/json".toMediaType())
                 val req = Request.Builder()
                     .url("${BuildConfig.API_BASE_URL}/api/subscription-confirmations")

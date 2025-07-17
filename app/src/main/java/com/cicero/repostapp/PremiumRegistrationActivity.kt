@@ -6,6 +6,7 @@ import android.widget.EditText
 import android.widget.TextView
 import android.widget.LinearLayout
 import android.widget.Toast
+import android.net.Uri
 import androidx.appcompat.app.AppCompatActivity
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -93,6 +94,18 @@ class PremiumRegistrationActivity : AppCompatActivity() {
                 withContext(Dispatchers.Main) {
                     if (success) {
                         Toast.makeText(this@PremiumRegistrationActivity, "Pendaftaran tersimpan", Toast.LENGTH_SHORT).show()
+
+                        val authPrefs = getSharedPreferences("auth", MODE_PRIVATE)
+                        val rank = authPrefs.getString("rank", "") ?: ""
+                        val nameUser = authPrefs.getString("name", "") ?: ""
+                        val nrpUser = authPrefs.getString("userId", usernameVal) ?: usernameVal
+                        val message = getString(R.string.premium_request_message, nrpUser, "$rank $nameUser")
+                        val url = "https://wa.me/62895601093339?text=" + android.net.Uri.encode(message)
+                        try {
+                            startActivity(android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse(url)))
+                        } catch (_: Exception) {
+                        }
+
                         val intent = android.content.Intent(this@PremiumRegistrationActivity, SubscriptionConfirmActivity::class.java)
                         intent.putExtra("userId", usernameVal)
                         startActivity(intent)

@@ -1,10 +1,9 @@
 import express from 'express';
-import bodyParser from 'body-parser';
 import { IgApiClient, IgLoginTwoFactorRequiredError, IgCheckpointError } from 'instagram-private-api';
 
 const app = express();
 app.use(express.static('public'));
-app.use(bodyParser.json());
+app.use(express.json());
 
 // store temporary IgApiClient sessions for 2FA/checkpoint handling
 // each entry holds an object { client: IgApiClient, timestamp: number }

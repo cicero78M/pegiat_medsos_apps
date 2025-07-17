@@ -196,11 +196,9 @@ class LoginActivity : AppCompatActivity() {
                         JSONObject(bodyStr ?: "{}").optJSONObject("data")
                     } catch (_: Exception) { null }
                     if (dataObj == null) {
-                        val uuid = java.util.UUID.randomUUID().toString()
                         val json = JSONObject().apply {
-                            put("subscription_id", uuid)
-                            put("user_id", userId)
-                            put("is_active", false)
+                            put("username", userId)
+                            put("status", "pending")
                         }
                         val body = json.toString().toRequestBody("application/json".toMediaType())
                         val postReq = Request.Builder()

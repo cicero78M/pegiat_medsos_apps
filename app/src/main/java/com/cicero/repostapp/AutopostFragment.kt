@@ -555,7 +555,8 @@ class AutopostFragment : Fragment() {
                         } catch (_: Exception) { null }
                         if (createdDate == today) {
                             val id = obj.optString("shortcode")
-                            val carouselArr = obj.optJSONArray("image_urls")
+                            val carouselArr = obj.optJSONArray("images_url")
+                                ?: obj.optJSONArray("image_urls")
                                 ?: obj.optJSONArray("carousel")
                                 ?: obj.optJSONArray("carousel_images")
                             val carousel = mutableListOf<String>()

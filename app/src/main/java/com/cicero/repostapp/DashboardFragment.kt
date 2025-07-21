@@ -22,6 +22,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.runBlocking
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import org.json.JSONArray
@@ -372,6 +373,12 @@ class DashboardFragment : Fragment(R.layout.fragment_dashboard) {
         val targetDir = if (!post.isVideo && post.isCarousel) java.io.File(baseDir, post.id) else baseDir
         if (!targetDir.exists()) targetDir.mkdirs()
 
+        if (post.isCarousel && !post.isVideo) {
+            kotlinx.coroutines.runBlocking {
+                ensureCarouselDownloaded(post, targetDir)
+            }
+        }
+
         val files: List<java.io.File> = if (!post.isVideo && post.isCarousel) {
             val folder = if (!post.localCarouselDir.isNullOrBlank()) java.io.File(post.localCarouselDir!!) else targetDir
             if (post.localCarouselPaths.size == post.carouselImages.size && folder.exists()) {
@@ -470,6 +477,34 @@ class DashboardFragment : Fragment(R.layout.fragment_dashboard) {
                     Toast.makeText(requireContext(), "Gagal mengambil laporan", Toast.LENGTH_SHORT).show()
                 }
             }
+        }
+    }
+
+    private suspend fun ensureCarouselDownloaded(post: InstaPost, folder: java.io.File) {
+        if (!folder.exists()) folder.mkdirs()
+        val client = OkHttpClient()
+        for ((idx, url) in post.carouselImages.withIndex()) {
+            val file = java.io.File(folder, "${post.id}_${idx}.jpg")
+            if (file.exists() || url.isBlank()) {
+                if (file.exists() && !post.localCarouselPaths.contains(file.absolutePath)) {
+                    post.localCarouselPaths.add(file.absolutePath)
+                }
+                continue
+            }
+            val req = Request.Builder().url(url).build()
+            try {
+                client.newCall(req).execute().use { resp ->
+                    if (!resp.isSuccessful) return@use
+                    val body = resp.body ?: return@use
+                    file.outputStream().use { out ->
+                        body.byteStream().copyTo(out)
+                    }
+                }
+            } catch (_: Exception) {}
+            if (file.exists()) post.localCarouselPaths.add(file.absolutePath)
+        }
+        if (post.localCarouselPaths.size == post.carouselImages.size) {
+            post.localCarouselDir = folder.absolutePath
         }
     }
 

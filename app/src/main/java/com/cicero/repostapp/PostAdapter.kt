@@ -26,6 +26,10 @@ data class InstaPost(
      * Paths for downloaded carousel images.
      */
     var localCarouselPaths: MutableList<String> = mutableListOf(),
+    /**
+     * Directory containing downloaded carousel images.
+     */
+    var localCarouselDir: String? = null,
     var reported: Boolean = false
 )
 

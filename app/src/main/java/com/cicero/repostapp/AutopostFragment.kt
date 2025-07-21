@@ -606,20 +606,26 @@ class AutopostFragment : Fragment() {
         }
 
         fun fileForPost(post: InstaPost): File {
-            val dir = File(requireContext().getExternalFilesDir(null), "CiceroReposterApp")
+            val baseDir = File(requireContext().getExternalFilesDir(null), "CiceroReposterApp")
+            if (!baseDir.exists()) baseDir.mkdirs()
+            val dir = File(baseDir, post.id)
             if (!dir.exists()) dir.mkdirs()
             val name = post.id + if (post.isVideo) ".mp4" else ".jpg"
             return File(dir, name)
         }
 
         fun coverFileForPost(post: InstaPost): File {
-            val dir = File(requireContext().getExternalFilesDir(null), "CiceroReposterApp")
+            val baseDir = File(requireContext().getExternalFilesDir(null), "CiceroReposterApp")
+            if (!baseDir.exists()) baseDir.mkdirs()
+            val dir = File(baseDir, post.id)
             if (!dir.exists()) dir.mkdirs()
             return File(dir, post.id + ".jpg")
         }
 
         fun carouselFileForPost(post: InstaPost, index: Int): File {
-            val dir = File(requireContext().getExternalFilesDir(null), "CiceroReposterApp")
+            val baseDir = File(requireContext().getExternalFilesDir(null), "CiceroReposterApp")
+            if (!baseDir.exists()) baseDir.mkdirs()
+            val dir = File(baseDir, post.id)
             if (!dir.exists()) dir.mkdirs()
             return File(dir, "${post.id}_${index}.jpg")
         }
@@ -671,6 +677,8 @@ class AutopostFragment : Fragment() {
             val files = mutableListOf<File>()
             if (post.carouselImages.size <= 1 || post.isVideo) return files
             val client = okhttp3.OkHttpClient()
+            val dir = carouselFileForPost(post, 0).parentFile
+            if (dir != null && !dir.exists()) dir.mkdirs()
             for ((idx, url) in post.carouselImages.withIndex()) {
                 val f = carouselFileForPost(post, idx)
                 if (f.exists()) { files.add(f); continue }
@@ -688,13 +696,16 @@ class AutopostFragment : Fragment() {
                 } catch (_: Exception) {}
                 if (f.exists()) files.add(f)
             }
+            if (files.isNotEmpty()) post.localCarouselDir = dir?.absolutePath
             return files
         }
 
         fun shareCarousel(post: InstaPost) {
-            val dir = File(requireContext().getExternalFilesDir(null), "CiceroReposterApp")
+            val baseDir = File(requireContext().getExternalFilesDir(null), "CiceroReposterApp")
+            val folder = if (!post.isVideo && post.carouselImages.size > 1) File(baseDir, post.id) else baseDir
             val files: List<File> = if (!post.isVideo && post.carouselImages.size > 1) {
-                post.carouselImages.indices.map { carouselFileForPost(post, it) }
+                folder.listFiles { f -> f.isFile && f.name.endsWith(".jpg") }?.sortedBy { it.name }?.toList()
+                    ?: post.carouselImages.indices.map { carouselFileForPost(post, it) }
             } else {
                 listOf(fileForPost(post))
             }

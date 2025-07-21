@@ -565,6 +565,7 @@ class AutopostFragment : Fragment() {
                                     if (u.isNotBlank()) carousel.add(u)
                                 }
                             }
+                            val isCarousel = obj.optBoolean("is_carousel", carousel.size > 1)
                             posts.add(
                                 InstaPost(
                                     id = id,
@@ -574,6 +575,7 @@ class AutopostFragment : Fragment() {
                                     isVideo = obj.optBoolean("is_video"),
                                     videoUrl = obj.optString("video_url"),
                                     sourceUrl = obj.optString("source_url"),
+                                    isCarousel = isCarousel,
                                     carouselImages = carousel
                                 )
                             )
@@ -675,7 +677,7 @@ class AutopostFragment : Fragment() {
 
         suspend fun downloadCarouselImagesIfNeeded(post: InstaPost): List<File> {
             val files = mutableListOf<File>()
-            if (post.carouselImages.size <= 1 || post.isVideo) return files
+            if (!post.isCarousel || post.carouselImages.isEmpty() || post.isVideo) return files
             val client = okhttp3.OkHttpClient()
             val dir = carouselFileForPost(post, 0).parentFile
             if (dir != null && !dir.exists()) dir.mkdirs()
@@ -702,8 +704,8 @@ class AutopostFragment : Fragment() {
 
         fun shareCarousel(post: InstaPost) {
             val baseDir = File(requireContext().getExternalFilesDir(null), "CiceroReposterApp")
-            val folder = if (!post.isVideo && post.carouselImages.size > 1) File(baseDir, post.id) else baseDir
-            val files: List<File> = if (!post.isVideo && post.carouselImages.size > 1) {
+            val folder = if (!post.isVideo && post.isCarousel) File(baseDir, post.id) else baseDir
+            val files: List<File> = if (!post.isVideo && post.isCarousel) {
                 folder.listFiles { f -> f.isFile && f.name.endsWith(".jpg") }?.sortedBy { it.name }?.toList()
                     ?: post.carouselImages.indices.map { carouselFileForPost(post, it) }
             } else {
@@ -780,7 +782,7 @@ class AutopostFragment : Fragment() {
             appendLog("Memeriksa download…")
             kotlinx.coroutines.delay(3000)
             val file = downloadIfNeeded(post) ?: continue
-            if (!post.isVideo && post.carouselImages.size > 1) {
+            if (!post.isVideo && post.isCarousel) {
                 downloadCarouselImagesIfNeeded(post)
             }
             kotlinx.coroutines.delay(3000)

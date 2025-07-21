@@ -17,6 +17,10 @@ data class InstaPost(
     val videoUrl: String? = null,
     val sourceUrl: String? = null,
     /**
+     * Whether this post contains multiple images (carousel).
+     */
+    val isCarousel: Boolean = false,
+    /**
      * Additional image URLs when the post is a carousel.
      */
     val carouselImages: List<String> = emptyList(),

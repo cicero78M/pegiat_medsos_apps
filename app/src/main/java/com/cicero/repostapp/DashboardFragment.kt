@@ -157,6 +157,7 @@ class DashboardFragment : Fragment(R.layout.fragment_dashboard) {
                                             if (u.isNotBlank()) carousel.add(u)
                                         }
                                     }
+                                    val isCarousel = obj.optBoolean("is_carousel", carousel.size > 1)
                                     posts.add(
                                         InstaPost(
                                             id = id,
@@ -168,6 +169,7 @@ class DashboardFragment : Fragment(R.layout.fragment_dashboard) {
                                             isVideo = obj.optBoolean("is_video"),
                                             videoUrl = obj.optString("video_url"),
                                             sourceUrl = obj.optString("source_url"),
+                                            isCarousel = isCarousel,
                                             carouselImages = carousel,
                                             downloaded = downloadedIds.contains(id),
                                             reported = reportedIds.contains(id)
@@ -244,8 +246,8 @@ class DashboardFragment : Fragment(R.layout.fragment_dashboard) {
 
     private fun checkIfFileExists(post: InstaPost): Boolean {
         val baseDir = java.io.File(requireContext().getExternalFilesDir(null), "CiceroReposterApp")
-        val folder = if (post.carouselImages.size > 1 && !post.isVideo) java.io.File(baseDir, post.id) else baseDir
-        if (post.carouselImages.size > 1 && !post.isVideo) {
+        val folder = if (post.isCarousel && !post.isVideo) java.io.File(baseDir, post.id) else baseDir
+        if (post.isCarousel && !post.isVideo) {
             if (!folder.exists()) return false
             for (i in post.carouselImages.indices) {
                 val file = java.io.File(folder, "${post.id}_${i}.jpg")
@@ -279,10 +281,10 @@ class DashboardFragment : Fragment(R.layout.fragment_dashboard) {
     }
 
     private fun downloadPost(post: InstaPost) {
-        val urls = if (!post.isVideo && post.carouselImages.size > 1) post.carouselImages
+        val urls = if (!post.isVideo && post.isCarousel) post.carouselImages
             else listOf(post.videoUrl.takeIf { post.isVideo } ?: (post.imageUrl ?: post.sourceUrl)).filterNotNull()
         if (urls.isEmpty()) return
-        val multiple = urls.size > 1 && !post.isVideo
+        val multiple = post.isCarousel && !post.isVideo
         val fileName = post.id + if (post.isVideo) ".mp4" else ".jpg"
         progressBar.visibility = View.VISIBLE
         progressBar.isIndeterminate = true
@@ -367,10 +369,10 @@ class DashboardFragment : Fragment(R.layout.fragment_dashboard) {
         val fileName = post.id + if (post.isVideo) ".mp4" else ".jpg"
         val baseDir = java.io.File(requireContext().getExternalFilesDir(null), "CiceroReposterApp")
         if (!baseDir.exists()) baseDir.mkdirs()
-        val targetDir = if (!post.isVideo && post.carouselImages.size > 1) java.io.File(baseDir, post.id) else baseDir
+        val targetDir = if (!post.isVideo && post.isCarousel) java.io.File(baseDir, post.id) else baseDir
         if (!targetDir.exists()) targetDir.mkdirs()
 
-        val files: List<java.io.File> = if (!post.isVideo && post.carouselImages.size > 1) {
+        val files: List<java.io.File> = if (!post.isVideo && post.isCarousel) {
             val folder = if (!post.localCarouselDir.isNullOrBlank()) java.io.File(post.localCarouselDir!!) else targetDir
             if (post.localCarouselPaths.size == post.carouselImages.size && folder.exists()) {
                 post.localCarouselPaths.map { java.io.File(it) }

@@ -8,6 +8,7 @@ import android.widget.Button
 import android.widget.EditText
 import android.widget.ImageView
 import android.widget.Toast
+import android.widget.ProgressBar
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
@@ -41,6 +42,7 @@ class AutopostFragment : Fragment() {
 
     private var igClient: IGClient? = null
     private var twitterToken: AccessToken? = null
+    private lateinit var progressBar: ProgressBar
 
     private fun showErrorDialog(message: String) {
         AlertDialog.Builder(requireContext())
@@ -206,6 +208,7 @@ class AutopostFragment : Fragment() {
         val youtubeIcon = view.findViewById<ImageView>(R.id.youtube_icon)
         val youtubeCheck = view.findViewById<ImageView>(R.id.youtube_check)
         val start = view.findViewById<Button>(R.id.button_start)
+        progressBar = view.findViewById(R.id.progress_loading)
 
         // attempt to load saved session
         lifecycleScope.launch(Dispatchers.IO) {
@@ -678,14 +681,27 @@ class AutopostFragment : Fragment() {
         suspend fun downloadCarouselImagesIfNeeded(post: InstaPost): List<File> {
             val files = mutableListOf<File>()
             if (!post.isCarousel || post.carouselImages.isEmpty() || post.isVideo) return files
+            withContext(Dispatchers.Main) {
+                progressBar.visibility = View.VISIBLE
+                progressBar.isIndeterminate = false
+                progressBar.progress = 0
+            }
+
             val client = okhttp3.OkHttpClient()
             val dir = carouselFileForPost(post, 0).parentFile
             if (dir != null && !dir.exists()) dir.mkdirs()
             for ((idx, url) in post.carouselImages.withIndex()) {
                 val f = carouselFileForPost(post, idx)
-                if (f.exists()) { files.add(f); continue }
+                if (f.exists()) {
+                    files.add(f)
+                    withContext(Dispatchers.Main) {
+                        progressBar.progress = ((idx + 1) * 100 / post.carouselImages.size)
+                    }
+                    appendLog("${post.carouselImages.size}/${files.size}")
+                    continue
+                }
                 if (url.isBlank()) continue
-                appendLog("Mengunduh gambar ${idx + 1}/${post.carouselImages.size}…")
+                appendLog("Mengunduh gambar ${post.carouselImages.size}/${idx + 1}…")
                 val req = okhttp3.Request.Builder().url(url).build()
                 try {
                     client.newCall(req).execute().use { resp ->
@@ -697,8 +713,16 @@ class AutopostFragment : Fragment() {
                     }
                 } catch (_: Exception) {}
                 if (f.exists()) files.add(f)
+                withContext(Dispatchers.Main) {
+                    progressBar.progress = ((idx + 1) * 100 / post.carouselImages.size)
+                }
+                appendLog("${post.carouselImages.size}/${files.size}")
             }
             if (files.isNotEmpty()) post.localCarouselDir = dir?.absolutePath
+            withContext(Dispatchers.Main) {
+                progressBar.visibility = View.GONE
+                progressBar.isIndeterminate = true
+            }
             return files
         }
 

@@ -243,10 +243,12 @@ class DashboardFragment : Fragment(R.layout.fragment_dashboard) {
     }
 
     private fun checkIfFileExists(post: InstaPost): Boolean {
-        val dir = java.io.File(requireContext().getExternalFilesDir(null), "CiceroReposterApp")
+        val baseDir = java.io.File(requireContext().getExternalFilesDir(null), "CiceroReposterApp")
+        val folder = if (post.carouselImages.size > 1 && !post.isVideo) java.io.File(baseDir, post.id) else baseDir
         if (post.carouselImages.size > 1 && !post.isVideo) {
+            if (!folder.exists()) return false
             for (i in post.carouselImages.indices) {
-                val file = java.io.File(dir, "${post.id}_${i}.jpg")
+                val file = java.io.File(folder, "${post.id}_${i}.jpg")
                 if (!file.exists()) return false
             }
             return true
@@ -255,7 +257,7 @@ class DashboardFragment : Fragment(R.layout.fragment_dashboard) {
         val file = if (!post.localPath.isNullOrBlank()) {
             java.io.File(post.localPath!!)
         } else {
-            java.io.File(dir, fileName)
+            java.io.File(folder, fileName)
         }
         return file.exists()
     }
@@ -291,8 +293,10 @@ class DashboardFragment : Fragment(R.layout.fragment_dashboard) {
         CoroutineScope(Dispatchers.IO).launch {
             try {
                 val client = OkHttpClient()
-                val dir = java.io.File(requireContext().getExternalFilesDir(null), "CiceroReposterApp")
-                if (!dir.exists()) dir.mkdirs()
+                val baseDir = java.io.File(requireContext().getExternalFilesDir(null), "CiceroReposterApp")
+                if (!baseDir.exists()) baseDir.mkdirs()
+                val targetDir = if (multiple) java.io.File(baseDir, post.id) else baseDir
+                if (!targetDir.exists()) targetDir.mkdirs()
                 var overall = 0
                 for ((index, url) in urls.withIndex()) {
                     val req = Request.Builder().url(url).build()
@@ -307,7 +311,7 @@ class DashboardFragment : Fragment(R.layout.fragment_dashboard) {
                         }
                         val body = resp.body ?: return@use
                         val name = if (multiple) "${post.id}_${index}.jpg" else fileName
-                        val file = java.io.File(dir, name)
+                        val file = java.io.File(targetDir, name)
                         file.outputStream().use { out ->
                             val total = body.contentLength()
                             var downloaded = 0L
@@ -323,7 +327,12 @@ class DashboardFragment : Fragment(R.layout.fragment_dashboard) {
                                 }
                             }
                         }
-                        if (multiple) post.localCarouselPaths.add(file.absolutePath) else post.localPath = file.absolutePath
+                        if (multiple) {
+                            post.localCarouselPaths.add(file.absolutePath)
+                            post.localCarouselDir = targetDir.absolutePath
+                        } else {
+                            post.localPath = file.absolutePath
+                        }
                     }
                     overall++
                 }
@@ -356,20 +365,25 @@ class DashboardFragment : Fragment(R.layout.fragment_dashboard) {
 
     private fun sharePost(post: InstaPost) {
         val fileName = post.id + if (post.isVideo) ".mp4" else ".jpg"
-        val dir = java.io.File(requireContext().getExternalFilesDir(null), "CiceroReposterApp")
-        if (!dir.exists()) {
-            dir.mkdirs()
-        }
+        val baseDir = java.io.File(requireContext().getExternalFilesDir(null), "CiceroReposterApp")
+        if (!baseDir.exists()) baseDir.mkdirs()
+        val targetDir = if (!post.isVideo && post.carouselImages.size > 1) java.io.File(baseDir, post.id) else baseDir
+        if (!targetDir.exists()) targetDir.mkdirs()
+
         val files: List<java.io.File> = if (!post.isVideo && post.carouselImages.size > 1) {
-            if (post.localCarouselPaths.size == post.carouselImages.size) {
+            val folder = if (!post.localCarouselDir.isNullOrBlank()) java.io.File(post.localCarouselDir!!) else targetDir
+            if (post.localCarouselPaths.size == post.carouselImages.size && folder.exists()) {
                 post.localCarouselPaths.map { java.io.File(it) }
+            } else if (folder.exists()) {
+                folder.listFiles { f -> f.isFile && f.name.endsWith(".jpg") }?.sortedBy { it.name }?.toList()
+                    ?: post.carouselImages.indices.map { idx -> java.io.File(folder, "${post.id}_${idx}.jpg") }
             } else {
-                post.carouselImages.indices.map { idx -> java.io.File(dir, "${post.id}_${idx}.jpg") }
+                post.carouselImages.indices.map { idx -> java.io.File(folder, "${post.id}_${idx}.jpg") }
             }
         } else {
             listOf(
                 if (!post.localPath.isNullOrBlank()) java.io.File(post.localPath!!)
-                else java.io.File(dir, fileName)
+                else java.io.File(targetDir, fileName)
             )
         }
 

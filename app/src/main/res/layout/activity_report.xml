@@ -17,6 +17,13 @@
             android:src="@android:drawable/ic_menu_gallery" />
 
         <TextView
+            android:id="@+id/task_number"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textStyle="bold"
+            android:paddingTop="8dp" />
+
+        <TextView
             android:id="@+id/caption_preview"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"

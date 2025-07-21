@@ -168,6 +168,7 @@ class DashboardFragment : Fragment(R.layout.fragment_dashboard) {
                                                 .ifBlank { obj.optString("thumbnail_url") }
                                                 .ifBlank { carousel.firstOrNull() },
                                             createdAt = created,
+                                            taskNumber = posts.size + 1,
                                             isVideo = obj.optBoolean("is_video"),
                                             videoUrl = obj.optString("video_url"),
                                             sourceUrl = obj.optString("source_url"),
@@ -442,11 +443,12 @@ class DashboardFragment : Fragment(R.layout.fragment_dashboard) {
                             putExtra(ReportActivity.EXTRA_IMAGE_URL, post.imageUrl)
                             putExtra(ReportActivity.EXTRA_CAPTION, post.caption)
                             putExtra(ReportActivity.EXTRA_SHORTCODE, post.id)
+                            putExtra(ReportActivity.EXTRA_TASK_NUMBER, post.taskNumber)
                         }
                         startActivity(intent)
                     }
                     2 -> if (post.reported) {
-                        shareReportViaWhatsApp(post.id)
+                        shareReportViaWhatsApp(post.id, post.taskNumber)
                     }
                 }
             }
@@ -466,12 +468,12 @@ class DashboardFragment : Fragment(R.layout.fragment_dashboard) {
         }
     }
 
-    private fun shareReportViaWhatsApp(shortcode: String) {
+    private fun shareReportViaWhatsApp(shortcode: String, taskNumber: Int) {
         CoroutineScope(Dispatchers.IO).launch {
             val links = getExistingReport(shortcode)
             if (links != null) {
                 withContext(Dispatchers.Main) {
-                    shareViaWhatsApp(shortcode, links)
+                    shareViaWhatsApp(shortcode, taskNumber, links)
                 }
             } else {
                 withContext(Dispatchers.Main) {
@@ -542,7 +544,7 @@ class DashboardFragment : Fragment(R.layout.fragment_dashboard) {
         }
     }
 
-    private fun shareViaWhatsApp(shortcode: String, links: Map<String, String?>) {
+    private fun shareViaWhatsApp(shortcode: String, taskNumber: Int, links: Map<String, String?>) {
         val locale = java.util.Locale("id", "ID")
         val today = java.time.LocalDate.now()
         val day = today.format(java.time.format.DateTimeFormatter.ofPattern("EEEE", locale))
@@ -559,6 +561,8 @@ class DashboardFragment : Fragment(R.layout.fragment_dashboard) {
         """.trimIndent()
 
         val message = """
+            Laporan Tugas $taskNumber
+
             Mohon ijin, Mengirimkan Laporan repost konten,
 
             Hari : $day,

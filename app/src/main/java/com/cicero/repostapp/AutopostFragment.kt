@@ -573,6 +573,7 @@ class AutopostFragment : Fragment() {
                                     caption = obj.optString("caption"),
                                     imageUrl = obj.optString("image_url").ifBlank { obj.optString("thumbnail_url") }.ifBlank { carousel.firstOrNull() },
                                     createdAt = created,
+                                    taskNumber = posts.size + 1,
                                     isVideo = obj.optBoolean("is_video"),
                                     videoUrl = obj.optString("video_url"),
                                     sourceUrl = obj.optString("source_url"),

@@ -180,6 +180,19 @@ class DashboardFragment : Fragment(R.layout.fragment_dashboard) {
                                     )
                                 }
                             }
+                            val parseTs: (String) -> Long = { ts ->
+                                try {
+                                    if (ts.contains("T")) {
+                                        java.time.OffsetDateTime.parse(ts)
+                                            .toInstant().toEpochMilli()
+                                    } else {
+                                        java.time.LocalDateTime.parse(ts, formatter)
+                                            .atZone(java.time.ZoneId.systemDefault())
+                                            .toInstant().toEpochMilli()
+                                    }
+                                } catch (_: Exception) { 0L }
+                            }
+                            posts.sortBy { parseTs(it.createdAt) }
                             adapter.setData(posts)
                             emptyView.visibility = if (posts.isEmpty()) View.VISIBLE else View.GONE
                             progressBar.visibility = View.GONE

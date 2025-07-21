@@ -13,6 +13,10 @@ data class InstaPost(
     val caption: String?,
     val imageUrl: String?,
     val createdAt: String,
+    /**
+     * Sequential task number as fetched from the API queue.
+     */
+    val taskNumber: Int = 0,
     val isVideo: Boolean = false,
     val videoUrl: String? = null,
     val sourceUrl: String? = null,
@@ -69,7 +73,8 @@ class PostAdapter(
         private val reportedIcon: ImageView = itemView.findViewById(R.id.icon_reported)
 
         fun bind(post: InstaPost) {
-            captionText.text = post.caption ?: ""
+            val cap = post.caption ?: ""
+            captionText.text = "Laporan Tugas ${post.taskNumber}\n$cap"
             val url = post.imageUrl ?: post.carouselImages.firstOrNull()
             if (url != null && url.isNotBlank()) {
                 Glide.with(itemView).load(url).into(imageView)

@@ -28,6 +28,7 @@ class ReportActivity : AppCompatActivity() {
         const val EXTRA_IMAGE_URL = "image_url"
         const val EXTRA_CAPTION = "caption"
         const val EXTRA_SHORTCODE = "shortcode"
+        const val EXTRA_TASK_NUMBER = "task_number"
     }
 
     private data class Platform(
@@ -41,6 +42,7 @@ class ReportActivity : AppCompatActivity() {
     private lateinit var platforms: List<Platform>
     private lateinit var token: String
     private lateinit var userId: String
+    private var taskNumber: Int = 0
     private var shortcode: String? = null
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -63,6 +65,8 @@ class ReportActivity : AppCompatActivity() {
             captionView.text = caption
         }
         shortcode = intent.getStringExtra(EXTRA_SHORTCODE)
+        taskNumber = intent.getIntExtra(EXTRA_TASK_NUMBER, 0)
+        findViewById<TextView>(R.id.task_number).text = "Laporan Tugas $taskNumber"
 
         platforms = listOf(
             Platform(
@@ -330,7 +334,7 @@ class ReportActivity : AppCompatActivity() {
                 withContext(Dispatchers.Main) {
                     if (success) {
                         Toast.makeText(this@ReportActivity, "Laporan terkirim", Toast.LENGTH_SHORT).show()
-                        shareViaWhatsApp(shortcodeVal ?: "", links)
+                        shareViaWhatsApp(shortcodeVal ?: "", taskNumber, links)
                         finish()
                     } else {
                         Toast.makeText(this@ReportActivity, "Gagal mengirim laporan", Toast.LENGTH_SHORT).show()
@@ -344,7 +348,7 @@ class ReportActivity : AppCompatActivity() {
         }
     }
 
-    private fun shareViaWhatsApp(shortcode: String, links: Map<String, String?>) {
+    private fun shareViaWhatsApp(shortcode: String, taskNumber: Int, links: Map<String, String?>) {
         val locale = java.util.Locale("id", "ID")
         val today = java.time.LocalDate.now()
         val day = today.format(java.time.format.DateTimeFormatter.ofPattern("EEEE", locale))
@@ -361,6 +365,8 @@ class ReportActivity : AppCompatActivity() {
         """.trimIndent()
 
         val message = """
+            Laporan Tugas $taskNumber
+
             Mohon ijin, Mengirimkan Laporan repost konten,
 
             Hari : $day,

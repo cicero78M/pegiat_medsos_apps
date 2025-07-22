@@ -403,6 +403,7 @@ class SpecialTaskFragment : Fragment(R.layout.fragment_special_task) {
                             putExtra(ReportActivity.EXTRA_CAPTION, post.caption)
                             putExtra(ReportActivity.EXTRA_SHORTCODE, post.id)
                             putExtra(ReportActivity.EXTRA_TASK_NUMBER, post.taskNumber)
+                            putExtra(ReportActivity.EXTRA_SPECIAL, true)
                         }
                         startActivity(intent)
                     }
@@ -461,7 +462,7 @@ class SpecialTaskFragment : Fragment(R.layout.fragment_special_task) {
         if (token.isBlank()) return null
         val client = OkHttpClient()
         val req = Request.Builder()
-            .url("${BuildConfig.API_BASE_URL}/api/link-reports")
+            .url("${BuildConfig.API_BASE_URL}/api/link-reports-khusus")
             .header("Authorization", "Bearer $token")
             .build()
         return try {
@@ -507,7 +508,7 @@ class SpecialTaskFragment : Fragment(R.layout.fragment_special_task) {
         """.trimIndent()
 
         val message = """
-            Laporan Tugas $taskNumber
+            Laporan Tugas Khusus $taskNumber
 
             Mohon ijin, Mengirimkan Laporan repost konten,
 
@@ -542,7 +543,7 @@ class SpecialTaskFragment : Fragment(R.layout.fragment_special_task) {
         if (token.isBlank() || userId.isBlank()) return emptySet()
         val client = OkHttpClient()
         val req = Request.Builder()
-            .url("${BuildConfig.API_BASE_URL}/api/link-reports")
+            .url("${BuildConfig.API_BASE_URL}/api/link-reports-khusus")
             .header("Authorization", "Bearer $token")
             .build()
         return try {

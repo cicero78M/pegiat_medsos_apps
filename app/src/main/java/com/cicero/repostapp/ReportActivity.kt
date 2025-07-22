@@ -29,6 +29,7 @@ class ReportActivity : AppCompatActivity() {
         const val EXTRA_CAPTION = "caption"
         const val EXTRA_SHORTCODE = "shortcode"
         const val EXTRA_TASK_NUMBER = "task_number"
+        const val EXTRA_SPECIAL = "special"
     }
 
     private data class Platform(
@@ -44,6 +45,7 @@ class ReportActivity : AppCompatActivity() {
     private lateinit var userId: String
     private var taskNumber: Int = 0
     private var shortcode: String? = null
+    private var isSpecial: Boolean = false
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_report)
@@ -66,7 +68,9 @@ class ReportActivity : AppCompatActivity() {
         }
         shortcode = intent.getStringExtra(EXTRA_SHORTCODE)
         taskNumber = intent.getIntExtra(EXTRA_TASK_NUMBER, 0)
-        findViewById<TextView>(R.id.task_number).text = "Laporan Tugas $taskNumber"
+        isSpecial = intent.getBooleanExtra(EXTRA_SPECIAL, false)
+        val header = if (isSpecial) "Laporan Tugas Khusus $taskNumber" else "Laporan Tugas $taskNumber"
+        findViewById<TextView>(R.id.task_number).text = header
 
         platforms = listOf(
             Platform(
@@ -191,7 +195,7 @@ class ReportActivity : AppCompatActivity() {
         if (token.isBlank()) return null
         val client = OkHttpClient()
         val req = Request.Builder()
-            .url("${BuildConfig.API_BASE_URL}/api/link-reports")
+            .url("${BuildConfig.API_BASE_URL}/api/link-reports${if (isSpecial) "-khusus" else ""}")
             .header("Authorization", "Bearer $token")
             .build()
         return try {
@@ -243,7 +247,7 @@ class ReportActivity : AppCompatActivity() {
         if (token.isBlank()) return false
         val client = OkHttpClient()
         val req = Request.Builder()
-            .url("${BuildConfig.API_BASE_URL}/api/link-reports")
+            .url("${BuildConfig.API_BASE_URL}/api/link-reports${if (isSpecial) "-khusus" else ""}")
             .header("Authorization", "Bearer $token")
             .build()
         return try {
@@ -324,7 +328,7 @@ class ReportActivity : AppCompatActivity() {
                 val body = json.toString().toRequestBody("application/json".toMediaType())
                 val client = OkHttpClient()
                 val req = Request.Builder()
-                    .url("${BuildConfig.API_BASE_URL}/api/link-reports")
+                    .url("${BuildConfig.API_BASE_URL}/api/link-reports${if (isSpecial) "-khusus" else ""}")
                     .header("Authorization", "Bearer $token")
                     .post(body)
                     .build()
@@ -365,7 +369,7 @@ class ReportActivity : AppCompatActivity() {
         """.trimIndent()
 
         val message = """
-            Laporan Tugas $taskNumber
+            ${if (isSpecial) "Laporan Tugas Khusus" else "Laporan Tugas"} $taskNumber
 
             Mohon ijin, Mengirimkan Laporan repost konten,
 

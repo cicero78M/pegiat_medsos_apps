@@ -69,7 +69,7 @@ class ReportActivity : AppCompatActivity() {
         shortcode = intent.getStringExtra(EXTRA_SHORTCODE)
         taskNumber = intent.getIntExtra(EXTRA_TASK_NUMBER, 0)
         isSpecial = intent.getBooleanExtra(EXTRA_SPECIAL, false)
-        val header = if (isSpecial) "Laporan Tugas Khusus $taskNumber" else "Laporan Tugas $taskNumber"
+        val header = if (isSpecial) "Laporan Tugas Khusus $taskNumber" else "Laporan Tugas Rutin $taskNumber"
         findViewById<TextView>(R.id.task_number).text = header
 
         platforms = listOf(

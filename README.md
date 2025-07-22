@@ -19,6 +19,10 @@ The project uses Gradle Kotlin DSL. To build the project you would typically run
 ./gradlew assembleDebug
 ```
 
+> **Important**: Gradle 8.7 and some dependencies are compiled for Java 21.
+> Make sure `JAVA_HOME` points to JDK 21 or newer when running the build.
+> Using an older JDK will fail with `Unsupported class file major version 65`.
+
 Before running the build you must point Gradle to a valid Android SDK
 installation.  Create a file named `local.properties` in the project root with
 the following content (adjust the path to match your environment):

@@ -17,6 +17,7 @@ class DashboardActivity : AppCompatActivity() {
         supportActionBar?.setDisplayShowHomeEnabled(true)
         supportActionBar?.setLogo(R.mipmap.ic_launcher_foreground)
         supportActionBar?.setDisplayUseLogoEnabled(true)
+        val pageTitles = listOf("Profil", "Tugas Resmi", "Tugas Khusus", "Autorepost")
 
         val token = intent.getStringExtra("token")
         val userId = intent.getStringExtra("userId")
@@ -35,6 +36,8 @@ class DashboardActivity : AppCompatActivity() {
         }
         viewPager.isUserInputEnabled = false
 
+        supportActionBar?.title = pageTitles[1]
+
         val bottomNav = findViewById<BottomNavigationView>(R.id.bottom_navigation)
         bottomNav.setOnItemSelectedListener { item ->
             when (item.itemId) {
@@ -49,11 +52,12 @@ class DashboardActivity : AppCompatActivity() {
         viewPager.registerOnPageChangeCallback(object : ViewPager2.OnPageChangeCallback() {
             override fun onPageSelected(position: Int) {
                 when (position) {
-                    0 -> bottomNav.selectedItemId = R.id.nav_profile
-                    1 -> bottomNav.selectedItemId = R.id.nav_insta
-                    2 -> bottomNav.selectedItemId = R.id.nav_special
-                    3 -> bottomNav.selectedItemId = R.id.nav_autopost
+                    0 -> { bottomNav.selectedItemId = R.id.nav_profile }
+                    1 -> { bottomNav.selectedItemId = R.id.nav_insta }
+                    2 -> { bottomNav.selectedItemId = R.id.nav_special }
+                    3 -> { bottomNav.selectedItemId = R.id.nav_autopost }
                 }
+                supportActionBar?.title = pageTitles[position]
             }
         })
 

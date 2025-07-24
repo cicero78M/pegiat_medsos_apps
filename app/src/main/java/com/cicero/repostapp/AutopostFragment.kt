@@ -83,8 +83,6 @@ class AutopostFragment : Fragment() {
 
     private fun tiktokSessionFile(): File = File(requireContext().filesDir, "tiktok_session.txt")
 
-    private fun youtubePrefs() = requireContext().getSharedPreferences("youtube_auth", Context.MODE_PRIVATE)
-
     private fun instagramPrefs() = requireContext().getSharedPreferences("instagram_auth", Context.MODE_PRIVATE)
 
     private fun saveInstagramUsername(username: String) {
@@ -93,14 +91,6 @@ class AutopostFragment : Fragment() {
 
     private fun loadInstagramUsername(): String? = instagramPrefs().getString("username", null)
 
-    private fun saveYoutubeToken(token: String) {
-        youtubePrefs().edit().putString("token", token).apply()
-    }
-
-    private fun loadYoutubeToken(): Pair<String?, Boolean> {
-        val t = youtubePrefs().getString("token", null)
-        return Pair(t, t != null)
-    }
 
     private fun saveFbSession(userId: String, cookie: String) {
         try {
@@ -142,42 +132,6 @@ class AutopostFragment : Fragment() {
         }
     }
 
-    private fun fetchYoutubeAvatar(token: String): String? {
-        val req = okhttp3.Request.Builder()
-            .url("https://www.googleapis.com/youtube/v3/channels?part=snippet&mine=true")
-            .header("Authorization", "Bearer $token")
-            .build()
-        return try {
-            okhttp3.OkHttpClient().newCall(req).execute().use { resp ->
-                if (!resp.isSuccessful) return null
-                val body = resp.body?.string() ?: return null
-                val items = org.json.JSONObject(body)
-                    .optJSONArray("items") ?: return null
-                val snippet = items.optJSONObject(0)
-                    ?.optJSONObject("snippet") ?: return null
-                snippet.optJSONObject("thumbnails")
-                    ?.optJSONObject("default")
-                    ?.optString("url")
-            }
-        } catch (_: Exception) {
-            null
-        }
-    }
-
-    private suspend fun loadYoutubeSession(icon: ImageView, check: ImageView) {
-        val (token, ok) = loadYoutubeToken()
-        if (!ok || token.isNullOrEmpty()) return
-        val pic = fetchYoutubeAvatar(token)
-        withContext(Dispatchers.Main) {
-            if (pic != null) {
-                Glide.with(this@AutopostFragment)
-                    .load(pic)
-                    .circleCrop()
-                    .into(icon)
-            }
-            check.visibility = View.VISIBLE
-        }
-    }
 
     private suspend fun loadFbSession(icon: ImageView, check: ImageView) {
         val file = fbSessionFile()
@@ -233,8 +187,6 @@ class AutopostFragment : Fragment() {
         val tiktokIcon = view.findViewById<ImageView>(R.id.tiktok_icon)
         val tiktokCheck = view.findViewById<ImageView>(R.id.tiktok_check)
         val tiktokText = view.findViewById<TextView>(R.id.tiktok_username)
-        val youtubeIcon = view.findViewById<ImageView>(R.id.youtube_icon)
-        val youtubeCheck = view.findViewById<ImageView>(R.id.youtube_check)
         val start = view.findViewById<Button>(R.id.button_start)
 
         // attempt to load saved session
@@ -243,14 +195,12 @@ class AutopostFragment : Fragment() {
             loadFbSession(fbIcon, fbCheck)
             loadTwitterSession(twitterIcon, twitterCheck)
             loadTikTokSession(tiktokIcon, tiktokCheck, tiktokText)
-            loadYoutubeSession(youtubeIcon, youtubeCheck)
         }
 
         icon.setOnClickListener { showLoginDialog(icon, check) }
         fbIcon.setOnClickListener { launchFacebookLogin() }
         twitterIcon.setOnClickListener { launchTwitterLogin() }
         tiktokIcon.setOnClickListener { launchTikTokLogin() }
-        youtubeIcon.setOnClickListener { launchYoutubeLogin() }
         start.setOnClickListener {
             lifecycleScope.launch(Dispatchers.IO) {
                 runAutopostWorkflow()
@@ -495,28 +445,6 @@ class AutopostFragment : Fragment() {
         }
     }
 
-    private fun launchYoutubeLogin() {
-        val intent = android.content.Intent(requireContext(), YouTubeLoginActivity::class.java)
-        youtubeLoginLauncher.launch(intent)
-    }
-
-    private val youtubeLoginLauncher = registerForActivityResult(androidx.activity.result.contract.ActivityResultContracts.StartActivityForResult()) { result ->
-        if (result.resultCode == android.app.Activity.RESULT_OK) {
-            val data = result.data ?: return@registerForActivityResult
-            val token = data.getStringExtra("token") ?: return@registerForActivityResult
-            saveYoutubeToken(token)
-            val pic = fetchYoutubeAvatar(token)
-            val icon = view?.findViewById<ImageView>(R.id.youtube_icon)
-            val check = view?.findViewById<ImageView>(R.id.youtube_check)
-            if (icon != null && pic != null) {
-                Glide.with(this)
-                    .load(pic)
-                    .circleCrop()
-                    .into(icon)
-            }
-            if (check != null) check.visibility = View.VISIBLE
-        }
-    }
 
     private suspend fun hasActiveSubscription(token: String, userId: String): Boolean {
         val client = okhttp3.OkHttpClient()

@@ -23,6 +23,19 @@
             cursor: pointer;
             border: 2px solid #fff;
         }
+        #tiktokIcon {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            object-fit: cover;
+            cursor: pointer;
+            border: 2px solid #fff;
+            margin-top: 20px;
+        }
+        #tiktokUsername {
+            margin-top: 6px;
+            text-align: center;
+        }
         #startBtn {
             margin-top: auto;
             margin-bottom: 20px;
@@ -82,6 +95,10 @@
         <img id="instaIcon" src="https://i.imgur.com/OK5yKjB.png" alt="Instagram">
         <div id="checkMark">&#10004;</div>
     </div>
+    <div id="tiktokWrapper">
+        <img id="tiktokIcon" src="https://www.vectorlogo.zone/logos/tiktok/tiktok-icon.png" alt="TikTok">
+        <div id="tiktokUsername"></div>
+    </div>
     <button id="startBtn">Start</button>
 
     <div id="loginModal" class="modal">
@@ -108,12 +125,22 @@
         </div>
     </div>
 
+    <div id="tiktokModal" class="modal">
+        <div class="modal-content">
+            <input type="text" id="ttUserInput" placeholder="TikTok Username"><br>
+            <button id="ttFetchBtn">Ambil Profil</button>
+        </div>
+    </div>
+
     <script>
         const icon = document.getElementById('instaIcon');
         const loginModal = document.getElementById('loginModal');
         const twofaModal = document.getElementById('twofaModal');
         const checkpointModal = document.getElementById('checkpointModal');
         const checkMark = document.getElementById('checkMark');
+        const tiktokIcon = document.getElementById('tiktokIcon');
+        const tiktokModal = document.getElementById('tiktokModal');
+        const tiktokUsername = document.getElementById('tiktokUsername');
 
         icon.addEventListener('click', () => {
             loginModal.style.display = 'flex';
@@ -180,6 +207,23 @@
                 checkMark.style.display = 'flex';
             } else {
                 alert(data.error || 'Checkpoint gagal');
+            }
+        });
+
+        tiktokIcon.addEventListener('click', () => {
+            tiktokModal.style.display = 'flex';
+        });
+
+        document.getElementById('ttFetchBtn').addEventListener('click', async () => {
+            const user = document.getElementById('ttUserInput').value.trim();
+            const resp = await fetch('/tiktok/' + encodeURIComponent(user));
+            const data = await resp.json();
+            if (resp.ok) {
+                tiktokModal.style.display = 'none';
+                tiktokIcon.src = data.user.avatar;
+                tiktokUsername.textContent = data.user.username;
+            } else {
+                alert(data.error || 'Gagal mengambil profil');
             }
         });
     </script>

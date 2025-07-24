@@ -89,6 +89,27 @@ app.post('/login', async (req, res) => {
   }
 });
 
+app.get('/tiktok/:username', async (req, res) => {
+  const { username } = req.params;
+  if (!username) return res.status(400).json({ error: 'Missing username' });
+  try {
+    const resp = await fetch(`https://tikwm.com/api/user/info?unique_id=${encodeURIComponent(username)}`);
+    const data = await resp.json();
+    if (data.code !== 0) return res.status(400).json({ error: 'User not found' });
+    const user = data.data.user;
+    res.json({
+      user: {
+        username: user.uniqueId,
+        nickname: user.nickname,
+        avatar: user.avatarLarger,
+      },
+    });
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ error: 'Failed to fetch profile' });
+  }
+});
+
 const port = process.env.PORT || 3000;
 app.listen(port, () => {
   console.log('Server running on port', port);

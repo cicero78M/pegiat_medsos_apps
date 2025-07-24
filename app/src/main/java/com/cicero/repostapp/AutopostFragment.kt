@@ -108,30 +108,33 @@ class AutopostFragment : Fragment() {
         }
     }
 
-    private fun saveTikTokSession(cookie: String) {
+    private fun saveTikTokUsername(username: String) {
         try {
-            tiktokSessionFile().writeText(cookie)
+            tiktokSessionFile().writeText(username)
         } catch (_: Exception) {
         }
     }
 
-    private fun fetchTikTokAvatar(cookie: String): String? {
-        val req = okhttp3.Request.Builder()
-            .url("https://www.tiktok.com/api/me/")
-            .header("Cookie", cookie)
-            .header(
-                "User-Agent",
-                "Mozilla/5.0 (Linux; Android 13; SM-G990B) AppleWebKit/537.36" +
-                    " (KHTML, like Gecko) Chrome/115.0.0.0 Mobile Safari/537.36"
-            )
-            .build()
+    private fun loadTikTokUsername(): String? {
+        val file = tiktokSessionFile()
+        return if (file.exists()) try { file.readText().trim() } catch (_: Exception) { null } else null
+    }
+
+    private fun fetchTikTokProfile(username: String): Pair<String, String>? {
+        val url = "https://tikwm.com/api/user/info?unique_id=" +
+            java.net.URLEncoder.encode(username, "UTF-8")
+        val req = okhttp3.Request.Builder().url(url).build()
         return try {
             okhttp3.OkHttpClient().newCall(req).execute().use { resp ->
                 if (!resp.isSuccessful) return null
                 val body = resp.body?.string() ?: return null
                 val obj = org.json.JSONObject(body)
-                val user = obj.optJSONObject("user")
-                user?.optString("avatarLarger") ?: user?.optString("avatarThumb")
+                if (obj.optInt("code") != 0) return null
+                val data = obj.optJSONObject("data")?.optJSONObject("user") ?: return null
+                val avatar = data.optString("avatarLarger")
+                val uname = data.optString("uniqueId")
+                if (avatar.isNullOrBlank() || uname.isNullOrBlank()) return null
+                Pair(avatar, uname)
             }
         } catch (_: Exception) {
             null
@@ -195,23 +198,17 @@ class AutopostFragment : Fragment() {
         }
     }
 
-    private suspend fun loadTikTokSession(icon: ImageView, check: ImageView) {
-        val file = tiktokSessionFile()
-        if (!file.exists()) return
-        try {
-            val cookie = file.readText()
-            val pic = fetchTikTokAvatar(cookie)
-            withContext(Dispatchers.Main) {
-                if (pic != null) {
-                    Glide.with(this@AutopostFragment)
-                        .load(pic)
-                        .circleCrop()
-                        .into(icon)
-                }
-                check.visibility = View.VISIBLE
-            }
-        } catch (_: Exception) {
-            file.delete()
+    private suspend fun loadTikTokSession(icon: ImageView, check: ImageView, text: TextView) {
+        val username = loadTikTokUsername() ?: return
+        val (avatar, uname) = fetchTikTokProfile(username) ?: return
+        withContext(Dispatchers.Main) {
+            Glide.with(this@AutopostFragment)
+                .load(avatar)
+                .circleCrop()
+                .into(icon)
+            text.text = uname
+            text.visibility = View.VISIBLE
+            check.visibility = View.VISIBLE
         }
     }
 
@@ -234,6 +231,7 @@ class AutopostFragment : Fragment() {
         val twitterCheck = view.findViewById<ImageView>(R.id.twitter_check)
         val tiktokIcon = view.findViewById<ImageView>(R.id.tiktok_icon)
         val tiktokCheck = view.findViewById<ImageView>(R.id.tiktok_check)
+        val tiktokText = view.findViewById<TextView>(R.id.tiktok_username)
         val youtubeIcon = view.findViewById<ImageView>(R.id.youtube_icon)
         val youtubeCheck = view.findViewById<ImageView>(R.id.youtube_check)
         val start = view.findViewById<Button>(R.id.button_start)
@@ -243,7 +241,7 @@ class AutopostFragment : Fragment() {
             loadSavedSession(icon, check)
             loadFbSession(fbIcon, fbCheck)
             loadTwitterSession(twitterIcon, twitterCheck)
-            loadTikTokSession(tiktokIcon, tiktokCheck)
+            loadTikTokSession(tiktokIcon, tiktokCheck, tiktokText)
             loadYoutubeSession(youtubeIcon, youtubeCheck)
         }
 
@@ -455,26 +453,43 @@ class AutopostFragment : Fragment() {
     }
 
     private fun launchTikTokLogin() {
-        val intent = android.content.Intent(requireContext(), TikTokLoginActivity::class.java)
-        tiktokLoginLauncher.launch(intent)
+        val view = layoutInflater.inflate(R.layout.dialog_tiktok_username, null)
+        val input = view.findViewById<EditText>(R.id.edit_tiktok_username)
+        AlertDialog.Builder(requireContext())
+            .setView(view)
+            .setPositiveButton("Ambil Profil") { _, _ ->
+                val user = input.text.toString().trim()
+                if (user.isBlank()) {
+                    Toast.makeText(requireContext(), "Username wajib diisi", Toast.LENGTH_SHORT).show()
+                } else {
+                    performTikTokFetch(user)
+                }
+            }
+            .setNegativeButton("Batal", null)
+            .show()
     }
 
-    private val tiktokLoginLauncher = registerForActivityResult(androidx.activity.result.contract.ActivityResultContracts.StartActivityForResult()) { result ->
-        if (result.resultCode == android.app.Activity.RESULT_OK) {
-            val data = result.data ?: return@registerForActivityResult
-            val cookie = data.getStringExtra("cookie") ?: return@registerForActivityResult
-            saveTikTokSession(cookie)
-            val icon = view?.findViewById<ImageView>(R.id.tiktok_icon)
-            val check = view?.findViewById<ImageView>(R.id.tiktok_check)
-            val pic = fetchTikTokAvatar(cookie)
-            if (icon != null && check != null) {
-                if (pic != null) {
-                    Glide.with(this)
-                        .load(pic)
+    private fun performTikTokFetch(username: String) {
+        val icon = view?.findViewById<ImageView>(R.id.tiktok_icon)
+        val check = view?.findViewById<ImageView>(R.id.tiktok_check)
+        val text = view?.findViewById<TextView>(R.id.tiktok_username)
+        if (icon == null || check == null || text == null) return
+        lifecycleScope.launch(Dispatchers.IO) {
+            val result = fetchTikTokProfile(username)
+            withContext(Dispatchers.Main) {
+                if (result == null) {
+                    Toast.makeText(requireContext(), "Gagal mengambil profil", Toast.LENGTH_SHORT).show()
+                } else {
+                    val (avatar, uname) = result
+                    Glide.with(this@AutopostFragment)
+                        .load(avatar)
                         .circleCrop()
                         .into(icon)
+                    text.text = uname
+                    text.visibility = View.VISIBLE
+                    check.visibility = View.VISIBLE
+                    saveTikTokUsername(uname)
                 }
-                check.visibility = View.VISIBLE
             }
         }
     }

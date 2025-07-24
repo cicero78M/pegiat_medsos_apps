@@ -138,10 +138,41 @@ class AutopostFragment : Fragment() {
         }
     }
 
+    private fun fetchYoutubeAvatar(token: String): String? {
+        val req = okhttp3.Request.Builder()
+            .url("https://www.googleapis.com/youtube/v3/channels?part=snippet&mine=true")
+            .header("Authorization", "Bearer $token")
+            .build()
+        return try {
+            okhttp3.OkHttpClient().newCall(req).execute().use { resp ->
+                if (!resp.isSuccessful) return null
+                val body = resp.body?.string() ?: return null
+                val items = org.json.JSONObject(body)
+                    .optJSONArray("items") ?: return null
+                val snippet = items.optJSONObject(0)
+                    ?.optJSONObject("snippet") ?: return null
+                snippet.optJSONObject("thumbnails")
+                    ?.optJSONObject("default")
+                    ?.optString("url")
+            }
+        } catch (_: Exception) {
+            null
+        }
+    }
+
     private suspend fun loadYoutubeSession(icon: ImageView, check: ImageView) {
         val (token, ok) = loadYoutubeToken()
         if (!ok || token.isNullOrEmpty()) return
-        withContext(Dispatchers.Main) { check.visibility = View.VISIBLE }
+        val pic = fetchYoutubeAvatar(token)
+        withContext(Dispatchers.Main) {
+            if (pic != null) {
+                Glide.with(this@AutopostFragment)
+                    .load(pic)
+                    .circleCrop()
+                    .into(icon)
+            }
+            check.visibility = View.VISIBLE
+        }
     }
 
     private suspend fun loadFbSession(icon: ImageView, check: ImageView) {
@@ -458,8 +489,15 @@ class AutopostFragment : Fragment() {
             val data = result.data ?: return@registerForActivityResult
             val token = data.getStringExtra("token") ?: return@registerForActivityResult
             saveYoutubeToken(token)
+            val pic = fetchYoutubeAvatar(token)
             val icon = view?.findViewById<ImageView>(R.id.youtube_icon)
             val check = view?.findViewById<ImageView>(R.id.youtube_check)
+            if (icon != null && pic != null) {
+                Glide.with(this)
+                    .load(pic)
+                    .circleCrop()
+                    .into(icon)
+            }
             if (check != null) check.visibility = View.VISIBLE
         }
     }

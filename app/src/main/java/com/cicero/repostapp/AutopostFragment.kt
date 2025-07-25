@@ -482,6 +482,7 @@ class AutopostFragment : Fragment() {
         }
 
         suspend fun fetchClientId(): String? {
+            appendLog("Meminta client id…")
             val client = okhttp3.OkHttpClient()
             val req = okhttp3.Request.Builder()
                 .url("${BuildConfig.API_BASE_URL}/api/users/$userId")
@@ -489,23 +490,35 @@ class AutopostFragment : Fragment() {
                 .build()
             return try {
                 client.newCall(req).execute().use { resp ->
-                    if (!resp.isSuccessful) return null
+                    if (!resp.isSuccessful) {
+                        appendLog("Gagal client id: ${'$'}{resp.code}")
+                        return null
+                    }
                     val body = resp.body?.string()
-                    try {
+                    val id = try {
                         org.json.JSONObject(body ?: "{}").optJSONObject("data")?.optString("client_id")
                     } catch (_: Exception) { null }
+                    if (id != null) appendLog("Client id diperoleh: ${'$'}id")
+                    id
                 }
-            } catch (_: Exception) { null }
+            } catch (e: Exception) {
+                appendLog("Error client id: ${'$'}{e.message}")
+                null
+            }
         }
 
         suspend fun fetchPosts(clientId: String): List<InstaPost> {
+            appendLog("Mengambil daftar tugas…")
             val posts = mutableListOf<InstaPost>()
             val client = okhttp3.OkHttpClient()
             val url = "${BuildConfig.API_BASE_URL}/api/insta/posts?client_id=$clientId"
             val req = okhttp3.Request.Builder().url(url).header("Authorization", "Bearer $token").build()
             try {
                 client.newCall(req).execute().use { resp ->
-                    if (!resp.isSuccessful) return emptyList()
+                    if (!resp.isSuccessful) {
+                        appendLog("Gagal mengambil tugas: ${'$'}{resp.code}")
+                        return emptyList()
+                    }
                     val body = resp.body?.string()
                     val arr = try { org.json.JSONObject(body ?: "{}").optJSONArray("data") ?: org.json.JSONArray() } catch (_: Exception) { org.json.JSONArray() }
                     val formatter = java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
@@ -551,11 +564,15 @@ class AutopostFragment : Fragment() {
                         }
                     }
                 }
-            } catch (_: Exception) {}
+            } catch (_: Exception) {
+                appendLog("Error mengambil tugas")
+            }
+            appendLog("Total tugas hari ini: ${'$'}{posts.size}")
             return posts
         }
 
         suspend fun fetchReported(): Set<String> {
+            appendLog("Mengambil daftar link yang sudah dilaporkan…")
             val set = mutableSetOf<String>()
             val client = okhttp3.OkHttpClient()
             val req = okhttp3.Request.Builder()
@@ -564,7 +581,10 @@ class AutopostFragment : Fragment() {
                 .build()
             try {
                 client.newCall(req).execute().use { resp ->
-                    if (!resp.isSuccessful) return emptySet()
+                    if (!resp.isSuccessful) {
+                        appendLog("Gagal mengambil laporan: ${'$'}{resp.code}")
+                        return emptySet()
+                    }
                     val body = resp.body?.string()
                     val arr = try { org.json.JSONObject(body ?: "{}").optJSONArray("data") ?: org.json.JSONArray() } catch (_: Exception) { org.json.JSONArray() }
                     for (i in 0 until arr.length()) {
@@ -572,7 +592,10 @@ class AutopostFragment : Fragment() {
                         if (o.optString("user_id") == userId) set.add(o.optString("shortcode"))
                     }
                 }
-            } catch (_: Exception) {}
+            } catch (e: Exception) {
+                appendLog("Error mengambil laporan: ${'$'}{e.message}")
+            }
+            appendLog("Total link terlapor: ${'$'}{set.size}")
             return set
         }
 
@@ -603,7 +626,10 @@ class AutopostFragment : Fragment() {
 
         suspend fun downloadCoverIfNeeded(post: InstaPost): File? {
             val cover = coverFileForPost(post)
-            if (cover.exists()) return cover
+            if (cover.exists()) {
+                appendLog("Thumbnail sudah ada")
+                return cover
+            }
             val url = post.imageUrl ?: post.sourceUrl
             if (url.isNullOrBlank()) return null
             appendLog("Mengunduh thumbnail…")
@@ -611,19 +637,29 @@ class AutopostFragment : Fragment() {
             val req = okhttp3.Request.Builder().url(url).build()
             return try {
                 client.newCall(req).execute().use { resp ->
-                    if (!resp.isSuccessful) return null
+                    if (!resp.isSuccessful) {
+                        appendLog("Gagal unduh thumbnail: ${'$'}{resp.code}")
+                        return null
+                    }
                     val body = resp.body ?: return null
                     cover.outputStream().use { outStream ->
                         body.byteStream().copyTo(outStream)
                     }
+                    appendLog("Thumbnail tersimpan")
                     cover
                 }
-            } catch (_: Exception) { null }
+            } catch (e: Exception) {
+                appendLog("Error unduh thumbnail: ${'$'}{e.message}")
+                null
+            }
         }
 
         suspend fun downloadIfNeeded(post: InstaPost): File? {
             val out = fileForPost(post)
-            if (out.exists()) return out
+            if (out.exists()) {
+                appendLog("Konten sudah ada")
+                return out
+            }
             val url = if (post.isVideo) post.videoUrl else post.imageUrl ?: post.sourceUrl
             if (url.isNullOrBlank()) return null
             appendLog("Mengunduh konten…")
@@ -631,7 +667,10 @@ class AutopostFragment : Fragment() {
             val req = okhttp3.Request.Builder().url(url).build()
             return try {
                 client.newCall(req).execute().use { resp ->
-                    if (!resp.isSuccessful) return null
+                    if (!resp.isSuccessful) {
+                        appendLog("Gagal unduh konten: ${'$'}{resp.code}")
+                        return null
+                    }
                     val body = resp.body ?: return null
                     out.outputStream().use { outStream ->
                         body.byteStream().copyTo(outStream)
@@ -639,9 +678,13 @@ class AutopostFragment : Fragment() {
                     if (post.isVideo) {
                         downloadCoverIfNeeded(post)
                     }
+                    appendLog("Konten tersimpan")
                     out
                 }
-            } catch (_: Exception) { null }
+            } catch (e: Exception) {
+                appendLog("Error unduh konten: ${'$'}{e.message}")
+                null
+            }
         }
 
         suspend fun downloadCarouselImagesIfNeeded(post: InstaPost): List<File> {
@@ -654,17 +697,22 @@ class AutopostFragment : Fragment() {
                 val f = carouselFileForPost(post, idx)
                 if (f.exists()) { files.add(f); continue }
                 if (url.isBlank()) continue
-                appendLog("Mengunduh gambar ${idx + 1}/${post.carouselImages.size}…")
+                appendLog("Mengunduh gambar ${'$'}{idx + 1}/${'$'}{post.carouselImages.size}…")
                 val req = okhttp3.Request.Builder().url(url).build()
                 try {
                     client.newCall(req).execute().use { resp ->
-                        if (!resp.isSuccessful) return@use
+                        if (!resp.isSuccessful) {
+                            appendLog("Gagal gambar ${'$'}{idx + 1}: ${'$'}{resp.code}")
+                            return@use
+                        }
                         val body = resp.body ?: return@use
                         f.outputStream().use { out ->
                             body.byteStream().copyTo(out)
                         }
                     }
-                } catch (_: Exception) {}
+                } catch (e: Exception) {
+                    appendLog("Error gambar ${'$'}{idx + 1}: ${'$'}{e.message}")
+                }
                 if (f.exists()) files.add(f)
             }
             if (files.isNotEmpty()) post.localCarouselDir = dir?.absolutePath
@@ -733,8 +781,17 @@ class AutopostFragment : Fragment() {
                         igClient!!.actions().timeline().uploadPhoto(file, post.caption ?: "").join()
                     }
                 }
-                result.media?.code?.let { "https://instagram.com/p/$it" }
-            } catch (_: Exception) { null }
+                val link = result.media?.code?.let { "https://instagram.com/p/$it" }
+                if (link != null) {
+                    appendLog("Berhasil unggah: ${'$'}link")
+                } else {
+                    appendLog("Upload berhasil tapi tidak ada link")
+                }
+                link
+            } catch (e: Exception) {
+                appendLog("Error unggah: ${'$'}{e.message}")
+                null
+            }
         }
 
         suspend fun sendLink(shortcode: String, link: String) {
@@ -751,8 +808,16 @@ class AutopostFragment : Fragment() {
                 .post(body)
                 .build()
             try {
-                client.newCall(req).execute().use { }
-            } catch (_: Exception) {}
+                client.newCall(req).execute().use { resp ->
+                    if (resp.isSuccessful) {
+                        appendLog("Link dikirim ke server")
+                    } else {
+                        appendLog("Gagal kirim link: ${'$'}{resp.code}")
+                    }
+                }
+            } catch (e: Exception) {
+                appendLog("Error kirim link: ${'$'}{e.message}")
+            }
         }
 
         appendLog("Memulai autopost…")
@@ -761,6 +826,7 @@ class AutopostFragment : Fragment() {
         val posts = fetchPosts(clientId)
         for (post in posts) {
             if (reported.contains(post.id)) continue
+            appendLog("Memproses tugas ${'$'}{post.taskNumber} (${ '$'}{post.id })")
             appendLog("Memeriksa download…")
             kotlinx.coroutines.delay(3000)
             val file = downloadIfNeeded(post) ?: continue
@@ -773,6 +839,7 @@ class AutopostFragment : Fragment() {
             appendLog("Link: $link")
             sendLink(post.id, link)
             withContext(Dispatchers.Main) { shareCarousel(post) }
+            appendLog("Tugas selesai")
             kotlinx.coroutines.delay(3000)
         }
         appendLog("Selesai")

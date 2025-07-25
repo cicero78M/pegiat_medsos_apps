@@ -888,7 +888,7 @@ class AutopostFragment : Fragment() {
             }
         }
 
-        private suspend fun postToTwitter(post: InstaPost, file: File): String? {
+        suspend fun postToTwitter(post: InstaPost, file: File): String? {
             appendLog("Posting ke Twitter…")
             // Placeholder implementation using accessibility service
             delay(2000)
@@ -898,7 +898,7 @@ class AutopostFragment : Fragment() {
             } catch (_: Exception) { null }
         }
 
-        private suspend fun postToTikTok(post: InstaPost, file: File): String? {
+        suspend fun postToTikTok(post: InstaPost, file: File): String? {
             appendLog("Posting ke TikTok…")
             delay(2000)
             return try {

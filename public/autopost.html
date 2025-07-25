@@ -2,53 +2,49 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <title>AutoPost Pager</title>
+    <title>AutoPost</title>
     <style>
         body {
             margin: 0;
             font-family: monospace;
             background: #1f1f1f;
             color: #33ff33;
-            height: 100vh;
             display: flex;
             flex-direction: column;
-        }
-        #pages {
-            flex: 1;
-            display: flex;
-            overflow: hidden;
-        }
-        .page {
-            width: 100%;
-            flex-shrink: 0;
-            display: none;
-            flex-direction: column;
-            align-items: center;
             justify-content: center;
+            align-items: center;
+            height: 100vh;
         }
-        .page.active { display: flex; }
-        #nav {
-            display: flex;
-            justify-content: space-around;
-            background: #000;
-        }
-        #nav button {
-            flex: 1;
-            padding: 10px 0;
-            background: transparent;
-            color: #33ff33;
-            border: none;
-            font-weight: bold;
-            cursor: pointer;
-        }
-        img.icon {
+        #instaIcon {
             width: 120px;
             height: 120px;
             border-radius: 50%;
             object-fit: cover;
-            border: 2px solid #fff;
             cursor: pointer;
-            margin-bottom: 10px;
+            border: 2px solid #fff;
+        }
+        #tiktokIcon {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            object-fit: cover;
+            cursor: pointer;
+            border: 2px solid #fff;
+            margin-top: 20px;
+        }
+        #tiktokUsername {
+            margin-top: 6px;
+            text-align: center;
+        }
+        #startBtn {
+            margin-top: auto;
+            margin-bottom: 20px;
+            padding: 10px 20px;
+            background: #33ff33;
+            color: #1f1f1f;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
         }
         .modal {
             position: fixed;
@@ -75,30 +71,35 @@
         .modal-content button {
             padding: 6px 12px;
         }
-        #tiktokUsername { margin-top: 6px; }
+        #checkMark {
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: #33ff33;
+            color: #000;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            font-size: 16px;
+        }
+        #iconWrapper {
+            position: relative;
+        }
     </style>
 </head>
 <body>
-    <div id="pages">
-        <div class="page active" id="page-instagram">
-            <img id="instaIcon" class="icon" src="https://i.imgur.com/OK5yKjB.png" alt="Instagram">
-            <button id="instaStart">Start Instagram</button>
-        </div>
-        <div class="page" id="page-twitter">
-            <img id="twIcon" class="icon" src="https://www.vectorlogo.zone/logos/twitter/twitter-tile.svg" alt="Twitter">
-            <button id="twStart">Start Twitter</button>
-        </div>
-        <div class="page" id="page-tiktok">
-            <img id="tiktokIcon" class="icon" src="https://www.vectorlogo.zone/logos/tiktok/tiktok-icon.png" alt="TikTok">
-            <div id="tiktokUsername"></div>
-            <button id="ttStart">Start TikTok</button>
-        </div>
+    <div id="iconWrapper">
+        <img id="instaIcon" src="https://i.imgur.com/OK5yKjB.png" alt="Instagram">
+        <div id="checkMark">&#10004;</div>
     </div>
-    <div id="nav">
-        <button data-target="page-instagram">Instagram</button>
-        <button data-target="page-twitter">Twitter</button>
-        <button data-target="page-tiktok">TikTok</button>
+    <div id="tiktokWrapper">
+        <img id="tiktokIcon" src="https://www.vectorlogo.zone/logos/tiktok/tiktok-icon.png" alt="TikTok">
+        <div id="tiktokUsername"></div>
     </div>
+    <button id="startBtn">Start</button>
 
     <div id="loginModal" class="modal">
         <div class="modal-content">
@@ -107,70 +108,124 @@
             <button id="loginBtn">Login</button>
         </div>
     </div>
-    <div id="tiktokModal" class="modal">
+
+    <div id="twofaModal" class="modal">
         <div class="modal-content">
-            <input type="text" id="ttUserInput" placeholder="TikTok Username"><br>
-            <button id="ttFetchBtn">Fetch Profile</button>
+            <p>Masukkan kode 2FA:</p>
+            <input type="text" id="twofaCode" placeholder="123456"><br>
+            <button id="twofaBtn">Verify</button>
         </div>
     </div>
 
-<script>
-const pages = document.querySelectorAll('.page');
-const buttons = document.querySelectorAll('#nav button');
-buttons.forEach(btn => btn.addEventListener('click', () => {
-    pages.forEach(p => p.classList.remove('active'));
-    document.getElementById(btn.dataset.target).classList.add('active');
-}));
+    <div id="checkpointModal" class="modal">
+        <div class="modal-content">
+            <p>Masukkan kode checkpoint:</p>
+            <input type="text" id="checkpointCode" placeholder="Code"><br>
+            <button id="checkpointBtn">Submit</button>
+        </div>
+    </div>
 
-const posted = new Set(JSON.parse(localStorage.getItem('posted') || '[]'));
-function recordPost(id) {
-    if (!posted.has(id)) {
-        posted.add(id);
-        localStorage.setItem('posted', JSON.stringify(Array.from(posted)));
-        return true;
-    }
-    return false;
-}
+    <div id="tiktokModal" class="modal">
+        <div class="modal-content">
+            <input type="text" id="ttUserInput" placeholder="TikTok Username"><br>
+            <button id="ttFetchBtn">Ambil Profil</button>
+        </div>
+    </div>
 
-// Instagram login placeholder
-const instaIcon = document.getElementById('instaIcon');
-const loginModal = document.getElementById('loginModal');
-instaIcon.onclick = () => loginModal.style.display = 'flex';
-document.getElementById('loginBtn').onclick = () => {
-    loginModal.style.display = 'none';
-    alert('Logged in as ' + document.getElementById('username').value);
-};
+    <script>
+        const icon = document.getElementById('instaIcon');
+        const loginModal = document.getElementById('loginModal');
+        const twofaModal = document.getElementById('twofaModal');
+        const checkpointModal = document.getElementById('checkpointModal');
+        const checkMark = document.getElementById('checkMark');
+        const tiktokIcon = document.getElementById('tiktokIcon');
+        const tiktokModal = document.getElementById('tiktokModal');
+        const tiktokUsername = document.getElementById('tiktokUsername');
 
-// TikTok profile fetch placeholder
-const tiktokIcon = document.getElementById('tiktokIcon');
-const tiktokModal = document.getElementById('tiktokModal');
-const tiktokUsername = document.getElementById('tiktokUsername');
-tiktokIcon.onclick = () => tiktokModal.style.display = 'flex';
-document.getElementById('ttFetchBtn').onclick = async () => {
-    const user = document.getElementById('ttUserInput').value.trim();
-    const resp = await fetch('/tiktok/' + encodeURIComponent(user));
-    const data = await resp.json();
-    if (resp.ok) {
-        tiktokModal.style.display = 'none';
-        tiktokIcon.src = data.user.avatar;
-        tiktokUsername.textContent = data.user.username;
-    } else {
-        alert(data.error || 'Failed');
-    }
-};
+        icon.addEventListener('click', () => {
+            loginModal.style.display = 'flex';
+        });
 
-function fakePost(platform) {
-    const id = platform + '-' + Date.now();
-    if (!recordPost(id)) {
-        alert('Duplicate post skipped');
-        return;
-    }
-    alert('Posted to ' + platform + ' with id ' + id);
-}
+        document.getElementById('loginBtn').addEventListener('click', async () => {
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const resp = await fetch('/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, password })
+            });
+            const data = await resp.json();
+            if (resp.ok) {
+                loginModal.style.display = 'none';
+                icon.src = data.user.profilePic;
+                checkMark.style.display = 'flex';
+            } else if (data.twoFactorRequired) {
+                loginModal.style.display = 'none';
+                twofaModal.dataset.username = username;
+                twofaModal.dataset.identifier = data.twoFactorIdentifier;
+                twofaModal.style.display = 'flex';
+            } else if (data.checkpoint) {
+                loginModal.style.display = 'none';
+                checkpointModal.dataset.username = username;
+                checkpointModal.style.display = 'flex';
+            } else {
+                alert(data.error || 'Login gagal');
+            }
+        });
 
-document.getElementById('instaStart').onclick = () => fakePost('instagram');
-document.getElementById('twStart').onclick = () => fakePost('twitter');
-document.getElementById('ttStart').onclick = () => fakePost('tiktok');
-</script>
+        document.getElementById('twofaBtn').addEventListener('click', async () => {
+            const username = twofaModal.dataset.username;
+            const identifier = twofaModal.dataset.identifier;
+            const code = document.getElementById('twofaCode').value;
+            const resp = await fetch('/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, twoFactorIdentifier: identifier, twoFactorCode: code })
+            });
+            const data = await resp.json();
+            if (resp.ok) {
+                twofaModal.style.display = 'none';
+                icon.src = data.user.profilePic;
+                checkMark.style.display = 'flex';
+            } else {
+                alert(data.error || 'Verifikasi gagal');
+            }
+        });
+
+        document.getElementById('checkpointBtn').addEventListener('click', async () => {
+            const username = checkpointModal.dataset.username;
+            const code = document.getElementById('checkpointCode').value;
+            const resp = await fetch('/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, checkpointCode: code })
+            });
+            const data = await resp.json();
+            if (resp.ok) {
+                checkpointModal.style.display = 'none';
+                icon.src = data.user.profilePic;
+                checkMark.style.display = 'flex';
+            } else {
+                alert(data.error || 'Checkpoint gagal');
+            }
+        });
+
+        tiktokIcon.addEventListener('click', () => {
+            tiktokModal.style.display = 'flex';
+        });
+
+        document.getElementById('ttFetchBtn').addEventListener('click', async () => {
+            const user = document.getElementById('ttUserInput').value.trim();
+            const resp = await fetch('/tiktok/' + encodeURIComponent(user));
+            const data = await resp.json();
+            if (resp.ok) {
+                tiktokModal.style.display = 'none';
+                tiktokIcon.src = data.user.avatar;
+                tiktokUsername.textContent = data.user.username;
+            } else {
+                alert(data.error || 'Gagal mengambil profil');
+            }
+        });
+    </script>
 </body>
 </html>

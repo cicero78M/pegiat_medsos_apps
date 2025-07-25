@@ -104,11 +104,8 @@ npm install
 npm start
 ```
 
-The server listens on port `3000` by default. Visit
-`http://localhost:3000/autopost` to access a simple Autopost interface.
-It now uses a lightweight **view pager** so you can switch between
-Instagram, Twitter and TikTok workflows. Each page keeps track of posts that
-have been submitted to avoid duplicates across sessions.
+The server listens on port `3000` by default, so you can access the page at
+`http://localhost:3000/autopost` once it is running.
 
 
 

@@ -714,11 +714,24 @@ class AutopostFragment : Fragment() {
         suspend fun uploadToInstagram(post: InstaPost, file: File): String? {
             appendLog("Mengunggah konten…")
             return try {
-                val result = if (post.isVideo) {
-                    val cover = downloadCoverIfNeeded(post) ?: return null
-                    igClient!!.actions().timeline().uploadVideo(file, cover, post.caption ?: "").join()
-                } else {
-                    igClient!!.actions().timeline().uploadPhoto(file, post.caption ?: "").join()
+                val result = when {
+                    post.isVideo -> {
+                        val cover = downloadCoverIfNeeded(post) ?: return null
+                        igClient!!.actions().timeline().uploadVideo(file, cover, post.caption ?: "").join()
+                    }
+                    post.isCarousel -> {
+                        val files = mutableListOf<File>()
+                        files.add(file)
+                        for (i in 1 until post.carouselImages.size) {
+                            val f = carouselFileForPost(post, i)
+                            if (f.exists()) files.add(f)
+                        }
+                        val infos = files.map { com.github.instagram4j.instagram4j.actions.timeline.TimelineAction.SidecarPhoto.from(it) }
+                        igClient!!.actions().timeline().uploadAlbum(infos, post.caption ?: "").join()
+                    }
+                    else -> {
+                        igClient!!.actions().timeline().uploadPhoto(file, post.caption ?: "").join()
+                    }
                 }
                 result.media?.code?.let { "https://instagram.com/p/$it" }
             } catch (_: Exception) { null }

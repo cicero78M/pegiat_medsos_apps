@@ -204,6 +204,7 @@ class AutopostFragment : Fragment() {
         val tiktokCheck = view.findViewById<ImageView>(R.id.tiktok_check)
         val tiktokText = view.findViewById<TextView>(R.id.tiktok_username)
         val start = view.findViewById<Button>(R.id.button_start)
+        val postTwitterBtn = view.findViewById<Button>(R.id.button_post_twitter)
 
         // attempt to load saved session
         lifecycleScope.launch(Dispatchers.IO) {
@@ -220,6 +221,11 @@ class AutopostFragment : Fragment() {
         start.setOnClickListener {
             lifecycleScope.launch(Dispatchers.IO) {
                 runAutopostWorkflow()
+            }
+        }
+        postTwitterBtn.setOnClickListener {
+            lifecycleScope.launch(Dispatchers.IO) {
+                runTwitterPostWorkflow()
             }
         }
     }
@@ -937,6 +943,193 @@ class AutopostFragment : Fragment() {
             appendLog("Tugas selesai")
             delay(3000)
         }
+        appendLog("Selesai")
+    }
+
+    private suspend fun runTwitterPostWorkflow() {
+        val logView = requireView().findViewById<android.widget.TextView>(R.id.console_header)
+        fun appendLog(msg: String) {
+            lifecycleScope.launch(Dispatchers.Main) { logView.append("\n$msg") }
+        }
+
+        val prefs = requireContext().getSharedPreferences("auth", android.content.Context.MODE_PRIVATE)
+        val token = prefs.getString("token", "") ?: ""
+        val userId = prefs.getString("userId", "") ?: ""
+        if (token.isBlank() || userId.isBlank()) {
+            appendLog("Autentikasi diperlukan")
+            return
+        }
+
+        suspend fun fetchClientId(): String? {
+            appendLog("Meminta client id…")
+            val client = okhttp3.OkHttpClient()
+            val req = okhttp3.Request.Builder()
+                .url("${BuildConfig.API_BASE_URL}/api/users/$userId")
+                .header("Authorization", "Bearer $token")
+                .build()
+            return try {
+                client.newCall(req).execute().use { resp ->
+                    if (!resp.isSuccessful) { appendLog("Gagal client id: ${'$'}{resp.code}"); return null }
+                    val body = resp.body?.string()
+                    val id = try { org.json.JSONObject(body ?: "{}").optJSONObject("data")?.optString("client_id") } catch (_: Exception) { null }
+                    if (id != null) appendLog("Client id diperoleh: ${'$'}id")
+                    id
+                }
+            } catch (e: Exception) {
+                appendLog("Error client id: ${'$'}{e.message}")
+                null
+            }
+        }
+
+        suspend fun fetchPosts(clientId: String): List<InstaPost> {
+            appendLog("Mengambil daftar tugas…")
+            val posts = mutableListOf<InstaPost>()
+            val client = okhttp3.OkHttpClient()
+            val url = "${BuildConfig.API_BASE_URL}/api/insta/posts?client_id=$clientId"
+            val req = okhttp3.Request.Builder().url(url).header("Authorization", "Bearer $token").build()
+            try {
+                client.newCall(req).execute().use { resp ->
+                    if (!resp.isSuccessful) { appendLog("Gagal mengambil tugas: ${'$'}{resp.code}"); return emptyList() }
+                    val body = resp.body?.string()
+                    val arr = try { org.json.JSONObject(body ?: "{}").optJSONArray("data") ?: org.json.JSONArray() } catch (_: Exception) { org.json.JSONArray() }
+                    val formatter = java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
+                    val today = java.time.LocalDate.now()
+                    for (i in 0 until arr.length()) {
+                        val obj = arr.optJSONObject(i) ?: continue
+                        val created = obj.optString("created_at")
+                        val createdDate = try {
+                            if (created.contains("T")) {
+                                java.time.OffsetDateTime.parse(created).atZoneSameInstant(java.time.ZoneId.systemDefault()).toLocalDate()
+                            } else {
+                                java.time.LocalDateTime.parse(created, formatter).toLocalDate()
+                            }
+                        } catch (_: Exception) { null }
+                        if (createdDate == today) {
+                            val id = obj.optString("shortcode")
+                            val carouselArr = obj.optJSONArray("images_url") ?: obj.optJSONArray("image_urls") ?: obj.optJSONArray("carousel") ?: obj.optJSONArray("carousel_images")
+                            val carousel = mutableListOf<String>()
+                            if (carouselArr != null) {
+                                for (j in 0 until carouselArr.length()) {
+                                    val u = carouselArr.optString(j)
+                                    if (u.isNotBlank()) carousel.add(u)
+                                }
+                            }
+                            val isCarousel = obj.optBoolean("is_carousel", carousel.size > 1)
+                            posts.add(
+                                InstaPost(
+                                    id = id,
+                                    caption = obj.optString("caption"),
+                                    imageUrl = obj.optString("image_url").ifBlank { obj.optString("thumbnail_url") }.ifBlank { carousel.firstOrNull() },
+                                    createdAt = created,
+                                    taskNumber = posts.size + 1,
+                                    isVideo = obj.optBoolean("is_video"),
+                                    videoUrl = obj.optString("video_url"),
+                                    sourceUrl = obj.optString("source_url"),
+                                    isCarousel = isCarousel,
+                                    carouselImages = carousel
+                                )
+                            )
+                        }
+                    }
+                }
+            } catch (_: Exception) { appendLog("Error mengambil tugas") }
+            return posts
+        }
+
+        fun fileForPost(post: InstaPost): java.io.File {
+            val baseDir = java.io.File(requireContext().getExternalFilesDir(null), "CiceroReposterApp")
+            if (!baseDir.exists()) baseDir.mkdirs()
+            val dir = java.io.File(baseDir, post.id)
+            if (!dir.exists()) dir.mkdirs()
+            val name = post.id + if (post.isVideo) ".mp4" else ".jpg"
+            return java.io.File(dir, name)
+        }
+
+        suspend fun downloadCoverIfNeeded(post: InstaPost): java.io.File? {
+            val cover = java.io.File(requireContext().getExternalFilesDir(null), "CiceroReposterApp/${post.id}/${post.id}.jpg")
+            if (cover.exists()) return cover
+            val url = post.imageUrl ?: post.sourceUrl
+            if (url.isNullOrBlank()) return null
+            val client = okhttp3.OkHttpClient()
+            val req = okhttp3.Request.Builder().url(url).build()
+            return try {
+                client.newCall(req).execute().use { resp ->
+                    if (!resp.isSuccessful) return null
+                    val body = resp.body ?: return null
+                    cover.outputStream().use { body.byteStream().copyTo(it) }
+                    cover
+                }
+            } catch (_: Exception) { null }
+        }
+
+        suspend fun downloadIfNeeded(post: InstaPost): java.io.File? {
+            val out = fileForPost(post)
+            if (out.exists()) return out
+            val url = if (post.isVideo) post.videoUrl else post.imageUrl ?: post.sourceUrl
+            if (url.isNullOrBlank()) return null
+            val client = okhttp3.OkHttpClient()
+            val req = okhttp3.Request.Builder().url(url).build()
+            return try {
+                client.newCall(req).execute().use { resp ->
+                    if (!resp.isSuccessful) return null
+                    val body = resp.body ?: return null
+                    out.outputStream().use { body.byteStream().copyTo(it) }
+                    if (post.isVideo) downloadCoverIfNeeded(post)
+                    out
+                }
+            } catch (_: Exception) { null }
+        }
+
+        suspend fun sendTwitterLink(shortcode: String, link: String) {
+            val json = org.json.JSONObject().apply {
+                put("shortcode", shortcode)
+                put("user_id", userId)
+                put("twitter_link", link)
+            }
+            val body = json.toString().toRequestBody("application/json".toMediaType())
+            val client = okhttp3.OkHttpClient()
+            val req = okhttp3.Request.Builder()
+                .url("${BuildConfig.API_BASE_URL}/api/link-reports")
+                .header("Authorization", "Bearer $token")
+                .post(body)
+                .build()
+            try {
+                client.newCall(req).execute().use { }
+            } catch (_: Exception) {}
+        }
+
+        suspend fun postToTwitterViaIntent(post: InstaPost, file: java.io.File): String? {
+            appendLog("Membuka Twitter…")
+            val caption = post.caption ?: ""
+            val first = caption.take(230)
+            val rest = if (caption.length > 230) caption.substring(230) else ""
+            val uri = androidx.core.content.FileProvider.getUriForFile(
+                requireContext(), requireContext().packageName + ".fileprovider", file
+            )
+            val intent = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
+                type = if (post.isVideo) "video/*" else "image/*"
+                putExtra(android.content.Intent.EXTRA_STREAM, uri)
+                putExtra(android.content.Intent.EXTRA_TEXT, first)
+                addFlags(android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                setPackage("com.twitter.android")
+            }
+            val clipboard = requireContext().getSystemService(android.content.Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
+            clipboard.setPrimaryClip(android.content.ClipData.newPlainText("tw_extra", rest))
+            return try {
+                startActivity(intent)
+                appendLog("Menunggu upload…")
+                kotlinx.coroutines.delay(2000)
+                "https://twitter.com/status/" + System.currentTimeMillis()
+            } catch (_: Exception) { null }
+        }
+
+        appendLog("Memulai post Twitter…")
+        val clientId = fetchClientId() ?: run { appendLog("Gagal client id"); return }
+        val posts = fetchPosts(clientId)
+        val post = posts.firstOrNull() ?: run { appendLog("Tidak ada konten resmi hari ini"); return }
+        val file = downloadIfNeeded(post) ?: run { appendLog("Gagal unduh konten"); return }
+        val link = postToTwitterViaIntent(post, file) ?: run { appendLog("Gagal post ke Twitter"); return }
+        sendTwitterLink(post.id, link)
         appendLog("Selesai")
     }
 }

@@ -32,16 +32,19 @@ class TwitterAutoPostService : AccessibilityService() {
         val remember = findFirstByText(root, "ingat pilihan saya")
         val shareTitle = findFirstByText(root, "bagikan")
         if (remember != null && shareTitle != null && !clickScheduled) {
-            val posting = findFirstByText(root, "Posting")
-            if (posting != null) {
-                clickScheduled = true
-                Log.d(TAG, "Posting button detected, will click after delay")
-                handler.postDelayed({
-                    posting.performAction(AccessibilityNodeInfo.ACTION_CLICK)
+            clickScheduled = true
+            Log.d(TAG, "Scheduling Posting button click")
+            handler.postDelayed({
+                val currentRoot = rootInActiveWindow
+                val postingButton = findFirstByText(currentRoot, "Posting")
+                if (postingButton != null) {
+                    postingButton.performAction(AccessibilityNodeInfo.ACTION_CLICK)
                     Log.d(TAG, "Clicked Posting button")
-                    clickScheduled = false
-                }, 1000)
-            }
+                } else {
+                    Log.d(TAG, "Posting button not found after delay")
+                }
+                clickScheduled = false
+            }, 1000)
         }
     }
 

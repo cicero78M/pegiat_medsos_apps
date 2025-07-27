@@ -5,6 +5,8 @@ import android.accessibilityservice.AccessibilityServiceInfo
 import android.util.Log
 import android.view.accessibility.AccessibilityEvent
 import android.view.accessibility.AccessibilityNodeInfo
+import android.os.Handler
+import android.os.Looper
 
 /**
  * AccessibilityService that presses the Posting button on the Twitter share
@@ -13,6 +15,8 @@ import android.view.accessibility.AccessibilityNodeInfo
 class TwitterAutoPostService : AccessibilityService() {
 
     private val TAG = "TwitterAutoPostSvc"
+    private val handler = Handler(Looper.getMainLooper())
+    private var clickScheduled = false
 
     override fun onServiceConnected() {
         serviceInfo = serviceInfo.apply {
@@ -27,11 +31,16 @@ class TwitterAutoPostService : AccessibilityService() {
 
         val remember = findFirstByText(root, "ingat pilihan saya")
         val shareTitle = findFirstByText(root, "bagikan")
-        if (remember != null && shareTitle != null) {
+        if (remember != null && shareTitle != null && !clickScheduled) {
             val posting = findFirstByText(root, "Posting")
             if (posting != null) {
-                Log.d(TAG, "Auto clicking Posting button")
-                posting.performAction(AccessibilityNodeInfo.ACTION_CLICK)
+                clickScheduled = true
+                Log.d(TAG, "Posting button detected, will click after delay")
+                handler.postDelayed({
+                    posting.performAction(AccessibilityNodeInfo.ACTION_CLICK)
+                    Log.d(TAG, "Clicked Posting button")
+                    clickScheduled = false
+                }, 1000)
             }
         }
     }

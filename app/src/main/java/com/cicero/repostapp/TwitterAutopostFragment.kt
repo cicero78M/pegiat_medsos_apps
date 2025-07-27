@@ -7,6 +7,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
+import android.widget.TextView
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.RecyclerView
@@ -26,6 +27,14 @@ import java.time.ZoneId
  * Fragment with a ViewPager that triggers Twitter autopost when button clicked.
  */
 class TwitterAutopostFragment : Fragment() {
+
+    private var logView: TextView? = null
+
+    private fun log(message: String) {
+        viewLifecycleOwner.lifecycleScope.launch(Dispatchers.Main) {
+            logView?.append(message + "\n")
+        }
+    }
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -52,6 +61,7 @@ class TwitterAutopostFragment : Fragment() {
         inner class VH(val v: View) : RecyclerView.ViewHolder(v) {
             init {
                 val btn = v.findViewById<Button>(R.id.btnPostToTwitter)
+                logView = v.findViewById(R.id.txtConsoleLogs)
                 btn.setOnClickListener {
                     lifecycleScope.launch(Dispatchers.IO) { performTwitterPost() }
                 }
@@ -108,18 +118,33 @@ class TwitterAutopostFragment : Fragment() {
     }
 
     private suspend fun performTwitterPost() {
-        val post = fetchLatestPost("instagram") ?: return
+        log("Fetching latest Instagram post...")
+        val post = fetchLatestPost("instagram") ?: run {
+            log("Failed to fetch post")
+            return
+        }
+        log("Checking post date")
         val postDate = Instant.ofEpochSecond(post.timestamp)
             .atZone(ZoneId.systemDefault()).toLocalDate()
-        if (postDate != LocalDate.now()) return // no post today
-        val file = ensureDownloaded(post) ?: return
+        if (postDate != LocalDate.now()) {
+            log("No new post today")
+            return
+        }
+        log("Downloading image")
+        val file = ensureDownloaded(post) ?: run {
+            log("Failed to download image")
+            return
+        }
+        log("Preparing Twitter post")
         val prefs = requireContext().getSharedPreferences("twitter_post_prefs", Context.MODE_PRIVATE)
         prefs.edit().putString("twitter_post_text", post.caption)
             .putString("twitter_post_image", file.absolutePath).apply()
         withContext(Dispatchers.Main) {
+            log("Launching Twitter")
             val intent = requireContext().packageManager.getLaunchIntentForPackage("com.twitter.android")
             if (intent != null) startActivity(intent) else {
                 android.widget.Toast.makeText(requireContext(), "Twitter not installed", android.widget.Toast.LENGTH_SHORT).show()
+                log("Twitter app not installed")
             }
         }
     }

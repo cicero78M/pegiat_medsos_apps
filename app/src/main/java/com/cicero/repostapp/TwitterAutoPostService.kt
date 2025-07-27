@@ -27,7 +27,10 @@ class TwitterAutoPostService : AccessibilityService() {
     }
 
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {
-        val root = rootInActiveWindow ?: return
+        val root = rootInActiveWindow ?: run {
+            Log.d(TAG, "No active window root")
+            return
+        }
 
         val remember = findFirstByText(root, "ingat pilihan saya")
         val shareTitle = findFirstByText(root, "bagikan")
@@ -45,6 +48,8 @@ class TwitterAutoPostService : AccessibilityService() {
                 }
                 clickScheduled = false
             }, 1000)
+        } else if (!clickScheduled) {
+            Log.d(TAG, "Share sheet texts not found")
         }
     }
 

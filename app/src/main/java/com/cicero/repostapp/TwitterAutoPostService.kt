@@ -17,6 +17,8 @@ class TwitterAutoPostService : AccessibilityService() {
             eventTypes = AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED or
                     AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED
             feedbackType = AccessibilityServiceInfo.FEEDBACK_GENERIC
+            flags = AccessibilityServiceInfo.FLAG_REPORT_VIEW_IDS or
+                    AccessibilityServiceInfo.FLAG_INCLUDE_NOT_IMPORTANT_VIEWS
         }
     }
 
@@ -25,13 +27,20 @@ class TwitterAutoPostService : AccessibilityService() {
 
         // Handle possible share sheet asking for default action
         val shareTitle = root.findAccessibilityNodeInfosByText("Bagikan").firstOrNull()
+            ?: root.findAccessibilityNodeInfosByText("Share").firstOrNull()
+            ?: root.findAccessibilityNodeInfosByText("Open with").firstOrNull()
         val remember = root.findAccessibilityNodeInfosByText("Ingat Pilihan saya").firstOrNull()
+            ?: root.findAccessibilityNodeInfosByText("Ingat pilihan saya").firstOrNull()
+            ?: root.findAccessibilityNodeInfosByText("Always").firstOrNull()
         if (shareTitle != null && remember != null) {
             if (remember.isCheckable && !remember.isChecked) {
                 remember.performAction(AccessibilityNodeInfo.ACTION_CLICK)
             }
             val posting = root.findAccessibilityNodeInfosByText("Posting").firstOrNull()
-            posting?.performAction(AccessibilityNodeInfo.ACTION_CLICK)
+                ?: root.findAccessibilityNodeInfosByText("Twitter").firstOrNull()
+            posting?.let { node ->
+                (node.parent ?: node).performAction(AccessibilityNodeInfo.ACTION_CLICK)
+            }
             return
         }
 

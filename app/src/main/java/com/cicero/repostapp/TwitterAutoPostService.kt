@@ -2,17 +2,19 @@ package com.cicero.repostapp
 
 import android.accessibilityservice.AccessibilityService
 import android.accessibilityservice.AccessibilityServiceInfo
-import android.os.Bundle
+import android.util.Log
 import android.view.accessibility.AccessibilityEvent
 import android.view.accessibility.AccessibilityNodeInfo
 
 /**
- * AccessibilityService to automate composing tweet using stored text.
+ * AccessibilityService that presses the Posting button on the Twitter share
+ * screen after the user sends a share Intent.
  */
 class TwitterAutoPostService : AccessibilityService() {
 
+    private val TAG = "TwitterAutoPostSvc"
+
     override fun onServiceConnected() {
-        // Listen for events from all apps to handle share sheet as well
         serviceInfo = serviceInfo.apply {
             eventTypes = AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED or
                     AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED
@@ -23,47 +25,28 @@ class TwitterAutoPostService : AccessibilityService() {
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {
         val root = rootInActiveWindow ?: return
 
-        // Handle possible share sheet asking for default action
-        val shareTitle = root.findAccessibilityNodeInfosByText("Bagikan").firstOrNull()
-        val remember = root.findAccessibilityNodeInfosByText("Ingat Pilihan saya").firstOrNull()
-        if (shareTitle != null && remember != null) {
-            if (remember.isCheckable && !remember.isChecked) {
-                remember.performAction(AccessibilityNodeInfo.ACTION_CLICK)
+        val remember = findFirstByText(root, "ingat pilihan saya")
+        val shareTitle = findFirstByText(root, "bagikan")
+        if (remember != null && shareTitle != null) {
+            val posting = findFirstByText(root, "Posting")
+            if (posting != null) {
+                Log.d(TAG, "Auto clicking Posting button")
+                posting.performAction(AccessibilityNodeInfo.ACTION_CLICK)
             }
-            val posting = root.findAccessibilityNodeInfosByText("Posting").firstOrNull()
-            posting?.performAction(AccessibilityNodeInfo.ACTION_CLICK)
-            return
         }
+    }
 
-        if (event?.packageName != "com.twitter.android") return
-
-        val prefs = getSharedPreferences("twitter_post_prefs", MODE_PRIVATE)
-        val text = prefs.getString("twitter_post_text", null) ?: return
-
-        // 1. open compose tweet
-        val fab = root.findAccessibilityNodeInfosByViewId("com.twitter.android:id/fab").firstOrNull()
-        if (fab != null) {
-            fab.performAction(AccessibilityNodeInfo.ACTION_CLICK)
-            return
+    /** Recursively search the node tree for the first element matching text. */
+    private fun findFirstByText(node: AccessibilityNodeInfo?, text: String): AccessibilityNodeInfo? {
+        if (node == null) return null
+        if (node.text?.toString()?.equals(text, ignoreCase = true) == true) {
+            return node
         }
-
-        // 2. fill tweet text
-        val tweetField = root.findAccessibilityNodeInfosByViewId("com.twitter.android:id/tweet_text").firstOrNull()
-        if (tweetField != null && tweetField.text.isNullOrEmpty()) {
-            val args = Bundle()
-            args.putCharSequence(AccessibilityNodeInfo.ACTION_ARGUMENT_SET_TEXT_CHARSEQUENCE, text)
-            tweetField.performAction(AccessibilityNodeInfo.ACTION_SET_TEXT, args)
-            return
+        for (i in 0 until node.childCount) {
+            val found = findFirstByText(node.getChild(i), text)
+            if (found != null) return found
         }
-
-        // 3. send tweet
-        val tweetButton = root.findAccessibilityNodeInfosByText("Tweet").firstOrNull()
-        if (tweetButton != null && tweetField != null && tweetField.text?.toString() == text) {
-            tweetButton.performAction(AccessibilityNodeInfo.ACTION_CLICK)
-            // Clear stored text after posting
-            prefs.edit().clear().apply()
-            // TODO: capture tweet link and report to server
-        }
+        return null
     }
 
     override fun onInterrupt() {}

@@ -12,18 +12,31 @@ import android.view.accessibility.AccessibilityNodeInfo
 class TwitterAutoPostService : AccessibilityService() {
 
     override fun onServiceConnected() {
-        // Configure the service to listen to Twitter app only
+        // Listen for events from all apps to handle share sheet as well
         serviceInfo = serviceInfo.apply {
             eventTypes = AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED or
                     AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED
-            packageNames = arrayOf("com.twitter.android")
             feedbackType = AccessibilityServiceInfo.FEEDBACK_GENERIC
         }
     }
 
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {
-        if (event?.packageName != "com.twitter.android") return
         val root = rootInActiveWindow ?: return
+
+        // Handle possible share sheet asking for default action
+        val shareTitle = root.findAccessibilityNodeInfosByText("Bagikan").firstOrNull()
+        val remember = root.findAccessibilityNodeInfosByText("Ingat Pilihan saya").firstOrNull()
+        if (shareTitle != null && remember != null) {
+            if (remember.isCheckable && !remember.isChecked) {
+                remember.performAction(AccessibilityNodeInfo.ACTION_CLICK)
+            }
+            val posting = root.findAccessibilityNodeInfosByText("Posting").firstOrNull()
+            posting?.performAction(AccessibilityNodeInfo.ACTION_CLICK)
+            return
+        }
+
+        if (event?.packageName != "com.twitter.android") return
+
         val prefs = getSharedPreferences("twitter_post_prefs", MODE_PRIVATE)
         val text = prefs.getString("twitter_post_text", null) ?: return
 

@@ -30,6 +30,8 @@ android {
         buildConfigField("String", "TWITTER_CONSUMER_SECRET", "\"${env("TWITTER_CONSUMER_SECRET")}\"")
         val callback = env("TWITTER_CALLBACK_URL").ifEmpty { "repostapp-twitter://callback" }
         buildConfigField("String", "TWITTER_CALLBACK_URL", "\"$callback\"")
+        buildConfigField("String", "TWITTER_ACCESS_TOKEN", "\"${env("TWITTER_ACCESS_TOKEN")}\"")
+        buildConfigField("String", "TWITTER_ACCESS_SECRET", "\"${env("TWITTER_ACCESS_SECRET")}\"")
         buildConfigField("String", "YOUTUBE_CLIENT_ID", "\"${env("YOUTUBE_CLIENT_ID")}\"")
         val ytRedirect = env("YOUTUBE_REDIRECT_URI").ifEmpty { "repostapp-youtube://oauth" }
         buildConfigField("String", "YOUTUBE_REDIRECT_URI", "\"$ytRedirect\"")
@@ -74,6 +76,8 @@ dependencies {
     implementation("com.google.code.gson:gson:2.10.1")
     implementation("com.github.instagram4j:instagram4j:2.0.7")
     implementation("org.twitter4j:twitter4j-core:4.1.1")
+    implementation("com.github.scribejava:scribejava-core:8.3.3")
+    implementation("com.github.scribejava:scribejava-apis:8.3.3")
     // Align with the version pulled in by the Android Gradle plugin to avoid
     // dependency resolution conflicts during the build.
     compileOnly("com.google.errorprone:error_prone_annotations:2.15.0")

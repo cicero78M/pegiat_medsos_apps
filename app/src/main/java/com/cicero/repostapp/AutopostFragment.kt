@@ -34,6 +34,7 @@ import kotlin.coroutines.resume
 import twitter4j.TwitterFactory
 import twitter4j.auth.AccessToken
 import com.github.instagram4j.instagram4j.requests.feed.FeedUserRequest
+import com.cicero.repostapp.postTweetWithMedia
 
 class AutopostFragment : Fragment() {
 
@@ -204,6 +205,7 @@ class AutopostFragment : Fragment() {
         val tiktokCheck = view.findViewById<ImageView>(R.id.tiktok_check)
         val tiktokText = view.findViewById<TextView>(R.id.tiktok_username)
         val start = view.findViewById<Button>(R.id.button_start)
+        val postTwitter = view.findViewById<Button>(R.id.button_post_twitter)
 
         // attempt to load saved session
         lifecycleScope.launch(Dispatchers.IO) {
@@ -220,6 +222,16 @@ class AutopostFragment : Fragment() {
         start.setOnClickListener {
             lifecycleScope.launch(Dispatchers.IO) {
                 runAutopostWorkflow()
+            }
+        }
+        postTwitter.setOnClickListener {
+            lifecycleScope.launch(Dispatchers.IO) {
+                val file = java.io.File(requireContext().filesDir, "sample.jpg")
+                val ok = postTweetWithMedia("Hello from API", file)
+                withContext(Dispatchers.Main) {
+                    val msg = if (ok) "Tweet terkirim" else "Gagal mengirim tweet"
+                    android.widget.Toast.makeText(requireContext(), msg, android.widget.Toast.LENGTH_SHORT).show()
+                }
             }
         }
     }

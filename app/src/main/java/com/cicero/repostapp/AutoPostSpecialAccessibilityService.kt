@@ -90,7 +90,7 @@ class AutoPostSpecialAccessibilityService : AccessibilityService() {
     override fun onInterrupt() {}
 
     private fun log(msg: String) {
-        if (BuildConfig.DEBUG) Log.d(TAG, msg)
+        Log.d(TAG, msg)
     }
 }
 

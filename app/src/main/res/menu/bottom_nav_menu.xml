@@ -16,9 +16,5 @@
         android:id="@+id/nav_autopost"
         android:icon="@android:drawable/ic_menu_upload"
         android:title="Autopost" />
-    <item
-        android:id="@+id/nav_autopost_twitter"
-        android:icon="@drawable/ic_twitter"
-        android:title="Twitter Autopost" />
     <!-- Removed YouTube and Facebook pages -->
 </menu>

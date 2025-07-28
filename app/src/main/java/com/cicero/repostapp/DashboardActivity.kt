@@ -2,7 +2,6 @@ package com.cicero.repostapp
 
 import android.content.Intent
 import android.os.Bundle
-import android.provider.Settings
 import androidx.appcompat.app.AppCompatActivity
 import androidx.viewpager2.widget.ViewPager2
 import com.google.android.material.bottomnavigation.BottomNavigationView
@@ -21,8 +20,7 @@ class DashboardActivity : AppCompatActivity() {
             "Profil",
             "Tugas Resmi",
             "Tugas Khusus",
-            "Autorepost",
-            "Autorepost Khusus"
+            "Autorepost"
         )
 
         val token = intent.getStringExtra("token")
@@ -32,8 +30,7 @@ class DashboardActivity : AppCompatActivity() {
             UserProfileFragment.newInstance(userId, token),
             DashboardFragment.newInstance(userId, token),
             SpecialTaskFragment.newInstance(userId, token),
-            AutopostFragment.newInstance(),
-            AutopostSpecialFragment.newInstance()
+            AutopostFragment.newInstance()
         )
 
         val viewPager = findViewById<ViewPager2>(R.id.view_pager)
@@ -52,7 +49,6 @@ class DashboardActivity : AppCompatActivity() {
                 R.id.nav_insta -> { viewPager.currentItem = 1; true }
                 R.id.nav_special -> { viewPager.currentItem = 2; true }
                 R.id.nav_autopost -> { viewPager.currentItem = 3; true }
-                R.id.nav_autopost_special -> { viewPager.currentItem = 4; true }
                 else -> false
             }
         }
@@ -64,7 +60,6 @@ class DashboardActivity : AppCompatActivity() {
                     1 -> { bottomNav.selectedItemId = R.id.nav_insta }
                     2 -> { bottomNav.selectedItemId = R.id.nav_special }
                     3 -> { bottomNav.selectedItemId = R.id.nav_autopost }
-                    4 -> { bottomNav.selectedItemId = R.id.nav_autopost_special }
                 }
                 supportActionBar?.title = pageTitles[position]
             }
@@ -74,17 +69,12 @@ class DashboardActivity : AppCompatActivity() {
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
-        menu.add(0, R.id.menu_config, 0, "Config")
-        menu.add(0, R.id.menu_logout, 1, "Logout")
+        menu.add(0, R.id.menu_logout, 0, "Logout")
         return true
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         return when (item.itemId) {
-            R.id.menu_config -> {
-                startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
-                true
-            }
             R.id.menu_logout -> {
                 val prefs = getSharedPreferences("auth", MODE_PRIVATE)
                 prefs.edit().clear().apply()

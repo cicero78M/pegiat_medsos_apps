@@ -36,8 +36,9 @@ root. Copy `.env.example` to `.env` and fill in your credentials:
 
 ```bash
 cp .env.example .env
-# edit .env and set TWITTER_CONSUMER_KEY, TWITTER_CONSUMER_SECRET
-# and API_BASE_URL if you need a different backend
+# edit .env and set TWITTER_CONSUMER_KEY, TWITTER_CONSUMER_SECRET,
+# TWITTER_ACCESS_TOKEN and TWITTER_ACCESS_SECRET. Adjust
+# API_BASE_URL if you need a different backend
 ```
 
 ## Update from GitHub Releases

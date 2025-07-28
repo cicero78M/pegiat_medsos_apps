@@ -1,12 +1,10 @@
 package com.cicero.repostapp
 
 import android.util.Log
-import com.github.scribejava.apis.TwitterApi
-import com.github.scribejava.core.builder.ServiceBuilder
-import com.github.scribejava.core.model.OAuth1AccessToken
-import com.github.scribejava.core.model.OAuthRequest
-import com.github.scribejava.core.model.Verb
-import com.github.scribejava.core.oauth.OAuth10aService
+import twitter4j.HttpParameter
+import twitter4j.HttpRequest
+import twitter4j.OAuthAuthorization
+import twitter4j.RequestMethod
 import okhttp3.FormBody
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.MultipartBody
@@ -24,10 +22,10 @@ private val ACCESS_TOKEN_SECRET get() = BuildConfig.TWITTER_ACCESS_SECRET
 
 suspend fun postTweetWithMedia(tweetText: String, file: File): Boolean {
     val tag = "TwitterApiPoster"
-    val service: OAuth10aService = ServiceBuilder(API_KEY)
-        .apiSecret(API_SECRET)
-        .build(TwitterApi.instance())
-    val token = OAuth1AccessToken(ACCESS_TOKEN, ACCESS_TOKEN_SECRET)
+    val auth = OAuthAuthorization.newBuilder()
+        .oAuthConsumer(API_KEY, API_SECRET)
+        .oAuthAccessToken(ACCESS_TOKEN, ACCESS_TOKEN_SECRET)
+        .build()
     val client = OkHttpClient()
 
     Log.d(tag, "Uploading media…")
@@ -40,11 +38,16 @@ suspend fun postTweetWithMedia(tweetText: String, file: File): Boolean {
         )
         .build()
 
-    val uploadSig = OAuthRequest(Verb.POST, "https://upload.twitter.com/1.1/media/upload.json")
-    service.signRequest(token, uploadSig)
+    val uploadReq = HttpRequest(
+        RequestMethod.POST,
+        "https://upload.twitter.com/1.1/media/upload.json",
+        emptyArray(),
+        auth,
+        emptyMap()
+    )
     val uploadRequest = Request.Builder()
         .url("https://upload.twitter.com/1.1/media/upload.json")
-        .header("Authorization", uploadSig.getHeaders()["Authorization"] ?: "")
+        .header("Authorization", auth.getAuthorizationHeader(uploadReq))
         .post(mediaBody)
         .build()
 
@@ -69,14 +72,20 @@ suspend fun postTweetWithMedia(tweetText: String, file: File): Boolean {
         .add("media_ids", mediaId)
         .build()
 
-    val tweetReq = OAuthRequest(Verb.POST, "https://api.twitter.com/1.1/statuses/update.json")
-    tweetReq.addBodyParameter("status", tweetText)
-    tweetReq.addBodyParameter("media_ids", mediaId)
-    service.signRequest(token, tweetReq)
+    val tweetReq = HttpRequest(
+        RequestMethod.POST,
+        "https://api.twitter.com/1.1/statuses/update.json",
+        arrayOf(
+            HttpParameter("status", tweetText),
+            HttpParameter("media_ids", mediaId)
+        ),
+        auth,
+        emptyMap()
+    )
 
     val request = Request.Builder()
         .url("https://api.twitter.com/1.1/statuses/update.json")
-        .header("Authorization", tweetReq.getHeaders()["Authorization"] ?: "")
+        .header("Authorization", auth.getAuthorizationHeader(tweetReq))
         .post(formBody)
         .build()
 

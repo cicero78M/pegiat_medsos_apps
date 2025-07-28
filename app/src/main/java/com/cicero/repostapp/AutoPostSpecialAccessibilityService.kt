@@ -61,8 +61,9 @@ class AutoPostSpecialAccessibilityService : AccessibilityService() {
     }
 }
 
+/*
  To add a new rule (e.g. Instagram or TikTok),
  add an entry with the same fields in AutoPostRuleLoader.defaultRulesJson
  or save a JSON array under SharedPreferences key "rules_json".
-*/
+ */
 

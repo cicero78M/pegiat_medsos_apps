@@ -25,14 +25,21 @@ object AutoPostRuleLoader {
             "packageName": "com.twitter.android",
             "requiresAll": ["posting"],
             "clickTargetText": "posting",
-            "maxDepth": 5,
+            "maxDepth": 10,
             "cooldownMs": 1500
           },
           {
             "packageName": "com.twitter.android",
             "requiresAll": ["tweet"],
             "clickTargetText": "tweet",
-            "maxDepth": 5,
+            "maxDepth": 10,
+            "cooldownMs": 1500
+          },
+          {
+            "packageName": "com.twitter.android",
+            "requiresAll": ["post"],
+            "clickTargetText": "post",
+            "maxDepth": 10,
             "cooldownMs": 1500
           }
         ]

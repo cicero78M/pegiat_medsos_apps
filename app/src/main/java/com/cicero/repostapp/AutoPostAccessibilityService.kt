@@ -79,7 +79,8 @@ class AutoPostAccessibilityService : AccessibilityService() {
             log("Checking for target text '${rule.clickTargetText}'")
             val targets = findNodesByText(root, rule.clickTargetText, rule.maxDepth)
             log(if (targets.isNotEmpty()) "Text found" else "Text not found")
-            if (targets.isNotEmpty() && safeClick(targets.first())) {
+            val clickable = targets.firstOrNull()?.traverseParentToFindClickable()
+            if (clickable != null && safeClick(clickable)) {
                 log("Clicked target for $pkg")
                 lastExecution[pkg] = now
             }

@@ -204,7 +204,6 @@ class AutopostFragment : Fragment() {
         val tiktokCheck = view.findViewById<ImageView>(R.id.tiktok_check)
         val tiktokText = view.findViewById<TextView>(R.id.tiktok_username)
         val start = view.findViewById<Button>(R.id.button_start)
-        val postTwitterBtn = view.findViewById<Button>(R.id.button_post_twitter)
 
         // attempt to load saved session
         lifecycleScope.launch(Dispatchers.IO) {
@@ -221,11 +220,6 @@ class AutopostFragment : Fragment() {
         start.setOnClickListener {
             lifecycleScope.launch(Dispatchers.IO) {
                 runAutopostWorkflow()
-            }
-        }
-        postTwitterBtn.setOnClickListener {
-            lifecycleScope.launch(Dispatchers.IO) {
-                runTwitterPostWorkflow()
             }
         }
     }
@@ -842,31 +836,6 @@ class AutopostFragment : Fragment() {
             }
         }
 
-        suspend fun sendTwitterLink(shortcode: String, link: String) {
-            val json = org.json.JSONObject().apply {
-                put("shortcode", shortcode)
-                put("user_id", userId)
-                put("twitter_link", link)
-            }
-            val body = json.toString().toRequestBody("application/json".toMediaType())
-            val client = okhttp3.OkHttpClient()
-            val req = okhttp3.Request.Builder()
-                .url("${BuildConfig.API_BASE_URL}/api/link-reports")
-                .header("Authorization", "Bearer $token")
-                .post(body)
-                .build()
-            try {
-                client.newCall(req).execute().use { resp ->
-                    if (resp.isSuccessful) {
-                        appendLog("Link Twitter dikirim")
-                    } else {
-                        appendLog("Gagal kirim link Twitter: ${'$'}{resp.code}")
-                    }
-                }
-            } catch (e: Exception) {
-                appendLog("Error kirim link Twitter: ${'$'}{e.message}")
-            }
-        }
 
         suspend fun sendTikTokLink(shortcode: String, link: String) {
             val json = org.json.JSONObject().apply {
@@ -894,15 +863,6 @@ class AutopostFragment : Fragment() {
             }
         }
 
-        suspend fun postToTwitter(post: InstaPost, file: File): String? {
-            appendLog("Posting ke Twitter…")
-            // Placeholder implementation using accessibility service
-            delay(2000)
-            return try {
-                val fake = "https://twitter.com/status/" + System.currentTimeMillis()
-                fake
-            } catch (_: Exception) { null }
-        }
 
         suspend fun postToTikTok(post: InstaPost, file: File): String? {
             appendLog("Posting ke TikTok…")
@@ -946,8 +906,6 @@ class AutopostFragment : Fragment() {
             delay(5000)
             appendLog("Link: ${'$'}igLink")
             sendLink(post.id, igLink)
-            val twLink = retryAction("post Twitter") { postToTwitter(post, file) }
-            if (twLink != null) sendTwitterLink(post.id, twLink)
             val ttLink = retryAction("post TikTok") { postToTikTok(post, file) }
             if (ttLink != null) sendTikTokLink(post.id, ttLink)
             withContext(Dispatchers.Main) { shareCarousel(post) }

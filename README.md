@@ -112,8 +112,12 @@ The server listens on port `3000` by default, so you can access the page at
 The Android app ships with an accessibility service that can automatically
 press the **Posting** button on the Twitter share screen. The behaviour is
 configured through `AutoPostRule` objects which are loaded from shared
-preferences. A default rule for Twitter is bundled with the app. To enable the
-service open **Settings → Accessibility → Cicero Reposter – AutoPost**.
+preferences. A default rule for Twitter is bundled with the app. To use the
+feature make sure the service is enabled under **Settings → Accessibility →
+Cicero Reposter – AutoPost**.  If the button text in the Twitter composer has
+changed (for example displaying *Tweet* instead of *Posting*) adjust the rule in
+`AutoPostRule.kt` or provide a custom rule via shared preferences so the
+service can recognise the new label.
 
 
 

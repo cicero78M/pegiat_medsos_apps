@@ -23,8 +23,15 @@ object AutoPostRuleLoader {
         [
           {
             "packageName": "com.twitter.android",
-            "requiresAll": ["ingat pilihan saya", "bagikan", "posting"],
+            "requiresAll": ["posting"],
             "clickTargetText": "posting",
+            "maxDepth": 5,
+            "cooldownMs": 1500
+          },
+          {
+            "packageName": "com.twitter.android",
+            "requiresAll": ["tweet"],
+            "clickTargetText": "tweet",
             "maxDepth": 5,
             "cooldownMs": 1500
           }

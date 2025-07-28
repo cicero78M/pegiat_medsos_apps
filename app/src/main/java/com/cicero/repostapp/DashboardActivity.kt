@@ -9,7 +9,6 @@ import com.google.android.material.bottomnavigation.BottomNavigationView
 import androidx.viewpager2.adapter.FragmentStateAdapter
 import android.view.Menu
 import android.view.MenuItem
-import com.cicero.repostapp.TwitterAutopostFragment
 
 class DashboardActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -22,8 +21,7 @@ class DashboardActivity : AppCompatActivity() {
             "Profil",
             "Tugas Resmi",
             "Tugas Khusus",
-            "Autorepost",
-            "Tw Autopost"
+            "Autorepost"
         )
 
         val token = intent.getStringExtra("token")
@@ -33,8 +31,7 @@ class DashboardActivity : AppCompatActivity() {
             UserProfileFragment.newInstance(userId, token),
             DashboardFragment.newInstance(userId, token),
             SpecialTaskFragment.newInstance(userId, token),
-            AutopostFragment.newInstance(),
-            TwitterAutopostFragment()
+            AutopostFragment.newInstance()
         )
 
         val viewPager = findViewById<ViewPager2>(R.id.view_pager)
@@ -53,7 +50,6 @@ class DashboardActivity : AppCompatActivity() {
                 R.id.nav_insta -> { viewPager.currentItem = 1; true }
                 R.id.nav_special -> { viewPager.currentItem = 2; true }
                 R.id.nav_autopost -> { viewPager.currentItem = 3; true }
-                R.id.nav_autopost_twitter -> { viewPager.currentItem = 4; true }
                 else -> false
             }
         }
@@ -65,7 +61,6 @@ class DashboardActivity : AppCompatActivity() {
                     1 -> { bottomNav.selectedItemId = R.id.nav_insta }
                     2 -> { bottomNav.selectedItemId = R.id.nav_special }
                     3 -> { bottomNav.selectedItemId = R.id.nav_autopost }
-                    4 -> { bottomNav.selectedItemId = R.id.nav_autopost_twitter }
                 }
                 supportActionBar?.title = pageTitles[position]
             }

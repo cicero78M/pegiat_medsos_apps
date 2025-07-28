@@ -167,6 +167,19 @@
         android:textColor="#1f1f1f"
         android:background="@drawable/button_green" />
 
+        <Button
+        android:id="@+id/button_post_twitter"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:layout_marginStart="32dp"
+        android:layout_marginEnd="32dp"
+        android:layout_marginTop="12dp"
+        android:text="POST TWITTER"
+        android:textStyle="bold"
+        android:textAllCaps="true"
+        android:textColor="#1f1f1f"
+        android:background="@drawable/button_green" />
+
 
     </LinearLayout>
 

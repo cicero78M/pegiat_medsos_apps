@@ -107,6 +107,14 @@ npm start
 The server listens on port `3000` by default, so you can access the page at
 `http://localhost:3000/autopost` once it is running.
 
+### AutoPost Accessibility Service
+
+The Android app ships with an accessibility service that can automatically
+press the **Posting** button on the Twitter share screen. The behaviour is
+configured through `AutoPostRule` objects which are loaded from shared
+preferences. A default rule for Twitter is bundled with the app. To enable the
+service open **Settings → Accessibility → Cicero Reposter – AutoPost**.
+
 
 
 

@@ -913,6 +913,17 @@ class AutopostFragment : Fragment() {
             } catch (_: Exception) { null }
         }
 
+        suspend fun <T> retryAction(name: String, block: suspend () -> T?): T? {
+            repeat(3) { attempt ->
+                val result = block()
+                if (result != null) return result
+                appendLog("Percobaan ${'$'}{attempt + 1} gagal pada ${'$'}name, ulangi…")
+                delay(5000)
+            }
+            appendLog("Berhenti pada proses ${'$'}name")
+            return null
+        }
+
         appendLog("Memulai autopost…")
         val clientId = fetchClientId() ?: run { appendLog("Gagal mengambil client id"); return }
         val reported = fetchReported()
@@ -925,23 +936,23 @@ class AutopostFragment : Fragment() {
             }
             appendLog("Memproses tugas ${'$'}{post.taskNumber} (${ '$'}{post.id })")
             appendLog("Memeriksa download…")
-            delay(3000)
-            val file = downloadIfNeeded(post) ?: continue
+            delay(5000)
+            val file = retryAction("download konten") { downloadIfNeeded(post) } ?: break
             if (!post.isVideo && post.isCarousel) {
                 downloadCarouselImagesIfNeeded(post)
             }
-            delay(3000)
-            val igLink = uploadToInstagram(post, file) ?: continue
-            delay(3000)
-            appendLog("Link: $igLink")
+            delay(5000)
+            val igLink = retryAction("upload Instagram") { uploadToInstagram(post, file) } ?: break
+            delay(5000)
+            appendLog("Link: ${'$'}igLink")
             sendLink(post.id, igLink)
-            val twLink = postToTwitter(post, file)
+            val twLink = retryAction("post Twitter") { postToTwitter(post, file) }
             if (twLink != null) sendTwitterLink(post.id, twLink)
-            val ttLink = postToTikTok(post, file)
+            val ttLink = retryAction("post TikTok") { postToTikTok(post, file) }
             if (ttLink != null) sendTikTokLink(post.id, ttLink)
             withContext(Dispatchers.Main) { shareCarousel(post) }
             appendLog("Tugas selesai")
-            delay(3000)
+            delay(5000)
         }
         appendLog("Selesai")
     }

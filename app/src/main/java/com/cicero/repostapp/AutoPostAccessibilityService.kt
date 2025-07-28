@@ -61,6 +61,16 @@ class AutoPostAccessibilityService : AccessibilityService() {
         Handler(Looper.getMainLooper()).postDelayed({
             val root = rootInActiveWindow ?: return@postDelayed
 
+            // Automatically click Twitter's Tweet button if visible
+            val tweetButton = root
+                .findAccessibilityNodeInfosByViewId("com.twitter.android:id/button_tweet")
+                .firstOrNull { it.isVisibleToUser && it.isClickable }
+            if (tweetButton != null) {
+                tweetButton.performAction(AccessibilityNodeInfo.ACTION_CLICK)
+                log("Tombol Tweet diklik otomatis")
+                return@postDelayed
+            }
+
             if (eventType == AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED ||
                 eventType == AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED) {
                 handleShareSheet(root)

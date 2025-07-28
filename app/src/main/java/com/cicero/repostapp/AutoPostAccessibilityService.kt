@@ -39,29 +39,36 @@ class AutoPostAccessibilityService : AccessibilityService() {
     }
 
     override fun onAccessibilityEvent(event: AccessibilityEvent) {
-        val root = rootInActiveWindow ?: return
+        val eventType = event.eventType
+        val pkgName = event.packageName?.toString()
+        log("Received event type=$eventType pkg=$pkgName - delaying 5s")
 
-        if (event.eventType == AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED ||
-            event.eventType == AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED) {
-            handleShareSheet(root)
-        }
+        Handler(Looper.getMainLooper()).postDelayed({
+            val root = rootInActiveWindow ?: return@postDelayed
 
-        val source = event.source ?: return
-        val pkg = event.packageName?.toString() ?: return
-        val rule = rules.firstOrNull { it.packageName == pkg } ?: return
-        if (event.eventType and serviceInfo.eventTypes == 0) return
+            if (eventType == AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED ||
+                eventType == AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED) {
+                handleShareSheet(root)
+            }
 
-        val now = SystemClock.elapsedRealtime()
-        val last = lastExecution[pkg] ?: 0L
-        if (now - last < rule.cooldownMs) return
+            val pkg = pkgName ?: return@postDelayed
+            val rule = rules.firstOrNull { it.packageName == pkg } ?: return@postDelayed
+            if (eventType and serviceInfo.eventTypes == 0) return@postDelayed
 
-        if (!containsAllTexts(root, rule.requiresAll, rule.maxDepth)) return
+            val now = SystemClock.elapsedRealtime()
+            val last = lastExecution[pkg] ?: 0L
+            if (now - last < rule.cooldownMs) return@postDelayed
 
-        val targets = findNodesByText(root, rule.clickTargetText, rule.maxDepth)
-        if (targets.isNotEmpty() && safeClick(targets.first())) {
-            log("Clicked target for $pkg")
-            lastExecution[pkg] = now
-        }
+            if (!containsAllTexts(root, rule.requiresAll, rule.maxDepth)) return@postDelayed
+
+            log("Checking for target text '${rule.clickTargetText}'")
+            val targets = findNodesByText(root, rule.clickTargetText, rule.maxDepth)
+            log(if (targets.isNotEmpty()) "Text found" else "Text not found")
+            if (targets.isNotEmpty() && safeClick(targets.first())) {
+                log("Clicked target for $pkg")
+                lastExecution[pkg] = now
+            }
+        }, 5000)
     }
 
     private fun handleShareSheet(root: AccessibilityNodeInfo) {

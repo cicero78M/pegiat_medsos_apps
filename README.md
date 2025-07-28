@@ -114,10 +114,17 @@ press the **Posting** button on the Twitter share screen. The behaviour is
 configured through `AutoPostRule` objects which are loaded from shared
 preferences. A default rule for Twitter is bundled with the app. To use the
 feature make sure the service is enabled under **Settings → Accessibility →
-Cicero Reposter – AutoPost**.  If the button text in the Twitter composer has
-changed (for example displaying *Tweet* instead of *Posting*) adjust the rule in
-`AutoPostRule.kt` or provide a custom rule via shared preferences so the
-service can recognise the new label.
+Cicero Reposter – AutoPost**.
+
+If the button text in the Twitter composer has changed (for example displaying
+*Tweet* instead of *Posting*) adjust the rule in `AutoPostRule.kt` or provide a
+custom JSON array under the `rules_json` key in shared preferences so the
+service can recognise the new label. After updating the preferences send the
+following broadcast to reload the rules without restarting the service:
+
+```bash
+adb shell am broadcast -a com.cicero.repostapp.RELOAD_RULES
+```
 
 
 

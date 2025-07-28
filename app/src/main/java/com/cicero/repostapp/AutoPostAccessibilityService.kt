@@ -6,6 +6,10 @@ import android.os.SystemClock
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
 import android.view.accessibility.AccessibilityEvent
 import android.view.accessibility.AccessibilityNodeInfo
 import com.cicero.repostapp.util.containsAllTexts
@@ -26,6 +30,16 @@ class AutoPostAccessibilityService : AccessibilityService() {
     private val TAG = "AutoPostService"
     private val lastExecution = mutableMapOf<String, Long>()
     private lateinit var rules: List<AutoPostRule>
+    private val reloadReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            rules = AutoPostRuleLoader.load(this@AutoPostAccessibilityService)
+            log("Rules reloaded")
+        }
+    }
+
+    companion object {
+        const val ACTION_RELOAD_RULES = "com.cicero.repostapp.RELOAD_RULES"
+    }
 
     override fun onServiceConnected() {
         serviceInfo = serviceInfo.apply {
@@ -35,6 +49,7 @@ class AutoPostAccessibilityService : AccessibilityService() {
             flags = AccessibilityServiceInfo.FLAG_REPORT_VIEW_IDS or
                     AccessibilityServiceInfo.FLAG_RETRIEVE_INTERACTIVE_WINDOWS
         }
+        registerReceiver(reloadReceiver, IntentFilter(ACTION_RELOAD_RULES))
         rules = AutoPostRuleLoader.load(this)
     }
 
@@ -88,6 +103,11 @@ class AutoPostAccessibilityService : AccessibilityService() {
     }
 
     override fun onInterrupt() {}
+
+    override fun onDestroy() {
+        unregisterReceiver(reloadReceiver)
+        super.onDestroy()
+    }
 
     private fun log(msg: String) {
         Log.d(TAG, msg)

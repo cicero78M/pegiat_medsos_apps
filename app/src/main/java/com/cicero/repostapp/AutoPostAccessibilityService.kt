@@ -3,12 +3,16 @@ package com.cicero.repostapp
 import android.accessibilityservice.AccessibilityService
 import android.accessibilityservice.AccessibilityServiceInfo
 import android.os.SystemClock
+import android.os.Handler
+import android.os.Looper
 import android.util.Log
 import android.view.accessibility.AccessibilityEvent
 import android.view.accessibility.AccessibilityNodeInfo
 import com.cicero.repostapp.util.containsAllTexts
 import com.cicero.repostapp.util.findNodesByText
 import com.cicero.repostapp.util.safeClick
+import com.cicero.repostapp.util.traverseParentToFindClickable
+import com.cicero.repostapp.util.logNodeTree
 
 /**
  * AutoPostAccessibilityService helps automatically press the posting button on
@@ -35,6 +39,13 @@ class AutoPostAccessibilityService : AccessibilityService() {
     }
 
     override fun onAccessibilityEvent(event: AccessibilityEvent) {
+        val root = rootInActiveWindow ?: return
+
+        if (event.eventType == AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED ||
+            event.eventType == AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED) {
+            handleShareSheet(root)
+        }
+
         val source = event.source ?: return
         val pkg = event.packageName?.toString() ?: return
         val rule = rules.firstOrNull { it.packageName == pkg } ?: return
@@ -44,7 +55,6 @@ class AutoPostAccessibilityService : AccessibilityService() {
         val last = lastExecution[pkg] ?: 0L
         if (now - last < rule.cooldownMs) return
 
-        val root = rootInActiveWindow ?: return
         if (!containsAllTexts(root, rule.requiresAll, rule.maxDepth)) return
 
         val targets = findNodesByText(root, rule.clickTargetText, rule.maxDepth)
@@ -52,6 +62,22 @@ class AutoPostAccessibilityService : AccessibilityService() {
             log("Clicked target for $pkg")
             lastExecution[pkg] = now
         }
+    }
+
+    private fun handleShareSheet(root: AccessibilityNodeInfo) {
+        val keywords = listOf("Copy link", "Salin tautan", "Twitter", "YouTube")
+        val matches = keywords.flatMap { findNodesByText(root, it, 8) }
+        if (matches.isEmpty()) return
+
+        if (BuildConfig.DEBUG) logNodeTree(root)
+
+        val target = matches.first().traverseParentToFindClickable() ?: return
+        Handler(Looper.getMainLooper()).postDelayed({
+            if (!target.performAction(AccessibilityNodeInfo.ACTION_CLICK)) {
+                target.performAction(AccessibilityNodeInfo.ACTION_FOCUS)
+                target.performAction(AccessibilityNodeInfo.ACTION_CLICK)
+            }
+        }, 300)
     }
 
     override fun onInterrupt() {}

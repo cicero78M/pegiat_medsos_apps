@@ -1,6 +1,7 @@
 package com.cicero.repostapp.util
 
 import android.view.accessibility.AccessibilityNodeInfo
+import android.util.Log
 import java.text.Normalizer
 import java.util.Locale
 
@@ -32,6 +33,26 @@ fun containsAllTexts(root: AccessibilityNodeInfo?, texts: List<String>, maxDepth
 fun safeClick(node: AccessibilityNodeInfo?): Boolean {
     if (node == null || !node.isVisibleToUser || !node.isEnabled) return false
     return node.performAction(AccessibilityNodeInfo.ACTION_CLICK)
+}
+
+/** Traverse up the parent chain to find a clickable node. */
+fun AccessibilityNodeInfo.traverseParentToFindClickable(): AccessibilityNodeInfo? {
+    var current: AccessibilityNodeInfo? = this
+    while (current != null && !current.isClickable) {
+        current = current.parent
+    }
+    return current
+}
+
+/** Debug helper to log the node tree structure. */
+fun logNodeTree(node: AccessibilityNodeInfo?, depth: Int = 0) {
+    if (node == null) return
+    val indent = "  ".repeat(depth)
+    val text = node.text ?: node.contentDescription
+    Log.d("NodeTree", "$indent${node.className} text=$text clickable=${node.isClickable}")
+    for (i in 0 until node.childCount) {
+        logNodeTree(node.getChild(i), depth + 1)
+    }
 }
 
 /** Normalize string for comparison (lowercase, trim, remove diacritics). */

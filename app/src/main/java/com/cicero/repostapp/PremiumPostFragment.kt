@@ -14,6 +14,8 @@ import okhttp3.RequestBody.Companion.toRequestBody
 import org.json.JSONArray
 import org.json.JSONObject
 import com.github.instagram4j.instagram4j.IGClient
+import java.io.File
+import com.cicero.repostapp.postTweetWithMedia
 
 class PremiumPostFragment : DashboardFragment() {
     companion object {
@@ -25,7 +27,7 @@ class PremiumPostFragment : DashboardFragment() {
     }
 
     override fun showShareDialog(post: InstaPost) {
-        val options = mutableListOf("Instagram", "Facebook", "Twitter", "TikTok")
+        val options = mutableListOf("Instagram", "Twitter", "TikTok")
         if (post.isVideo) {
             options.add("YouTube")
         }
@@ -33,8 +35,7 @@ class PremiumPostFragment : DashboardFragment() {
             .setItems(options.toTypedArray()) { _, which ->
                 when (options[which]) {
                     "Instagram" -> shareViaInstagram(post)
-                    "Facebook" -> sharePost(post, "com.facebook.katana")
-                    "Twitter" -> sharePost(post, "com.twitter.android")
+                    "Twitter" -> shareViaTwitter(post)
                     "TikTok" -> sharePost(post, "com.zhiliaoapp.musically")
                     "YouTube" -> sharePost(post, "com.google.android.youtube")
                     else -> sharePost(post)
@@ -93,6 +94,37 @@ class PremiumPostFragment : DashboardFragment() {
             } else {
                 Toast.makeText(requireContext(), "Gagal upload ke Instagram", Toast.LENGTH_SHORT).show()
             }
+        }
+    }
+
+    private fun shareViaTwitter(post: InstaPost) {
+        val view = layoutInflater.inflate(R.layout.dialog_progress, null)
+        val progressText = view.findViewById<TextView>(R.id.text_progress)
+        progressText.text = "Proses..."
+        val dialog = androidx.appcompat.app.AlertDialog.Builder(requireContext())
+            .setView(view)
+            .setCancelable(false)
+            .create()
+        dialog.show()
+
+        viewLifecycleOwner.lifecycleScope.launch {
+            progressText.text = "Mengunduh konten..."
+            val file = withContext(Dispatchers.IO) {
+                InstagramShareHelper.ensureContentDownloaded(requireContext(), post)
+            }
+            if (file == null) {
+                dialog.dismiss()
+                Toast.makeText(requireContext(), "Gagal menyiapkan konten", Toast.LENGTH_SHORT).show()
+                return@launch
+            }
+
+            progressText.text = "Memposting..."
+            val ok = withContext(Dispatchers.IO) {
+                postTweetWithMedia(post.caption ?: "", file)
+            }
+            dialog.dismiss()
+            val msg = if (ok) "Tweet terkirim" else "Gagal mengirim tweet"
+            Toast.makeText(requireContext(), msg, Toast.LENGTH_SHORT).show()
         }
     }
 

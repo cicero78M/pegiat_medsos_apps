@@ -110,6 +110,19 @@ object InstagramShareHelper {
         return files
     }
 
+    /**
+     * Ensure the content for [post] has been downloaded locally. When the post
+     * is a carousel this will also fetch additional images. The downloaded file
+     * (image or video) is returned or `null` on failure.
+     */
+    suspend fun ensureContentDownloaded(context: Context, post: InstaPost): File? {
+        val file = downloadIfNeeded(context, post) ?: return null
+        if (!post.isVideo && post.isCarousel) {
+            downloadCarouselImagesIfNeeded(context, post)
+        }
+        return file
+    }
+
     suspend fun uploadPost(context: Context, client: IGClient, post: InstaPost): String? {
         val file = downloadIfNeeded(context, post) ?: return null
         if (!post.isVideo && post.isCarousel) {

@@ -381,7 +381,7 @@ open class DashboardFragment : Fragment(R.layout.fragment_dashboard) {
         }
     }
 
-    private fun sharePost(post: InstaPost) {
+    protected open fun sharePost(post: InstaPost, packageName: String? = null) {
         val fileName = post.id + if (post.isVideo) ".mp4" else ".jpg"
         val baseDir = java.io.File(requireContext().getExternalFilesDir(null), "CiceroReposterApp")
         if (!baseDir.exists()) baseDir.mkdirs()
@@ -436,12 +436,19 @@ open class DashboardFragment : Fragment(R.layout.fragment_dashboard) {
         if (!post.caption.isNullOrBlank()) {
             intent.putExtra(Intent.EXTRA_TEXT, post.caption)
         }
+        if (packageName != null) {
+            intent.setPackage(packageName)
+        }
         val clipboard = requireContext().getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
         clipboard.setPrimaryClip(ClipData.newPlainText("caption", post.caption ?: ""))
-        startActivity(Intent.createChooser(intent, "Share via"))
+        try {
+            startActivity(intent)
+        } catch (_: Exception) {
+            startActivity(Intent.createChooser(intent, "Share via"))
+        }
     }
 
-    private fun showShareDialog(post: InstaPost) {
+    protected open fun showShareDialog(post: InstaPost) {
         val opts = if (post.reported) {
             arrayOf("Share", "Kirim Link", "Laporan WhatsApp")
         } else {

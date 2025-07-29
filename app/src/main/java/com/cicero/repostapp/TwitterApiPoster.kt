@@ -23,6 +23,8 @@ suspend fun postTweetWithMedia(tweetText: String, file: File): Boolean {
         .setOAuthConsumerSecret(API_SECRET)
         .setOAuthAccessToken(ACCESS_TOKEN)
         .setOAuthAccessTokenSecret(ACCESS_TOKEN_SECRET)
+        .setRestBaseURL("https://api.twitter.com/1.1/")
+        .setUploadBaseURL("https://upload.twitter.com/1.1/")
     val twitter = TwitterFactory(cb.build()).instance
 
     return try {
@@ -48,6 +50,8 @@ suspend fun postTweetWithMediaResponse(tweetText: String, file: File): TwitterPo
         .setOAuthAccessToken(ACCESS_TOKEN)
         .setOAuthAccessTokenSecret(ACCESS_TOKEN_SECRET)
         .setJSONStoreEnabled(true)
+        .setRestBaseURL("https://api.twitter.com/1.1/")
+        .setUploadBaseURL("https://upload.twitter.com/1.1/")
     val twitter = TwitterFactory(cb.build()).instance
 
     return try {

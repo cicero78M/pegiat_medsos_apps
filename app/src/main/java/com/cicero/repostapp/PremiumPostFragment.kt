@@ -122,10 +122,10 @@ class PremiumPostFragment : DashboardFragment() {
             }
 
             progressText.text = "Memeriksa laporan..."
-            val exists = withContext(Dispatchers.IO) {
-                twitterLinkExists(post.id, token, userId)
+            val existingLink = withContext(Dispatchers.IO) {
+                getTwitterLink(post.id, token, userId)
             }
-            if (exists) {
+            if (existingLink != null) {
                 dialog.dismiss()
                 Toast.makeText(requireContext(), "Link Twitter sudah ada", Toast.LENGTH_SHORT).show()
                 return@launch
@@ -143,8 +143,8 @@ class PremiumPostFragment : DashboardFragment() {
         }
     }
 
-    private suspend fun twitterLinkExists(sc: String, token: String, userId: String): Boolean {
-        if (token.isBlank() || userId.isBlank()) return false
+    private suspend fun getTwitterLink(sc: String, token: String, userId: String): String? {
+        if (token.isBlank() || userId.isBlank()) return null
         val client = OkHttpClient()
         val req = Request.Builder()
             .url("${BuildConfig.API_BASE_URL}/api/link-reports")
@@ -152,18 +152,19 @@ class PremiumPostFragment : DashboardFragment() {
             .build()
         return try {
             client.newCall(req).execute().use { resp ->
-                if (!resp.isSuccessful) return false
+                if (!resp.isSuccessful) return null
                 val body = resp.body?.string()
                 val arr = try { JSONObject(body ?: "{}").optJSONArray("data") ?: JSONArray() } catch (_: Exception) { JSONArray() }
                 for (i in 0 until arr.length()) {
                     val obj = arr.optJSONObject(i) ?: continue
                     if (obj.optString("shortcode") == sc && obj.optString("user_id") == userId) {
-                        if (obj.optString("twitter_link").isNotBlank()) return true
+                        val link = obj.optString("twitter_link")
+                        return link.takeIf { it.isNotBlank() }
                     }
                 }
-                false
+                null
             }
-        } catch (_: Exception) { false }
+        } catch (_: Exception) { null }
     }
 
     private suspend fun instagramLinkExists(sc: String, token: String, userId: String): Boolean {

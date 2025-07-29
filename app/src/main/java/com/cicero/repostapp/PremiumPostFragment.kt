@@ -15,7 +15,7 @@ import org.json.JSONArray
 import org.json.JSONObject
 import com.github.instagram4j.instagram4j.IGClient
 import java.io.File
-import com.cicero.repostapp.postTweetWithMedia
+import com.cicero.repostapp.postTweetWithMediaResponse
 
 class PremiumPostFragment : DashboardFragment() {
     companion object {
@@ -108,7 +108,10 @@ class PremiumPostFragment : DashboardFragment() {
         dialog.show()
 
         viewLifecycleOwner.lifecycleScope.launch {
-            progressText.text = "Mengunduh konten..."
+            val token = arguments?.getString("token") ?: ""
+            val userId = arguments?.getString("userId") ?: ""
+
+            progressText.text = "Memeriksa konten..."
             val file = withContext(Dispatchers.IO) {
                 InstagramShareHelper.ensureContentDownloaded(requireContext(), post)
             }
@@ -118,14 +121,49 @@ class PremiumPostFragment : DashboardFragment() {
                 return@launch
             }
 
+            progressText.text = "Memeriksa laporan..."
+            val exists = withContext(Dispatchers.IO) {
+                twitterLinkExists(post.id, token, userId)
+            }
+            if (exists) {
+                dialog.dismiss()
+                Toast.makeText(requireContext(), "Link Twitter sudah ada", Toast.LENGTH_SHORT).show()
+                return@launch
+            }
+
             progressText.text = "Memposting..."
-            val ok = withContext(Dispatchers.IO) {
-                postTweetWithMedia(post.caption ?: "", file)
+            val result = withContext(Dispatchers.IO) {
+                postTweetWithMediaResponse(post.caption ?: "", file)
             }
             dialog.dismiss()
-            val msg = if (ok) "Tweet terkirim" else "Gagal mengirim tweet"
-            Toast.makeText(requireContext(), msg, Toast.LENGTH_SHORT).show()
+            androidx.appcompat.app.AlertDialog.Builder(requireContext())
+                .setMessage(result.rawResponse)
+                .setPositiveButton("OK", null)
+                .show()
         }
+    }
+
+    private suspend fun twitterLinkExists(sc: String, token: String, userId: String): Boolean {
+        if (token.isBlank() || userId.isBlank()) return false
+        val client = OkHttpClient()
+        val req = Request.Builder()
+            .url("${BuildConfig.API_BASE_URL}/api/link-reports")
+            .header("Authorization", "Bearer $token")
+            .build()
+        return try {
+            client.newCall(req).execute().use { resp ->
+                if (!resp.isSuccessful) return false
+                val body = resp.body?.string()
+                val arr = try { JSONObject(body ?: "{}").optJSONArray("data") ?: JSONArray() } catch (_: Exception) { JSONArray() }
+                for (i in 0 until arr.length()) {
+                    val obj = arr.optJSONObject(i) ?: continue
+                    if (obj.optString("shortcode") == sc && obj.optString("user_id") == userId) {
+                        if (obj.optString("twitter_link").isNotBlank()) return true
+                    }
+                }
+                false
+            }
+        } catch (_: Exception) { false }
     }
 
     private suspend fun instagramLinkExists(sc: String, token: String, userId: String): Boolean {

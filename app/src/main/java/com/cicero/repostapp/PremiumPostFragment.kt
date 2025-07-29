@@ -1,6 +1,11 @@
 package com.cicero.repostapp
 
 import androidx.core.os.bundleOf
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import android.widget.Toast
 
 class PremiumPostFragment : DashboardFragment() {
     companion object {
@@ -18,16 +23,35 @@ class PremiumPostFragment : DashboardFragment() {
         }
         androidx.appcompat.app.AlertDialog.Builder(requireContext())
             .setItems(options.toTypedArray()) { _, which ->
-                val pkg = when (options[which]) {
-                    "Instagram" -> "com.instagram.android"
-                    "Facebook" -> "com.facebook.katana"
-                    "Twitter" -> "com.twitter.android"
-                    "TikTok" -> "com.zhiliaoapp.musically"
-                    "YouTube" -> "com.google.android.youtube"
-                    else -> null
+                when (options[which]) {
+                    "Instagram" -> shareViaInstagram(post)
+                    "Facebook" -> sharePost(post, "com.facebook.katana")
+                    "Twitter" -> sharePost(post, "com.twitter.android")
+                    "TikTok" -> sharePost(post, "com.zhiliaoapp.musically")
+                    "YouTube" -> sharePost(post, "com.google.android.youtube")
+                    else -> sharePost(post)
                 }
-                sharePost(post, pkg)
             }
             .show()
+    }
+
+    private fun shareViaInstagram(post: InstaPost) {
+        viewLifecycleOwner.lifecycleScope.launch {
+            val client = withContext(Dispatchers.IO) {
+                InstagramShareHelper.loadClient(requireContext())
+            }
+            if (client == null) {
+                Toast.makeText(requireContext(), "Autopost Instagram belum login", Toast.LENGTH_SHORT).show()
+                return@launch
+            }
+            val link = withContext(Dispatchers.IO) {
+                InstagramShareHelper.uploadPost(requireContext(), client, post)
+            }
+            if (link != null) {
+                Toast.makeText(requireContext(), "Berhasil upload", Toast.LENGTH_SHORT).show()
+            } else {
+                Toast.makeText(requireContext(), "Gagal upload ke Instagram", Toast.LENGTH_SHORT).show()
+            }
+        }
     }
 }

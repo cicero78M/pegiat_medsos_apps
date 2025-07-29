@@ -136,10 +136,14 @@ class PremiumPostFragment : DashboardFragment() {
                 postTweetWithMediaResponse(post.caption ?: "", file)
             }
             dialog.dismiss()
-            androidx.appcompat.app.AlertDialog.Builder(requireContext())
+            val alert = androidx.appcompat.app.AlertDialog.Builder(requireContext())
                 .setMessage(result.rawResponse)
                 .setPositiveButton("OK", null)
-                .show()
+                .create()
+            alert.setOnDismissListener {
+                Toast.makeText(requireContext(), "Posting selesai", Toast.LENGTH_SHORT).show()
+            }
+            alert.show()
         }
     }
 
@@ -158,13 +162,19 @@ class PremiumPostFragment : DashboardFragment() {
                 for (i in 0 until arr.length()) {
                     val obj = arr.optJSONObject(i) ?: continue
                     if (obj.optString("shortcode") == sc && obj.optString("user_id") == userId) {
-                        val link = obj.optString("twitter_link")
-                        return link.takeIf { it.isNotBlank() }
+                        val link = obj.optString("twitter_link").trim()
+                        return link.takeIf { isValidLink(it) }
                     }
                 }
                 null
             }
         } catch (_: Exception) { null }
+    }
+
+    private fun isValidLink(link: String?): Boolean {
+        if (link.isNullOrBlank()) return false
+        val l = link.trim()
+        return l.startsWith("http://", true) || l.startsWith("https://", true)
     }
 
     private suspend fun instagramLinkExists(sc: String, token: String, userId: String): Boolean {

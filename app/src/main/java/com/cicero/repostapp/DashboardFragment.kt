@@ -28,7 +28,7 @@ import okhttp3.Request
 import org.json.JSONArray
 import org.json.JSONObject
 
-class DashboardFragment : Fragment(R.layout.fragment_dashboard) {
+open class DashboardFragment : Fragment(R.layout.fragment_dashboard) {
 
     companion object {
         private const val ARG_USER_ID = "userId"

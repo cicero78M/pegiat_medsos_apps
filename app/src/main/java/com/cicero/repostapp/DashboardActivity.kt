@@ -19,6 +19,7 @@ class DashboardActivity : AppCompatActivity() {
         val pageTitles = listOf(
             "Profil",
             "Tugas Resmi",
+            "Premium Post",
             "Tugas Khusus",
             "Autorepost"
         )
@@ -29,6 +30,7 @@ class DashboardActivity : AppCompatActivity() {
         val fragments = listOf(
             UserProfileFragment.newInstance(userId, token),
             DashboardFragment.newInstance(userId, token),
+            PremiumPostFragment.newInstance(userId, token),
             SpecialTaskFragment.newInstance(userId, token),
             AutopostFragment.newInstance()
         )
@@ -47,8 +49,9 @@ class DashboardActivity : AppCompatActivity() {
             when (item.itemId) {
                 R.id.nav_profile -> { viewPager.currentItem = 0; true }
                 R.id.nav_insta -> { viewPager.currentItem = 1; true }
-                R.id.nav_special -> { viewPager.currentItem = 2; true }
-                R.id.nav_autopost -> { viewPager.currentItem = 3; true }
+                R.id.nav_premium -> { viewPager.currentItem = 2; true }
+                R.id.nav_special -> { viewPager.currentItem = 3; true }
+                R.id.nav_autopost -> { viewPager.currentItem = 4; true }
                 else -> false
             }
         }
@@ -58,8 +61,9 @@ class DashboardActivity : AppCompatActivity() {
                 when (position) {
                     0 -> { bottomNav.selectedItemId = R.id.nav_profile }
                     1 -> { bottomNav.selectedItemId = R.id.nav_insta }
-                    2 -> { bottomNav.selectedItemId = R.id.nav_special }
-                    3 -> { bottomNav.selectedItemId = R.id.nav_autopost }
+                    2 -> { bottomNav.selectedItemId = R.id.nav_premium }
+                    3 -> { bottomNav.selectedItemId = R.id.nav_special }
+                    4 -> { bottomNav.selectedItemId = R.id.nav_autopost }
                 }
                 supportActionBar?.title = pageTitles[position]
             }

@@ -6,6 +6,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import android.widget.Toast
+import android.widget.TextView
 
 class PremiumPostFragment : DashboardFragment() {
     companion object {
@@ -36,17 +37,30 @@ class PremiumPostFragment : DashboardFragment() {
     }
 
     private fun shareViaInstagram(post: InstaPost) {
+        val view = layoutInflater.inflate(R.layout.dialog_progress, null)
+        val progressText = view.findViewById<TextView>(R.id.text_progress)
+        progressText.text = "Menyiapkan..."
+        val dialog = androidx.appcompat.app.AlertDialog.Builder(requireContext())
+            .setView(view)
+            .setCancelable(false)
+            .create()
+        dialog.show()
+
         viewLifecycleOwner.lifecycleScope.launch {
+            progressText.text = "Memuat sesi..."
             val client = withContext(Dispatchers.IO) {
                 InstagramShareHelper.loadClient(requireContext())
             }
             if (client == null) {
+                dialog.dismiss()
                 Toast.makeText(requireContext(), "Autopost Instagram belum login", Toast.LENGTH_SHORT).show()
                 return@launch
             }
+            progressText.text = "Mengunggah..."
             val link = withContext(Dispatchers.IO) {
                 InstagramShareHelper.uploadPost(requireContext(), client, post)
             }
+            dialog.dismiss()
             if (link != null) {
                 Toast.makeText(requireContext(), "Berhasil upload", Toast.LENGTH_SHORT).show()
             } else {

@@ -1,11 +1,13 @@
+import java.util.Properties
+val envProps = Properties()
+
 plugins {
     id("com.android.application")
     kotlin("android")
 }
 
-import java.util.Properties
 
-val envProps = Properties()
+
 val envFile = rootProject.file(".env")
 if (envFile.exists()) {
     envFile.inputStream().use { envProps.load(it) }
@@ -75,7 +77,7 @@ dependencies {
     implementation("androidx.security:security-crypto:1.1.0-alpha06")
     implementation("com.google.code.gson:gson:2.10.1")
     implementation("com.github.instagram4j:instagram4j:2.0.7")
-    implementation("org.twitter4j:twitter4j-core:4.1.1")
+    implementation("org.twitter4j:twitter4j-core:4.0.7")
     implementation("com.github.scribejava:scribejava-core:8.3.3")
     implementation("com.github.scribejava:scribejava-apis:8.3.3")
     // Align with the version pulled in by the Android Gradle plugin to avoid

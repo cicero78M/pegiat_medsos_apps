@@ -940,12 +940,18 @@ class AutopostFragment : Fragment() {
             appendLog("Memproses tugas ${'$'}{post.taskNumber} (${ '$'}{post.id })")
             appendLog("Memeriksa download…")
             delay(5000)
-            val file = retryAction("download konten") { downloadIfNeeded(post) } ?: break
+            val file = retryAction("download konten") { downloadIfNeeded(post) } ?: run {
+                appendLog("Lewati tugas karena gagal mengunduh konten")
+                continue
+            }
             if (!post.isVideo && post.isCarousel) {
                 downloadCarouselImagesIfNeeded(post)
             }
             delay(5000)
-            val igLink = retryAction("upload Instagram") { uploadToInstagram(post, file) } ?: break
+            val igLink = retryAction("upload Instagram") { uploadToInstagram(post, file) } ?: run {
+                appendLog("Lewati tugas karena gagal mengunggah ke Instagram")
+                continue
+            }
             delay(5000)
             appendLog("Link: ${'$'}igLink")
             sendLink(post.id, igLink)

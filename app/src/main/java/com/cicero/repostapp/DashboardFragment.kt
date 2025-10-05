@@ -18,6 +18,8 @@ import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -69,10 +71,12 @@ open class DashboardFragment : Fragment(R.layout.fragment_dashboard) {
         userId = arguments?.getString(ARG_USER_ID) ?: ""
         if (token.isNotBlank() && userId.isNotBlank()) {
             progressBar.visibility = View.VISIBLE
-            CoroutineScope(Dispatchers.IO).launch {
+            viewLifecycleOwner.lifecycleScope.launch(Dispatchers.IO) {
                 reportedIds.clear()
                 reportedIds.addAll(fetchReportedShortcodes(token, userId))
+                if (!isActive || !viewLifecycleOwner.lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED)) return@launch
                 withContext(Dispatchers.Main) {
+                    if (!isActive || !viewLifecycleOwner.lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED)) return@withContext
                     fetchClientAndPosts(userId, token)
                 }
             }
@@ -80,7 +84,7 @@ open class DashboardFragment : Fragment(R.layout.fragment_dashboard) {
     }
 
     private fun fetchClientAndPosts(userId: String, token: String) {
-        CoroutineScope(Dispatchers.IO).launch {
+        viewLifecycleOwner.lifecycleScope.launch(Dispatchers.IO) {
             val client = OkHttpClient()
             val req = Request.Builder()
                 .url("${BuildConfig.API_BASE_URL}/api/users/$userId")
@@ -96,26 +100,32 @@ open class DashboardFragment : Fragment(R.layout.fragment_dashboard) {
                                 ?.optString("client_id") ?: ""
                         } catch (_: Exception) { "" }
                     } else ""
+                    if (!isActive || !viewLifecycleOwner.lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED)) return@launch
                     withContext(Dispatchers.Main) {
+                        if (!isActive || !viewLifecycleOwner.lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED)) return@withContext
                         if (clientId.isNotBlank()) {
                             fetchPosts(token, clientId)
                         } else {
                             progressBar.visibility = View.GONE
-                            Toast.makeText(requireContext(), "Gagal memuat data", Toast.LENGTH_SHORT).show()
+                            val ctx = context ?: return@withContext
+                            Toast.makeText(ctx, "Gagal memuat data", Toast.LENGTH_SHORT).show()
                         }
                     }
                 }
             } catch (e: Exception) {
+                if (!isActive || !viewLifecycleOwner.lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED)) return@launch
                 withContext(Dispatchers.Main) {
+                    if (!isActive || !viewLifecycleOwner.lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED)) return@withContext
                     progressBar.visibility = View.GONE
-                    Toast.makeText(requireContext(), "Gagal terhubung ke server", Toast.LENGTH_SHORT).show()
+                    val ctx = context ?: return@withContext
+                    Toast.makeText(ctx, "Gagal terhubung ke server", Toast.LENGTH_SHORT).show()
                 }
             }
         }
     }
 
     private fun fetchPosts(token: String, clientId: String) {
-        CoroutineScope(Dispatchers.IO).launch {
+        viewLifecycleOwner.lifecycleScope.launch(Dispatchers.IO) {
             val client = OkHttpClient()
             val url = "${BuildConfig.API_BASE_URL}/api/insta/posts?client_id=$clientId"
             val req = Request.Builder()
@@ -125,7 +135,9 @@ open class DashboardFragment : Fragment(R.layout.fragment_dashboard) {
             try {
                 client.newCall(req).execute().use { resp ->
                     val body = resp.body?.string()
+                    if (!isActive || !viewLifecycleOwner.lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED)) return@launch
                     withContext(Dispatchers.Main) {
+                        if (!isActive || !viewLifecycleOwner.lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED)) return@withContext
                         emptyView.visibility = View.GONE
                         if (resp.isSuccessful) {
                             val arr = try {
@@ -198,14 +210,18 @@ open class DashboardFragment : Fragment(R.layout.fragment_dashboard) {
                             progressBar.visibility = View.GONE
                         } else {
                             progressBar.visibility = View.GONE
-                            Toast.makeText(requireContext(), "Gagal mengambil konten", Toast.LENGTH_SHORT).show()
+                            val ctx = context ?: return@withContext
+                            Toast.makeText(ctx, "Gagal mengambil konten", Toast.LENGTH_SHORT).show()
                         }
                     }
                 }
             } catch (e: Exception) {
+                if (!isActive || !viewLifecycleOwner.lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED)) return@launch
                 withContext(Dispatchers.Main) {
+                    if (!isActive || !viewLifecycleOwner.lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED)) return@withContext
                     progressBar.visibility = View.GONE
-                    Toast.makeText(requireContext(), "Gagal terhubung ke server", Toast.LENGTH_SHORT).show()
+                    val ctx = context ?: return@withContext
+                    Toast.makeText(ctx, "Gagal terhubung ke server", Toast.LENGTH_SHORT).show()
                 }
             }
         }

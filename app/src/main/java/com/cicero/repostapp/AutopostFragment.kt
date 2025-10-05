@@ -16,6 +16,7 @@ import android.content.Intent
 import java.io.File
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.activity.result.contract.ActivityResultContracts
 import com.bumptech.glide.Glide
@@ -44,6 +45,7 @@ class AutopostFragment : Fragment() {
 
     private var igClient: IGClient? = null
     private var twitterToken: AccessToken? = null
+    private var consoleHeader: TextView? = null
 
     /**
      * Check if a caption already exists on the authenticated Instagram account.
@@ -159,6 +161,7 @@ class AutopostFragment : Fragment() {
             val userId = lines[0]
             val pic = "https://graph.facebook.com/$userId/picture?type=normal"
             withContext(Dispatchers.Main) {
+                if (!canUpdateUi()) return@withContext
                 Glide.with(this@AutopostFragment)
                     .load(pic)
                     .circleCrop()
@@ -174,6 +177,7 @@ class AutopostFragment : Fragment() {
         val username = loadTikTokUsername() ?: return
         val (avatar, uname) = fetchTikTokProfile(username) ?: return
         withContext(Dispatchers.Main) {
+            if (!canUpdateUi()) return@withContext
             Glide.with(this@AutopostFragment)
                 .load(avatar)
                 .circleCrop()
@@ -208,7 +212,7 @@ class AutopostFragment : Fragment() {
         val postTwitter = view.findViewById<Button>(R.id.button_post_twitter)
 
         // attempt to load saved session
-        lifecycleScope.launch(Dispatchers.IO) {
+        viewLifecycleOwner.lifecycleScope.launch(Dispatchers.IO) {
             loadSavedSession(icon, check)
             loadFbSession(fbIcon, fbCheck)
             loadTwitterSession(twitterIcon, twitterCheck)
@@ -219,20 +223,37 @@ class AutopostFragment : Fragment() {
         fbIcon.setOnClickListener { launchFacebookLogin() }
         twitterIcon.setOnClickListener { launchTwitterLogin() }
         tiktokIcon.setOnClickListener { launchTikTokLogin() }
+        consoleHeader = view.findViewById(R.id.console_header)
+
         start.setOnClickListener {
-            lifecycleScope.launch(Dispatchers.IO) {
+            viewLifecycleOwner.lifecycleScope.launch(Dispatchers.IO) {
                 runAutopostWorkflow()
             }
         }
         postTwitter.setOnClickListener {
-            lifecycleScope.launch(Dispatchers.IO) {
+            viewLifecycleOwner.lifecycleScope.launch(Dispatchers.IO) {
                 val file = java.io.File(requireContext().filesDir, "sample.jpg")
                 val ok = postTweetWithMedia("Hello from API", file)
                 withContext(Dispatchers.Main) {
+                    if (!canUpdateUi()) return@withContext
                     val msg = if (ok) "Tweet terkirim" else "Gagal mengirim tweet"
                     android.widget.Toast.makeText(requireContext(), msg, android.widget.Toast.LENGTH_SHORT).show()
                 }
             }
+        }
+    }
+
+    override fun onDestroyView() {
+        consoleHeader = null
+        super.onDestroyView()
+    }
+
+    private fun canUpdateUi(): Boolean {
+        if (!isAdded || view == null) return false
+        return try {
+            viewLifecycleOwner.lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED)
+        } catch (_: IllegalStateException) {
+            false
         }
     }
 
@@ -257,7 +278,7 @@ class AutopostFragment : Fragment() {
 
 
     private fun performLogin(username: String, password: String, icon: ImageView, check: ImageView) {
-        lifecycleScope.launch(Dispatchers.IO) {
+        viewLifecycleOwner.lifecycleScope.launch(Dispatchers.IO) {
             try {
                 val twoFactor = IGClient.Builder.LoginHandler { client, resp ->
                     val code = runBlocking { promptTwoFactorCode() }
@@ -282,6 +303,7 @@ class AutopostFragment : Fragment() {
                 saveSession(client)
                 val pic = client.selfProfile.profile_pic_url
                 withContext(Dispatchers.Main) {
+                    if (!canUpdateUi()) return@withContext
                     Glide.with(this@AutopostFragment)
                         .load(pic)
                         .circleCrop()
@@ -289,9 +311,15 @@ class AutopostFragment : Fragment() {
                     check.visibility = View.VISIBLE
                 }
             } catch (e: IGLoginException) {
-                withContext(Dispatchers.Main) { Toast.makeText(requireContext(), "Login gagal", Toast.LENGTH_SHORT).show() }
+                withContext(Dispatchers.Main) {
+                    if (!canUpdateUi()) return@withContext
+                    Toast.makeText(requireContext(), "Login gagal", Toast.LENGTH_SHORT).show()
+                }
             } catch (_: Exception) {
-                withContext(Dispatchers.Main) { Toast.makeText(requireContext(), "Gagal terhubung", Toast.LENGTH_SHORT).show() }
+                withContext(Dispatchers.Main) {
+                    if (!canUpdateUi()) return@withContext
+                    Toast.makeText(requireContext(), "Gagal terhubung", Toast.LENGTH_SHORT).show()
+                }
             }
         }
     }
@@ -346,6 +374,7 @@ class AutopostFragment : Fragment() {
             saveInstagramUsername(client.selfProfile.username)
             val pic = client.selfProfile.profile_pic_url
             withContext(Dispatchers.Main) {
+                if (!canUpdateUi()) return@withContext
                 Glide.with(this@AutopostFragment)
                     .load(pic)
                     .circleCrop()
@@ -370,6 +399,7 @@ class AutopostFragment : Fragment() {
             twitterToken = token
             val pic = profile ?: user.profileImageURLHttps
             withContext(Dispatchers.Main) {
+                if (!canUpdateUi()) return@withContext
                 Glide.with(this@AutopostFragment)
                     .load(pic)
                     .circleCrop()
@@ -397,7 +427,7 @@ class AutopostFragment : Fragment() {
             saveTwitterToken(access, profile)
             val icon = view?.findViewById<ImageView>(R.id.twitter_icon)
             val check = view?.findViewById<ImageView>(R.id.twitter_check)
-            if (icon != null && check != null) {
+            if (icon != null && check != null && canUpdateUi()) {
                 Glide.with(this)
                     .load(profile)
                     .circleCrop()
@@ -421,7 +451,7 @@ class AutopostFragment : Fragment() {
             val icon = view?.findViewById<ImageView>(R.id.facebook_icon)
             val check = view?.findViewById<ImageView>(R.id.facebook_check)
             val pic = "https://graph.facebook.com/$userId/picture?type=normal"
-            if (icon != null && check != null) {
+            if (icon != null && check != null && canUpdateUi()) {
                 Glide.with(this)
                     .load(pic)
                     .circleCrop()
@@ -453,9 +483,10 @@ class AutopostFragment : Fragment() {
         val check = view?.findViewById<ImageView>(R.id.tiktok_check)
         val text = view?.findViewById<TextView>(R.id.tiktok_username)
         if (icon == null || check == null || text == null) return
-        lifecycleScope.launch(Dispatchers.IO) {
+        viewLifecycleOwner.lifecycleScope.launch(Dispatchers.IO) {
             val result = fetchTikTokProfile(username)
             withContext(Dispatchers.Main) {
+                if (!canUpdateUi()) return@withContext
                 if (result == null) {
                     Toast.makeText(requireContext(), "Gagal mengambil profil", Toast.LENGTH_SHORT).show()
                 } else {
@@ -494,10 +525,10 @@ class AutopostFragment : Fragment() {
     }
 
     private suspend fun runAutopostWorkflow() {
-        val logView = requireView().findViewById<android.widget.TextView>(R.id.console_header)
         fun appendLog(msg: String) {
-            lifecycleScope.launch(Dispatchers.Main) {
-                logView.append("\n$msg")
+            viewLifecycleOwner.lifecycleScope.launch(Dispatchers.Main) {
+                if (!canUpdateUi()) return@launch
+                consoleHeader?.append("\n$msg")
             }
         }
 
@@ -909,18 +940,27 @@ class AutopostFragment : Fragment() {
             appendLog("Memproses tugas ${'$'}{post.taskNumber} (${ '$'}{post.id })")
             appendLog("Memeriksa download…")
             delay(5000)
-            val file = retryAction("download konten") { downloadIfNeeded(post) } ?: break
+            val file = retryAction("download konten") { downloadIfNeeded(post) } ?: run {
+                appendLog("Lewati tugas karena gagal mengunduh konten")
+                continue
+            }
             if (!post.isVideo && post.isCarousel) {
                 downloadCarouselImagesIfNeeded(post)
             }
             delay(5000)
-            val igLink = retryAction("upload Instagram") { uploadToInstagram(post, file) } ?: break
+            val igLink = retryAction("upload Instagram") { uploadToInstagram(post, file) } ?: run {
+                appendLog("Lewati tugas karena gagal mengunggah ke Instagram")
+                continue
+            }
             delay(5000)
             appendLog("Link: ${'$'}igLink")
             sendLink(post.id, igLink)
             val ttLink = retryAction("post TikTok") { postToTikTok(post, file) }
             if (ttLink != null) sendTikTokLink(post.id, ttLink)
-            withContext(Dispatchers.Main) { shareCarousel(post) }
+            withContext(Dispatchers.Main) {
+                if (!canUpdateUi()) return@withContext
+                shareCarousel(post)
+            }
             appendLog("Tugas selesai")
             delay(5000)
         }
@@ -928,9 +968,11 @@ class AutopostFragment : Fragment() {
     }
 
     private suspend fun runTwitterPostWorkflow() {
-        val logView = requireView().findViewById<android.widget.TextView>(R.id.console_header)
         fun appendLog(msg: String) {
-            lifecycleScope.launch(Dispatchers.Main) { logView.append("\n$msg") }
+            viewLifecycleOwner.lifecycleScope.launch(Dispatchers.Main) {
+                if (!canUpdateUi()) return@launch
+                consoleHeader?.append("\n$msg")
+            }
         }
 
         val prefs = requireContext().getSharedPreferences("auth", android.content.Context.MODE_PRIVATE)

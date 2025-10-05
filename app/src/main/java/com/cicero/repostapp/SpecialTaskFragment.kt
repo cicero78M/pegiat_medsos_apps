@@ -18,6 +18,8 @@ import androidx.core.os.bundleOf
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -66,10 +68,12 @@ class SpecialTaskFragment : Fragment(R.layout.fragment_special_task) {
         userId = arguments?.getString(ARG_USER_ID) ?: ""
         if (token.isNotBlank() && userId.isNotBlank()) {
             progressBar.visibility = View.VISIBLE
-            CoroutineScope(Dispatchers.IO).launch {
+            viewLifecycleOwner.lifecycleScope.launch(Dispatchers.IO) {
                 reportedIds.clear()
                 reportedIds.addAll(fetchReportedShortcodes(token, userId))
+                if (!isActive || !viewLifecycleOwner.lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED)) return@launch
                 withContext(Dispatchers.Main) {
+                    if (!isActive || !viewLifecycleOwner.lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED)) return@withContext
                     fetchClientAndPosts(userId, token)
                 }
             }
@@ -77,7 +81,7 @@ class SpecialTaskFragment : Fragment(R.layout.fragment_special_task) {
     }
 
     private fun fetchClientAndPosts(userId: String, token: String) {
-        CoroutineScope(Dispatchers.IO).launch {
+        viewLifecycleOwner.lifecycleScope.launch(Dispatchers.IO) {
             val client = OkHttpClient()
             val req = Request.Builder()
                 .url("${BuildConfig.API_BASE_URL}/api/users/$userId")
@@ -91,33 +95,41 @@ class SpecialTaskFragment : Fragment(R.layout.fragment_special_task) {
                             JSONObject(body ?: "{}").optJSONObject("data")?.optString("client_id") ?: ""
                         } catch (_: Exception) { "" }
                     } else ""
+                    if (!isActive || !viewLifecycleOwner.lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED)) return@launch
                     withContext(Dispatchers.Main) {
+                        if (!isActive || !viewLifecycleOwner.lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED)) return@withContext
                         if (clientId.isNotBlank()) {
                             fetchSpecialPosts(token, clientId)
                         } else {
                             progressBar.visibility = View.GONE
-                            Toast.makeText(requireContext(), "Gagal memuat data", Toast.LENGTH_SHORT).show()
+                            val ctx = context ?: return@withContext
+                            Toast.makeText(ctx, "Gagal memuat data", Toast.LENGTH_SHORT).show()
                         }
                     }
                 }
             } catch (_: Exception) {
+                if (!isActive || !viewLifecycleOwner.lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED)) return@launch
                 withContext(Dispatchers.Main) {
+                    if (!isActive || !viewLifecycleOwner.lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED)) return@withContext
                     progressBar.visibility = View.GONE
-                    Toast.makeText(requireContext(), "Gagal terhubung ke server", Toast.LENGTH_SHORT).show()
+                    val ctx = context ?: return@withContext
+                    Toast.makeText(ctx, "Gagal terhubung ke server", Toast.LENGTH_SHORT).show()
                 }
             }
         }
     }
 
     private fun fetchSpecialPosts(token: String, clientId: String) {
-        CoroutineScope(Dispatchers.IO).launch {
+        viewLifecycleOwner.lifecycleScope.launch(Dispatchers.IO) {
             val client = OkHttpClient()
             val url = "${BuildConfig.API_BASE_URL}/api/insta/posts-khusus?client_id=$clientId"
             val req = Request.Builder().url(url).header("Authorization", "Bearer $token").build()
             try {
                 client.newCall(req).execute().use { resp ->
                     val body = resp.body?.string()
+                    if (!isActive || !viewLifecycleOwner.lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED)) return@launch
                     withContext(Dispatchers.Main) {
+                        if (!isActive || !viewLifecycleOwner.lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED)) return@withContext
                         emptyView.visibility = View.GONE
                         if (resp.isSuccessful) {
                             val arr = try { JSONObject(body ?: "{}").optJSONArray("data") } catch (_: Exception) { JSONArray() }
@@ -147,14 +159,18 @@ class SpecialTaskFragment : Fragment(R.layout.fragment_special_task) {
                             progressBar.visibility = View.GONE
                         } else {
                             progressBar.visibility = View.GONE
-                            Toast.makeText(requireContext(), "Gagal mengambil data", Toast.LENGTH_SHORT).show()
+                            val ctx = context ?: return@withContext
+                            Toast.makeText(ctx, "Gagal mengambil data", Toast.LENGTH_SHORT).show()
                         }
                     }
                 }
             } catch (_: Exception) {
+                if (!isActive || !viewLifecycleOwner.lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED)) return@launch
                 withContext(Dispatchers.Main) {
+                    if (!isActive || !viewLifecycleOwner.lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED)) return@withContext
                     progressBar.visibility = View.GONE
-                    Toast.makeText(requireContext(), "Gagal terhubung ke server", Toast.LENGTH_SHORT).show()
+                    val ctx = context ?: return@withContext
+                    Toast.makeText(ctx, "Gagal terhubung ke server", Toast.LENGTH_SHORT).show()
                 }
             }
         }

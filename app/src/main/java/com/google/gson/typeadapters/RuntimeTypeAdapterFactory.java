@@ -274,6 +274,13 @@ public final class RuntimeTypeAdapterFactory<T> implements TypeAdapterFactory {
         }
 
         if (labelJsonElement == null) {
+          if (!baseType.equals(rawType)) {
+            @SuppressWarnings("unchecked") // registration requires that subtype extends T
+            TypeAdapter<R> delegate = (TypeAdapter<R>) subtypeToDelegate.get(rawType);
+            if (delegate != null) {
+              return delegate.fromJsonTree(jsonElement);
+            }
+          }
           throw new JsonParseException(
               "cannot deserialize "
                   + baseType

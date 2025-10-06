@@ -83,6 +83,7 @@ dependencies {
     // Align with the version pulled in by the Android Gradle plugin to avoid
     // dependency resolution conflicts during the build.
     compileOnly("com.google.errorprone:error_prone_annotations:2.15.0")
-    
 
+
+    testImplementation("junit:junit:4.13.2")
 }

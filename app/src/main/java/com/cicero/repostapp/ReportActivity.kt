@@ -4,12 +4,12 @@ import android.os.Bundle
 import android.widget.Button
 import android.content.ClipboardManager
 import android.content.Context
-import android.view.View
 import android.widget.TextView
 import android.widget.Toast
 import android.net.Uri
 import androidx.appcompat.app.AppCompatActivity
 import android.widget.ImageView
+import android.content.SharedPreferences
 import com.bumptech.glide.Glide
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -46,6 +46,40 @@ class ReportActivity : AppCompatActivity() {
     private var taskNumber: Int = 0
     private var shortcode: String? = null
     private var isSpecial: Boolean = false
+
+    private fun reportPrefs() = getSharedPreferences("report_links", MODE_PRIVATE)
+
+    private fun cacheKey(platform: String) = "${userId}_${platform}"
+
+    private fun loadReportCache(): MutableMap<String, MutableSet<String>> {
+        val prefs = reportPrefs()
+        val cache = mutableMapOf<String, MutableSet<String>>()
+        platforms.forEach { platform ->
+            val stored = prefs.getStringSet(cacheKey(platform.name), emptySet()) ?: emptySet()
+            cache[platform.name] = stored.toMutableSet()
+        }
+        return cache
+    }
+
+    private fun mergeReportCache(
+        cache: MutableMap<String, MutableSet<String>>,
+        links: Map<String, String?>
+    ) {
+        var editor: SharedPreferences.Editor? = null
+        links.forEach { (platform, link) ->
+            if (!link.isNullOrBlank()) {
+                val normalized = link.trim().lowercase(java.util.Locale.ROOT)
+                val set = cache.getOrPut(platform) { mutableSetOf() }
+                if (set.add(normalized)) {
+                    if (editor == null) {
+                        editor = reportPrefs().edit()
+                    }
+                    editor?.putStringSet(cacheKey(platform), set)
+                }
+            }
+        }
+        editor?.apply()
+    }
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_report)
@@ -182,10 +216,14 @@ class ReportActivity : AppCompatActivity() {
             val obj = getExistingReport(shortcode!!)
             if (obj != null) {
                 withContext(Dispatchers.Main) {
+                    val cache = loadReportCache()
+                    val existingLinks = mutableMapOf<String, String?>()
                     platforms.forEach { p ->
                         val link = obj.optString("${p.name}_link").takeIf { it.isNotBlank() }
+                        existingLinks[p.name] = link
                         fillField(p, link)
                     }
+                    mergeReportCache(cache, existingLinks)
                 }
             }
         }
@@ -297,6 +335,25 @@ class ReportActivity : AppCompatActivity() {
             return
         }
 
+        val cache = loadReportCache()
+        var hasLocalDuplicate = false
+        platforms.forEach { platform ->
+            val link = links[platform.name]
+            if (!link.isNullOrBlank()) {
+                val normalized = link.trim().lowercase(java.util.Locale.ROOT)
+                if (cache[platform.name]?.contains(normalized) == true) {
+                    resetField(platform)
+                    Toast.makeText(this, "Link ${platform.name} sudah pernah dilaporkan", Toast.LENGTH_SHORT).show()
+                    links[platform.name] = null
+                    hasLocalDuplicate = true
+                }
+            }
+        }
+
+        if (hasLocalDuplicate) {
+            return
+        }
+
         CoroutineScope(Dispatchers.IO).launch {
             var valid = true
             for (p in platforms) {
@@ -337,6 +394,7 @@ class ReportActivity : AppCompatActivity() {
                 } catch (_: Exception) { false }
                 withContext(Dispatchers.Main) {
                     if (success) {
+                        mergeReportCache(cache, links)
                         Toast.makeText(this@ReportActivity, "Laporan terkirim", Toast.LENGTH_SHORT).show()
                         shareViaWhatsApp(shortcodeVal ?: "", taskNumber, links)
                         finish()

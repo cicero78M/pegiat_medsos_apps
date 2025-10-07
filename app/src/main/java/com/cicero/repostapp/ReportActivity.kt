@@ -297,7 +297,6 @@ class ReportActivity : AppCompatActivity() {
             if (trimmed.isBlank()) null else trimmed
         }
         if (sanitized.isEmpty()) return emptySet()
-        val requestedNormalized = sanitized.map { it.lowercase(java.util.Locale.ROOT) }.toSet()
         val baseUrl = "${BuildConfig.API_BASE_URL}/api/link-reports${if (isSpecial) "-khusus" else ""}"
         val httpUrl = baseUrl.toHttpUrlOrNull()?.newBuilder()?.apply {
             sanitized.forEach { addQueryParameter("links[]", it) }
@@ -314,32 +313,10 @@ class ReportActivity : AppCompatActivity() {
                     JSONObject(body ?: "{}").optJSONArray("duplicates") ?: JSONArray()
                 } catch (_: Exception) { JSONArray() }
                 val duplicates = mutableSetOf<String>()
-                if (duplicatesJson.length() > 0) {
-                    for (i in 0 until duplicatesJson.length()) {
-                        val link = duplicatesJson.optString(i)
-                        if (!link.isNullOrBlank()) {
-                            duplicates.add(link.trim().lowercase(java.util.Locale.ROOT))
-                        }
-                    }
-                } else {
-                    val arr = try {
-                        JSONObject(body ?: "{}").optJSONArray("data") ?: JSONArray()
-                    } catch (_: Exception) { JSONArray() }
-                    for (i in 0 until arr.length()) {
-                        val obj = arr.optJSONObject(i) ?: continue
-                        val remoteLinks = listOf(
-                            obj.optString("instagram_link"),
-                            obj.optString("facebook_link"),
-                            obj.optString("twitter_link"),
-                            obj.optString("tiktok_link"),
-                            obj.optString("youtube_link")
-                        )
-                        remoteLinks.forEach { remoteLink ->
-                            val normalized = remoteLink.trim().lowercase(java.util.Locale.ROOT)
-                            if (normalized.isNotBlank() && normalized in requestedNormalized) {
-                                duplicates.add(normalized)
-                            }
-                        }
+                for (i in 0 until duplicatesJson.length()) {
+                    val link = duplicatesJson.optString(i)
+                    if (!link.isNullOrBlank()) {
+                        duplicates.add(link.trim().lowercase(java.util.Locale.ROOT))
                     }
                 }
                 duplicates

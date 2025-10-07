@@ -71,7 +71,7 @@ const handleGetLinkReports = (isSpecial) => (req, res) => {
 
   if (requestedLinks.length) {
     const duplicates = collectDuplicates(collection, requestedLinks);
-    return res.json({ data: filteredData, duplicates });
+    return res.json({ duplicates, count: duplicates.length });
   }
   res.json({ data: filteredData });
 };

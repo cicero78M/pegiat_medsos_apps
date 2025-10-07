@@ -27,6 +27,10 @@
     <string name="save_login">Save Login</string>
     <string name="show_password">Show Password</string>
     <string name="bagikan_ulang_konten_resmi_lebih_mudah">Bagikan Ulang Konten Resmi Lebih Mudah</string>
+    <string name="landing_subtitle">Unduh, Repost dan Kirim Laporan Link dalam Satu Aplikasi.</string>
+    <string name="feature_authentication">Authentikasi - Registrasi via WA Bot</string>
+    <string name="feature_repost">Repost Cepat - Klik-Download-Repost</string>
+    <string name="feature_report">Laporan Link - Copy-Paste-Kirim</string>
     <string name="check_update">Perbarui Aplikasi</string>
     <string name="up_to_date">Aplikasi sudah versi terbaru</string>
     <string name="premium_registration_title">Pendaftaran Premium</string>

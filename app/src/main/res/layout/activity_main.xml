@@ -23,7 +23,7 @@
             android:id="@+id/landing_subtitle"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Unduh, Repost dan Kirim Laporan Link dalam Satu Aplikasi."
+            android:text="@string/landing_subtitle"
             android:gravity="center"
             android:paddingBottom="24dp" />
 
@@ -57,7 +57,7 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:text="Authentikasi - Registrasi via WA Bot" />
+                    android:text="@string/feature_authentication" />
             </LinearLayout>
 
             <LinearLayout
@@ -75,7 +75,7 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:text="Repost Cepat - Klik-Download-Repost" />
+                    android:text="@string/feature_repost" />
             </LinearLayout>
 
             <LinearLayout
@@ -95,7 +95,7 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:text="Laporan Link - Copy-Paste-Kirim" />
+                    android:text="@string/feature_report" />
             </LinearLayout>
 
         </LinearLayout>

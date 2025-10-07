@@ -31,6 +31,9 @@
     <string name="feature_authentication">Authentikasi - Registrasi via WA Bot</string>
     <string name="feature_repost">Repost Cepat - Klik-Download-Repost</string>
     <string name="feature_report">Laporan Link - Copy-Paste-Kirim</string>
+    <string name="cd_feature_authentication_icon">Ikon fitur autentikasi</string>
+    <string name="cd_feature_repost_icon">Ikon fitur repost cepat</string>
+    <string name="cd_feature_report_icon">Ikon fitur laporan link</string>
     <string name="check_update">Perbarui Aplikasi</string>
     <string name="up_to_date">Aplikasi sudah versi terbaru</string>
     <string name="premium_registration_title">Pendaftaran Premium</string>

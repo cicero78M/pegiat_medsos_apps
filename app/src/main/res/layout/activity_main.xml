@@ -43,16 +43,16 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
-                android:paddingBottom="12dp">
+                android:paddingBottom="12dp"
+                android:gravity="center_vertical">
 
 
-                <TextView
+                <ImageView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:paddingEnd="8dp"
-                    android:text="🔐"
-                    android:textColor="#EF6C00"
-                    android:textSize="32sp" />
+                    android:layout_marginEnd="12dp"
+                    android:contentDescription="@string/cd_feature_authentication_icon"
+                    android:src="@drawable/ic_feature_authentication" />
                 <TextView
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
@@ -64,13 +64,14 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
-                android:paddingBottom="12dp">
-                <TextView
+                android:paddingBottom="12dp"
+                android:gravity="center_vertical">
+                <ImageView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="⚡"
-                    android:textSize="32sp"
-                    android:paddingEnd="8dp" />
+                    android:layout_marginEnd="12dp"
+                    android:contentDescription="@string/cd_feature_repost_icon"
+                    android:src="@drawable/ic_feature_repost" />
                 <TextView
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
@@ -82,15 +83,15 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
-                android:paddingBottom="12dp">
+                android:paddingBottom="12dp"
+                android:gravity="center_vertical">
 
-                <TextView
+                <ImageView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:paddingEnd="8dp"
-                    android:text="📑"
-                    android:textColor="#039BE5"
-                    android:textSize="32sp" />
+                    android:layout_marginEnd="12dp"
+                    android:contentDescription="@string/cd_feature_report_icon"
+                    android:src="@drawable/ic_feature_report" />
                 <TextView
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"

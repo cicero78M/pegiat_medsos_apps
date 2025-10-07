@@ -1,22 +1,24 @@
 package com.cicero.repostapp
 
-import android.annotation.SuppressLint
 import android.os.Bundle
 import android.view.View
 import android.widget.TextView
 import android.widget.Toast
-import android.widget.ImageView
 import androidx.core.content.edit
 import androidx.core.os.bundleOf
+import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
 import com.bumptech.glide.Glide
-import kotlinx.coroutines.CoroutineScope
+import com.cicero.repostapp.databinding.ActivityProfileBinding
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import org.json.JSONObject
+import java.text.NumberFormat
+import java.util.Locale
 
 class UserProfileFragment : Fragment(R.layout.activity_profile) {
 
@@ -31,114 +33,214 @@ class UserProfileFragment : Fragment(R.layout.activity_profile) {
         }
     }
 
+    private var _binding: ActivityProfileBinding? = null
+    private val bindingOrNull get() = _binding
+
+    private val numberFormatter by lazy {
+        NumberFormat.getIntegerInstance(Locale("id", "ID"))
+    }
+
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        _binding = ActivityProfileBinding.bind(view)
+        updateProfileUI(ProfileData())
         val userId = arguments?.getString(ARG_USER_ID) ?: ""
         val token = arguments?.getString(ARG_TOKEN) ?: ""
         if (userId.isNotBlank() && token.isNotBlank()) {
-            fetchProfile(userId, token, view)
+            fetchProfile(userId, token)
         }
     }
 
-    @SuppressLint("SetTextI18n")
-    private fun fetchProfile(userId: String, token: String, rootView: View) {
-        CoroutineScope(Dispatchers.IO).launch {
-            val client = OkHttpClient()
-            val request = Request.Builder()
-                .url("${BuildConfig.API_BASE_URL}/api/users/$userId")
-                .header("Authorization", "Bearer $token")
-                .build()
-            try {
-                client.newCall(request).execute().use { response ->
-                    val body = response.body?.string()
-                    withContext(Dispatchers.Main) {
-                        if (response.isSuccessful) {
-                            val data = try {
-                                val obj = JSONObject(body ?: "{}")
-                                obj.optJSONObject("data")
-                            } catch (_: Exception) {
-                                null
-                            }
-                            val insta = data?.optString("insta") ?: ""
-                            val rank = data?.optString("title") ?: ""
-                            val name = data?.optString("nama") ?: ""
-                            val satfung = data?.optString("divisi") ?: ""
-                            val nrp = data?.optString("user_id") ?: userId
+    override fun onDestroyView() {
+        super.onDestroyView()
+        _binding = null
+    }
 
-                            val authPrefs = SecurePreferences.getAuthPrefs(requireContext())
-                            authPrefs.edit()
-                                .putString("rank", rank)
-                                .putString("name", name)
-                                .putString("satfung", satfung)
-                                .apply()
-
-                            rootView.findViewById<TextView>(R.id.text_username).text =
-                                "@$insta"
-                            rootView.findViewById<TextView>(R.id.text_name).text =
-                                "$rank $name"
-                            rootView.findViewById<TextView>(R.id.text_nrp).text =
-                                nrp
-                            rootView.findViewById<TextView>(R.id.text_client_id).text =
-                                (data?.optString("client_id") ?: "")
-                            rootView.findViewById<TextView>(R.id.text_satfung).text =
-                                satfung
-                            rootView.findViewById<TextView>(R.id.text_jabatan).text =
-                                (data?.optString("jabatan") ?: "")
-                            rootView.findViewById<TextView>(R.id.text_tiktok).text =
-                                (data?.optString("tiktok") ?: "")
-                            val statusText = data?.optString("status") ?: ""
-
-
-                            val statusImage = if (statusText.equals("true", true)) {
-                                R.drawable.ic_status_true
-                            } else {
-                                R.drawable.ic_status_false
-                            }
-                            rootView.findViewById<ImageView>(R.id.image_status).setImageResource(statusImage)
-                            fetchStats(token, insta, rootView)
-                        } else {
-                            Toast.makeText(requireContext(), "Gagal memuat profil", Toast.LENGTH_SHORT).show()
-                        }
+    private fun fetchProfile(userId: String, token: String) {
+        val okHttpClient = OkHttpClient()
+        viewLifecycleOwner.lifecycleScope.launch {
+            val result = withContext(Dispatchers.IO) {
+                runCatching {
+                    val request = Request.Builder()
+                        .url("${BuildConfig.API_BASE_URL}/api/users/$userId")
+                        .header("Authorization", "Bearer $token")
+                        .build()
+                    okHttpClient.newCall(request).execute().use { response ->
+                        val body = response.body?.string().orEmpty()
+                        ProfileResponse(response.isSuccessful, body)
                     }
                 }
-            } catch (e: Exception) {
-                withContext(Dispatchers.Main) {
-                    Toast.makeText(requireContext(), "Gagal terhubung ke server", Toast.LENGTH_SHORT).show()
+            }
+
+            val binding = bindingOrNull ?: return@launch
+
+            result.onFailure {
+                context?.let { ctx ->
+                    Toast.makeText(ctx, ctx.getString(R.string.profile_error_connection), Toast.LENGTH_SHORT)
+                        .show()
+                }
+            }.onSuccess { response ->
+                if (!response.isSuccessful) {
+                    context?.let { ctx ->
+                        Toast.makeText(ctx, ctx.getString(R.string.profile_error_load), Toast.LENGTH_SHORT)
+                            .show()
+                    }
+                    return@onSuccess
+                }
+
+                val data = parseProfileData(response.body, userId)
+                if (data != null) {
+                    storeProfileLocally(data)
+                    updateProfileUI(data)
+                    fetchStats(token, data.instagramUsername)
+                } else {
+                    updateProfileUI(ProfileData())
                 }
             }
         }
     }
 
-    private fun fetchStats(token: String, username: String, rootView: View) {
-        if (username.isBlank()) return
-        CoroutineScope(Dispatchers.IO).launch {
-            var (stats, _) = getStatsFromDb(token, username)
-            if (stats == null) {
-                fetchAndStoreStats(token, username)
-                val result = getStatsFromDb(token, username)
-                stats = result.first
-            }
-            withContext(Dispatchers.Main) {
-                rootView.findViewById<TextView>(R.id.stat_posts).text =
-                    (stats?.optInt("post_count") ?: 0).toString()
-                rootView.findViewById<TextView>(R.id.stat_followers).text =
-                    (stats?.optInt("follower_count") ?: 0).toString()
-                rootView.findViewById<TextView>(R.id.stat_following).text =
-                    (stats?.optInt("following_count") ?: 0).toString()
-                val avatarUrl = stats?.optString("profile_pic_url") ?: ""
-                val fullAvatarUrl = if (avatarUrl.startsWith("http"))
-                    avatarUrl else "${BuildConfig.API_BASE_URL}$avatarUrl"
+    private fun fetchStats(token: String, username: String) {
+        if (username.isBlank()) {
+            bindingOrNull?.cardStats?.isVisible = false
+            return
+        }
 
-                Glide.with(this@UserProfileFragment)
-                    .load(fullAvatarUrl)
-                    .placeholder(R.drawable.profile_avatar_placeholder)
-                    .error(R.drawable.profile_avatar_placeholder)
-                    .circleCrop()
-                    .into(rootView.findViewById(R.id.image_avatar))
-
+        viewLifecycleOwner.lifecycleScope.launch {
+            val stats = withContext(Dispatchers.IO) {
+                var (profileStats, _) = getStatsFromDb(token, username)
+                if (profileStats == null) {
+                    fetchAndStoreStats(token, username)
+                    profileStats = getStatsFromDb(token, username).first
+                }
+                profileStats
             }
+
+            val binding = bindingOrNull ?: return@launch
+            binding.cardStats.isVisible = true
+            binding.statPosts.text = formatCount(stats?.optInt("post_count") ?: 0)
+            binding.statFollowers.text = formatCount(stats?.optInt("follower_count") ?: 0)
+            binding.statFollowing.text = formatCount(stats?.optInt("following_count") ?: 0)
+
+            val avatarUrl = stats?.optString("profile_pic_url").orEmpty()
+            val fullAvatarUrl = if (avatarUrl.startsWith("http")) {
+                avatarUrl
+            } else {
+                "${BuildConfig.API_BASE_URL}$avatarUrl"
+            }
+
+            Glide.with(this@UserProfileFragment)
+                .load(fullAvatarUrl)
+                .placeholder(R.drawable.profile_avatar_placeholder)
+                .error(R.drawable.profile_avatar_placeholder)
+                .circleCrop()
+                .into(binding.imageAvatar)
         }
     }
+
+    private fun updateProfileUI(data: ProfileData) {
+        val binding = bindingOrNull ?: return
+        val usernameDisplay = data.instagramUsername.takeIf { it.isNotBlank() }
+            ?.let { getString(R.string.profile_username_format, it) }
+            .orEmpty()
+        val displayName = listOf(data.rank, data.name)
+            .filter { it.isNotBlank() }
+            .joinToString(" ")
+            .trim()
+        val tiktokHandle = formatHandle(data.tiktok)
+
+        binding.textUsername.renderValue(usernameDisplay)
+        binding.textName.renderValue(displayName)
+        binding.textNrp.renderValue(data.nrp)
+        binding.textClientId.renderValue(data.clientId)
+        binding.textSatfung.renderValue(data.satfung)
+        binding.textJabatan.renderValue(data.jabatan)
+        binding.textTiktok.renderValue(tiktokHandle)
+
+        binding.cardStats.isVisible = data.instagramUsername.isNotBlank()
+
+        updateStatusIcon(data.status)
+    }
+
+    private fun updateStatusIcon(status: Boolean?) {
+        val binding = bindingOrNull ?: return
+        val (icon, description) = when (status) {
+            true -> R.drawable.ic_status_true to getString(R.string.profile_status_active)
+            false -> R.drawable.ic_status_false to getString(R.string.profile_status_inactive)
+            null -> null to getString(R.string.profile_status_unknown)
+        }
+
+        binding.imageStatus.isVisible = icon != null
+        if (icon != null) {
+            binding.imageStatus.setImageResource(icon)
+        }
+        binding.imageStatus.contentDescription = description
+    }
+
+    private fun parseProfileData(body: String, fallbackUserId: String): ProfileData? {
+        val rawJson = runCatching { JSONObject(body) }.getOrNull() ?: return null
+        val data = rawJson.optJSONObject("data") ?: rawJson
+        if (data.length() == 0) return null
+
+        val statusText = data.optString("status")
+        val status = when {
+            statusText.equals("true", true) -> true
+            statusText.equals("false", true) -> false
+            else -> null
+        }
+
+        return ProfileData(
+            instagramUsername = data.optString("insta").orEmpty(),
+            rank = data.optString("title").orEmpty(),
+            name = data.optString("nama").orEmpty(),
+            satfung = data.optString("divisi").orEmpty(),
+            nrp = data.optString("user_id", fallbackUserId).orEmpty(),
+            clientId = data.optString("client_id").orEmpty(),
+            jabatan = data.optString("jabatan").orEmpty(),
+            tiktok = data.optString("tiktok").orEmpty(),
+            status = status
+        )
+    }
+
+    private fun storeProfileLocally(data: ProfileData) {
+        val context = context ?: return
+        val authPrefs = SecurePreferences.getAuthPrefs(context)
+        authPrefs.edit {
+            putString("rank", data.rank)
+            putString("name", data.name)
+            putString("satfung", data.satfung)
+        }
+    }
+
+    private fun TextView.renderValue(value: String) {
+        val displayText = value.takeIf { it.isNotBlank() }
+            ?: context.getString(R.string.profile_data_not_available)
+        text = displayText
+    }
+
+    private fun formatHandle(raw: String): String {
+        val sanitized = raw.trim().removePrefix("@")
+        return if (sanitized.isNotBlank()) "@${sanitized}" else ""
+    }
+
+    private fun formatCount(count: Int): String = numberFormatter.format(count)
+
+    private data class ProfileResponse(
+        val isSuccessful: Boolean,
+        val body: String
+    )
+
+    private data class ProfileData(
+        val instagramUsername: String = "",
+        val rank: String = "",
+        val name: String = "",
+        val satfung: String = "",
+        val nrp: String = "",
+        val clientId: String = "",
+        val jabatan: String = "",
+        val tiktok: String = "",
+        val status: Boolean? = null
+    )
 
     private fun getStatsFromDb(token: String, username: String): Pair<JSONObject?, String?> {
         val client = OkHttpClient()

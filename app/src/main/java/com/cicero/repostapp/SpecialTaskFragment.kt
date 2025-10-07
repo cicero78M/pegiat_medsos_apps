@@ -513,7 +513,7 @@ class SpecialTaskFragment : Fragment(R.layout.fragment_special_task) {
         val today = java.time.LocalDate.now()
         val day = today.format(java.time.format.DateTimeFormatter.ofPattern("EEEE", locale))
         val dateStr = today.format(java.time.format.DateTimeFormatter.ofPattern("dd MMMM yyyy", locale))
-        val prefsAuth = requireContext().getSharedPreferences("auth", Context.MODE_PRIVATE)
+        val prefsAuth = SecurePreferences.getAuthPrefs(requireContext())
         val rank = prefsAuth.getString("rank", "") ?: ""
         val name = prefsAuth.getString("name", "") ?: ""
         val satfung = prefsAuth.getString("satfung", "") ?: ""

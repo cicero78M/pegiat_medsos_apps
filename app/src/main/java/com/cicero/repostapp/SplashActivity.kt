@@ -17,7 +17,7 @@ class SplashActivity : AppCompatActivity() {
         supportActionBar?.hide()
         setContentView(R.layout.activity_splash)
 
-        val prefs = getSharedPreferences("auth", MODE_PRIVATE)
+        val prefs = SecurePreferences.getAuthPrefs(this)
         val token = prefs.getString("token", null)
         val userId = prefs.getString("userId", null)
         if (!token.isNullOrBlank() && !userId.isNullOrBlank()) {

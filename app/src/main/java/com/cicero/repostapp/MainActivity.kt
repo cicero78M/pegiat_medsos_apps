@@ -24,7 +24,7 @@ class MainActivity : AppCompatActivity() {
         supportActionBar?.setLogo(R.mipmap.ic_launcher_foreground)
         supportActionBar?.setDisplayUseLogoEnabled(true)
 
-        val prefs = getSharedPreferences("auth", MODE_PRIVATE)
+        val prefs = SecurePreferences.getAuthPrefs(this)
         val token = prefs.getString("token", null)
         val userId = prefs.getString("userId", null)
         if (!token.isNullOrBlank() && !userId.isNullOrBlank()) {

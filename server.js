@@ -5,6 +5,74 @@ const app = express();
 app.use(express.static('public'));
 app.use(express.json());
 
+const linkFields = ['instagram_link', 'facebook_link', 'twitter_link', 'tiktok_link', 'youtube_link'];
+const linkReportsStore = {
+  regular: [],
+  special: [],
+};
+
+const normalizeLink = (link) => (link || '').trim().toLowerCase();
+
+const toArray = (value) => {
+  if (!value) return [];
+  return Array.isArray(value) ? value : [value];
+};
+
+const parseRequestedLinks = (query) => {
+  const rawLinks = [
+    ...toArray(query.links),
+    ...toArray(query['links[]']),
+    ...toArray(query.link),
+  ];
+  return rawLinks
+    .map((link) => (typeof link === 'string' ? link : String(link || '')))
+    .map((link) => link.trim())
+    .filter((link) => link.length > 0);
+};
+
+const collectDuplicates = (reports, requestedLinks) => {
+  const requested = new Set(requestedLinks.map((link) => normalizeLink(link)).filter((link) => link));
+  if (!requested.size) return [];
+  const duplicates = new Set();
+  for (const report of reports) {
+    for (const field of linkFields) {
+      const normalized = normalizeLink(report[field]);
+      if (normalized && requested.has(normalized)) {
+        duplicates.add(normalized);
+      }
+    }
+  }
+  return Array.from(duplicates);
+};
+
+const getCollection = (isSpecial) => (isSpecial ? linkReportsStore.special : linkReportsStore.regular);
+
+const handleGetLinkReports = (isSpecial) => (req, res) => {
+  const collection = getCollection(isSpecial);
+  const requestedLinks = parseRequestedLinks(req.query);
+  if (requestedLinks.length) {
+    const duplicates = collectDuplicates(collection, requestedLinks);
+    return res.json({ data: collection, duplicates });
+  }
+  res.json({ data: collection });
+};
+
+const handlePostLinkReports = (isSpecial) => (req, res) => {
+  const collection = getCollection(isSpecial);
+  const payload = req.body || {};
+  const record = {
+    id: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
+    shortcode: payload.shortcode || '',
+    user_id: payload.user_id || '',
+  };
+  for (const field of linkFields) {
+    record[field] = payload[field] || '';
+  }
+  record.created_at = new Date().toISOString();
+  collection.push(record);
+  res.status(201).json({ data: record });
+};
+
 // store temporary IgApiClient sessions for 2FA/checkpoint handling
 // each entry holds an object { client: IgApiClient, timestamp: number }
 const igSessions = new Map();
@@ -26,6 +94,11 @@ app.get('/', (req, res) => {
 app.get('/autopost', (req, res) => {
   res.sendFile(`${process.cwd()}/public/autopost.html`);
 });
+
+app.get('/api/link-reports', handleGetLinkReports(false));
+app.post('/api/link-reports', handlePostLinkReports(false));
+app.get('/api/link-reports-khusus', handleGetLinkReports(true));
+app.post('/api/link-reports-khusus', handlePostLinkReports(true));
 
 app.post('/login', async (req, res) => {
   const { username, password, twoFactorCode, twoFactorIdentifier, checkpointCode } = req.body;

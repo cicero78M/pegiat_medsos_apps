@@ -118,8 +118,6 @@ class LoginActivity : AppCompatActivity() {
                                 putString("token", token)
                                 putString("userId", userId)
                             }
-
-                            ensurePremiumData(token, userId)
                             val loginPrefs = getSharedPreferences("login", MODE_PRIVATE)
                             if (saveLogin) {
                                 loginPrefs.edit {
@@ -182,35 +180,4 @@ class LoginActivity : AppCompatActivity() {
         finish()
     }
 
-    private fun ensurePremiumData(token: String, userId: String) {
-        CoroutineScope(Dispatchers.IO).launch {
-            val client = OkHttpClient()
-            val checkReq = Request.Builder()
-                .url("${BuildConfig.API_BASE_URL}/api/premium-subscriptions/user/$userId/active")
-                .header("Authorization", "Bearer $token")
-                .build()
-            try {
-                client.newCall(checkReq).execute().use { resp ->
-                    val bodyStr = resp.body?.string()
-                    val dataObj = try {
-                        JSONObject(bodyStr ?: "{}").optJSONObject("data")
-                    } catch (_: Exception) { null }
-                    if (dataObj == null) {
-                        val json = JSONObject().apply {
-                            put("username", userId)
-                            put("status", "pending")
-                        }
-                        val body = json.toString().toRequestBody("application/json".toMediaType())
-                        val postReq = Request.Builder()
-                            .url("${BuildConfig.API_BASE_URL}/api/premium-subscriptions")
-                            .header("Authorization", "Bearer $token")
-                            .post(body)
-                            .build()
-                        client.newCall(postReq).execute().close()
-                    }
-                }
-            } catch (_: Exception) {
-            }
-        }
-    }
 }

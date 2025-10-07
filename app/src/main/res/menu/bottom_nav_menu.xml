@@ -9,16 +9,8 @@
         android:icon="@android:drawable/ic_menu_gallery"
         android:title="Tugas Resmi" />
     <item
-        android:id="@+id/nav_premium"
-        android:icon="@android:drawable/ic_menu_gallery"
-        android:title="Premium Post" />
-    <item
         android:id="@+id/nav_special"
         android:icon="@android:drawable/ic_menu_agenda"
         android:title="Tugas Khusus" />
-    <item
-        android:id="@+id/nav_autopost"
-        android:icon="@android:drawable/ic_menu_upload"
-        android:title="Autopost" />
     <!-- Removed YouTube and Facebook pages -->
 </menu>

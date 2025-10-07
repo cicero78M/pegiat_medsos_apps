@@ -15,6 +15,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -281,35 +282,63 @@ class ReportActivity : AppCompatActivity() {
         }
     }
 
-    private suspend fun isDuplicate(link: String): Boolean {
-        if (token.isBlank()) return false
+    private suspend fun fetchExistingLinks(linkCollection: Collection<String>): Set<String> {
+        if (token.isBlank()) return emptySet()
+        val sanitized = linkCollection.mapNotNull {
+            val trimmed = it.trim()
+            if (trimmed.isBlank()) null else trimmed
+        }
+        if (sanitized.isEmpty()) return emptySet()
+        val requestedNormalized = sanitized.map { it.lowercase(java.util.Locale.ROOT) }.toSet()
+        val baseUrl = "${BuildConfig.API_BASE_URL}/api/link-reports${if (isSpecial) "-khusus" else ""}"
+        val httpUrl = baseUrl.toHttpUrlOrNull()?.newBuilder()?.apply {
+            sanitized.forEach { addQueryParameter("links[]", it) }
+        }?.build() ?: return emptySet()
         val client = OkHttpClient()
         val req = Request.Builder()
-            .url("${BuildConfig.API_BASE_URL}/api/link-reports${if (isSpecial) "-khusus" else ""}")
+            .url(httpUrl)
             .header("Authorization", "Bearer $token")
             .build()
         return try {
             client.newCall(req).execute().use { resp ->
-                if (!resp.isSuccessful) return false
+                if (!resp.isSuccessful) return emptySet()
                 val body = resp.body?.string()
-                val arr = try {
-                    JSONObject(body ?: "{}").optJSONArray("data") ?: JSONArray()
+                val duplicatesJson = try {
+                    JSONObject(body ?: "{}").optJSONArray("duplicates") ?: JSONArray()
                 } catch (_: Exception) { JSONArray() }
-                for (i in 0 until arr.length()) {
-                    val obj = arr.optJSONObject(i) ?: continue
-                    val links = listOf(
-                        obj.optString("instagram_link"),
-                        obj.optString("facebook_link"),
-                        obj.optString("twitter_link"),
-                        obj.optString("tiktok_link"),
-                        obj.optString("youtube_link")
-                    )
-                    if (links.any { it.equals(link, true) }) return true
+                val duplicates = mutableSetOf<String>()
+                if (duplicatesJson.length() > 0) {
+                    for (i in 0 until duplicatesJson.length()) {
+                        val link = duplicatesJson.optString(i)
+                        if (!link.isNullOrBlank()) {
+                            duplicates.add(link.trim().lowercase(java.util.Locale.ROOT))
+                        }
+                    }
+                } else {
+                    val arr = try {
+                        JSONObject(body ?: "{}").optJSONArray("data") ?: JSONArray()
+                    } catch (_: Exception) { JSONArray() }
+                    for (i in 0 until arr.length()) {
+                        val obj = arr.optJSONObject(i) ?: continue
+                        val remoteLinks = listOf(
+                            obj.optString("instagram_link"),
+                            obj.optString("facebook_link"),
+                            obj.optString("twitter_link"),
+                            obj.optString("tiktok_link"),
+                            obj.optString("youtube_link")
+                        )
+                        remoteLinks.forEach { remoteLink ->
+                            val normalized = remoteLink.trim().lowercase(java.util.Locale.ROOT)
+                            if (normalized.isNotBlank() && normalized in requestedNormalized) {
+                                duplicates.add(normalized)
+                            }
+                        }
+                    }
                 }
-                false
+                duplicates
             }
         } catch (_: Exception) {
-            false
+            emptySet()
         }
     }
 
@@ -355,21 +384,31 @@ class ReportActivity : AppCompatActivity() {
         }
 
         CoroutineScope(Dispatchers.IO).launch {
-            var valid = true
-            for (p in platforms) {
-                val link = links[p.name]
-                if (!link.isNullOrBlank() && isDuplicate(link)) {
-                    withContext(Dispatchers.Main) {
-                        resetField(p)
-                        Toast.makeText(this@ReportActivity, "Link ${p.name} sudah ada", Toast.LENGTH_SHORT).show()
+            val remoteDuplicates = fetchExistingLinks(
+                links.values.mapNotNull { it }
+            )
+            if (remoteDuplicates.isNotEmpty()) {
+                for (p in platforms) {
+                    val link = links[p.name]
+                    if (!link.isNullOrBlank()) {
+                        val normalized = link.trim().lowercase(java.util.Locale.ROOT)
+                        if (remoteDuplicates.contains(normalized)) {
+                            links[p.name] = null
+                            withContext(Dispatchers.Main) {
+                                resetField(p)
+                                Toast.makeText(
+                                    this@ReportActivity,
+                                    "Link ${p.name} sudah ada",
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                            }
+                        }
                     }
-                    links[p.name] = null
                 }
             }
 
-            if (links["instagram"] == null || links["facebook"] == null || links["twitter"] == null) {
-                valid = false
-            }
+            val valid =
+                links["instagram"] != null && links["facebook"] != null && links["twitter"] != null
 
             if (valid) {
                 val shortcodeVal = shortcode ?: extractShortcode(links["instagram"]!!)

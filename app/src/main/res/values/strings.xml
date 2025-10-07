@@ -44,6 +44,4 @@
     <string name="premium_request_message">Permintaan Subscription Premium
 Username Instagram : %1$s
 User : %2$s</string>
-    <string name="console_header_text">&gt; user@android:~$&#10;&gt; echo &quot;Hello World&quot;&#10;Hello World</string>
-    <string name="premium_required">Fitur autopost hanya untuk pengguna premium</string>
 </resources>

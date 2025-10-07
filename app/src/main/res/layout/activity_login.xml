@@ -54,12 +54,15 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:hint="@string/nrp"
+                        android:importantForAutofill="yes"
                         app:startIconDrawable="@android:drawable/ic_menu_myplaces">
 
                         <com.google.android.material.textfield.TextInputEditText
                             android:id="@+id/input_nrp"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
+                            android:autofillHints="username"
+                            android:imeOptions="actionNext"
                             tools:ignore="TextContrastCheck,VisualLintTextFieldSize" />
                     </com.google.android.material.textfield.TextInputLayout>
 
@@ -69,6 +72,7 @@
                         android:layout_height="wrap_content"
                         android:hint="@string/password"
                         android:layout_marginTop="16dp"
+                        android:importantForAutofill="yes"
                         app:startIconDrawable="@android:drawable/ic_lock_lock"
                         app:endIconMode="password_toggle">
 
@@ -77,6 +81,8 @@
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:inputType="textPassword"
+                            android:autofillHints="password"
+                            android:imeOptions="actionDone"
                             tools:ignore="TextContrastCheck,VisualLintTextFieldSize" />
                     </com.google.android.material.textfield.TextInputLayout>
 

@@ -5,7 +5,6 @@ import android.os.Bundle
 import android.view.View
 import android.widget.TextView
 import android.widget.Toast
-import android.content.Context
 import android.widget.ImageView
 import androidx.core.content.edit
 import androidx.core.os.bundleOf
@@ -66,7 +65,7 @@ class UserProfileFragment : Fragment(R.layout.activity_profile) {
                             val satfung = data?.optString("divisi") ?: ""
                             val nrp = data?.optString("user_id") ?: userId
 
-                            val authPrefs = requireContext().getSharedPreferences("auth", Context.MODE_PRIVATE)
+                            val authPrefs = SecurePreferences.getAuthPrefs(requireContext())
                             authPrefs.edit()
                                 .putString("rank", rank)
                                 .putString("name", name)

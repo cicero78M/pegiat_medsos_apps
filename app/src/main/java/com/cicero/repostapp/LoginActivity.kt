@@ -26,7 +26,7 @@ class LoginActivity : AppCompatActivity() {
         supportActionBar?.hide()
         setContentView(R.layout.activity_login)
 
-        val authPrefs = getSharedPreferences("auth", MODE_PRIVATE)
+        val authPrefs = SecurePreferences.getAuthPrefs(this)
         val savedToken = authPrefs.getString("token", null)
         val savedUser = authPrefs.getString("userId", null)
         if (!savedToken.isNullOrBlank() && !savedUser.isNullOrBlank()) {
@@ -41,11 +41,12 @@ class LoginActivity : AppCompatActivity() {
 
         val loginPrefs = getSharedPreferences("login", MODE_PRIVATE)
         val savedNrp = loginPrefs.getString("nrp", "")
-        val savedPass = loginPrefs.getString("password", "")
-        if (!savedNrp.isNullOrBlank() && !savedPass.isNullOrBlank()) {
+        if (!savedNrp.isNullOrBlank()) {
             nrpInput.setText(savedNrp)
-            passwordInput.setText(savedPass)
             saveLoginBox.isChecked = true
+        }
+        if (loginPrefs.contains("password")) {
+            loginPrefs.edit { remove("password") }
         }
 
         showPasswordBox.setOnCheckedChangeListener { _, checked ->
@@ -113,7 +114,7 @@ class LoginActivity : AppCompatActivity() {
                             val token = obj.optString("token", "")
                             val user = obj.optJSONObject("user")
                             val userId = user?.optString("user_id", nrp) ?: nrp
-                            val prefs = getSharedPreferences("auth", MODE_PRIVATE)
+                            val prefs = SecurePreferences.getAuthPrefs(this@LoginActivity)
                             prefs.edit {
                                 putString("token", token)
                                 putString("userId", userId)
@@ -122,7 +123,7 @@ class LoginActivity : AppCompatActivity() {
                             if (saveLogin) {
                                 loginPrefs.edit {
                                     putString("nrp", nrp)
-                                    putString("password", phone)
+                                    remove("password")
                                 }
                             } else {
                                 loginPrefs.edit { clear() }

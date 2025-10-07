@@ -87,7 +87,7 @@ class ReportActivity : AppCompatActivity() {
         supportActionBar?.setLogo(R.mipmap.ic_launcher_round)
         supportActionBar?.setDisplayUseLogoEnabled(true)
 
-        val prefs = getSharedPreferences("auth", MODE_PRIVATE)
+        val prefs = SecurePreferences.getAuthPrefs(this)
         token = prefs.getString("token", "") ?: ""
         userId = prefs.getString("userId", "") ?: ""
 
@@ -415,7 +415,7 @@ class ReportActivity : AppCompatActivity() {
         val today = java.time.LocalDate.now()
         val day = today.format(java.time.format.DateTimeFormatter.ofPattern("EEEE", locale))
         val dateStr = today.format(java.time.format.DateTimeFormatter.ofPattern("dd MMMM yyyy", locale))
-        val prefsAuth = getSharedPreferences("auth", MODE_PRIVATE)
+        val prefsAuth = SecurePreferences.getAuthPrefs(this)
         val rank = prefsAuth.getString("rank", "") ?: ""
         val name = prefsAuth.getString("name", "") ?: ""
         val satfung = prefsAuth.getString("satfung", "") ?: ""

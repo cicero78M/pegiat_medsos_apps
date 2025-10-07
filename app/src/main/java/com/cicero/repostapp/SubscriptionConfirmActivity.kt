@@ -25,7 +25,7 @@ class SubscriptionConfirmActivity : AppCompatActivity() {
         cancelButton.setOnClickListener { finish() }
 
         confirmButton.setOnClickListener {
-            val prefs = getSharedPreferences("auth", MODE_PRIVATE)
+            val prefs = SecurePreferences.getAuthPrefs(this)
             val token = prefs.getString("token", "") ?: ""
             val userId = intent.getStringExtra("userId") ?: ""
             if (token.isBlank() || userId.isBlank()) {

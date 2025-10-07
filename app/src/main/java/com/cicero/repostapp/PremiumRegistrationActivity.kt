@@ -23,7 +23,7 @@ class PremiumRegistrationActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_premium_registration)
 
-        val prefs = getSharedPreferences("auth", MODE_PRIVATE)
+        val prefs = SecurePreferences.getAuthPrefs(this)
         val token = prefs.getString("token", "") ?: ""
 
         val activeStatusView = findViewById<TextView>(R.id.text_active_status)
@@ -50,9 +50,6 @@ class PremiumRegistrationActivity : AppCompatActivity() {
         val nama = findViewById<EditText>(R.id.input_nama_rekening)
         val nomor = findViewById<EditText>(R.id.input_nomor_rekening)
         val phone = findViewById<EditText>(R.id.input_phone)
-        val loginPrefs = getSharedPreferences("login", MODE_PRIVATE)
-        val savedPhone = loginPrefs.getString("password", "")
-        savedPhone?.takeIf { it.isNotBlank() }?.let { phone.setText(it) }
         val button = findViewById<Button>(R.id.button_submit)
         val cancelButton = findViewById<Button>(R.id.button_cancel)
 
@@ -63,7 +60,7 @@ class PremiumRegistrationActivity : AppCompatActivity() {
         cancelButton.setOnClickListener { finish() }
 
         button.setOnClickListener {
-            val prefs = getSharedPreferences("auth", MODE_PRIVATE)
+            val prefs = SecurePreferences.getAuthPrefs(this)
             val token = prefs.getString("token", "") ?: ""
             if (token.isBlank()) {
                 Toast.makeText(this, "Anda belum login", Toast.LENGTH_SHORT).show()
@@ -97,7 +94,7 @@ class PremiumRegistrationActivity : AppCompatActivity() {
                     if (success) {
                         Toast.makeText(this@PremiumRegistrationActivity, "Pendaftaran tersimpan", Toast.LENGTH_SHORT).show()
 
-                        val authPrefs = getSharedPreferences("auth", MODE_PRIVATE)
+                        val authPrefs = SecurePreferences.getAuthPrefs(this@PremiumRegistrationActivity)
                         val rank = authPrefs.getString("rank", "") ?: ""
                         val nameUser = authPrefs.getString("name", "") ?: ""
                         val nrpUser = authPrefs.getString("userId", usernameVal) ?: usernameVal

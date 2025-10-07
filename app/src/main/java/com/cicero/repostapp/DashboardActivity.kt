@@ -72,7 +72,7 @@ class DashboardActivity : AppCompatActivity() {
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         return when (item.itemId) {
             R.id.menu_logout -> {
-                val prefs = getSharedPreferences("auth", MODE_PRIVATE)
+                val prefs = SecurePreferences.getAuthPrefs(this)
                 prefs.edit().clear().apply()
                 startActivity(Intent(this, MainActivity::class.java))
                 finish()

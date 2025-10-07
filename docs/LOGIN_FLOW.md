@@ -19,6 +19,7 @@ This document describes how the application handles user authentication when a l
 
 - **LoginActivity** contains a form for NRP and phone number (as password).
   - Input is validated locally (non-empty fields) and a request is sent over HTTPS to `/api/auth/user-login`.
+  - Nomor WhatsApp dikirim sebagai nilai untuk field `whatsapp` dan `password` di request body JSON.
   - On success, the JWT token and user ID are stored securely and the dashboard is opened.
   - When the activity starts it also validates any stored token so returning users skip the form entirely.
 - Errors are shown as toast messages, such as "NRP dan password wajib diisi" or "Gagal terhubung ke server".

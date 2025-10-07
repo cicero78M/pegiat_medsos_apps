@@ -119,6 +119,7 @@ class LoginActivity : AppCompatActivity() {
             val json = JSONObject().apply {
                 put("nrp", nrp)
                 put("whatsapp", phone)
+                put("password", phone)
             }
             val body = json.toString().toRequestBody("application/json".toMediaType())
             val request = Request.Builder()

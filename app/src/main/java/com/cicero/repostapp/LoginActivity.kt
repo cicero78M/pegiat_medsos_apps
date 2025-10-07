@@ -10,7 +10,9 @@ import android.widget.Toast
 import android.net.Uri
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.edit
+import androidx.core.widget.addTextChangedListener
 import androidx.lifecycle.lifecycleScope
+import com.google.android.material.textfield.TextInputLayout
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -39,6 +41,8 @@ class LoginActivity : AppCompatActivity() {
         }
         val nrpInput = findViewById<EditText>(R.id.input_nrp)
         val passwordInput = findViewById<EditText>(R.id.input_password)
+        val nrpLayout = findViewById<TextInputLayout>(R.id.layout_nrp)
+        val passwordLayout = findViewById<TextInputLayout>(R.id.layout_password)
         val showPasswordBox = findViewById<CheckBox>(R.id.checkbox_show_password)
         val saveLoginBox = findViewById<CheckBox>(R.id.checkbox_save_login)
         val loginButton = findViewById<Button>(R.id.button_login)
@@ -63,15 +67,43 @@ class LoginActivity : AppCompatActivity() {
             passwordInput.setSelection(passwordInput.text?.length ?: 0)
         }
 
+        nrpInput.addTextChangedListener { text ->
+            if (!text.isNullOrBlank()) {
+                nrpLayout.error = null
+            }
+        }
+
+        passwordInput.addTextChangedListener { text ->
+            if (!text.isNullOrBlank()) {
+                passwordLayout.error = null
+            }
+        }
+
         loginButton.setOnClickListener {
             val nrp = nrpInput.text.toString().trim()
             val phone = passwordInput.text.toString().trim()
             val save = saveLoginBox.isChecked
-            if (nrp.isBlank() || phone.isBlank()) {
-                Toast.makeText(this, "NRP dan password wajib diisi", Toast.LENGTH_SHORT).show()
+
+            var hasError = false
+            if (nrp.isBlank()) {
+                nrpLayout.error = getString(R.string.error_nrp_required)
+                hasError = true
             } else {
-                login(nrp, phone, save)
+                nrpLayout.error = null
             }
+
+            if (phone.isBlank()) {
+                passwordLayout.error = getString(R.string.error_password_required)
+                hasError = true
+            } else {
+                passwordLayout.error = null
+            }
+
+            if (hasError) {
+                return@setOnClickListener
+            }
+
+            login(nrp, phone, save)
         }
 
         registerButton.setOnClickListener {

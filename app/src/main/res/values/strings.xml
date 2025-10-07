@@ -14,6 +14,13 @@
     <string name="profile_avatar">Profile avatar</string>
     <string name="profile_status">Profile status indicator</string>
     <string name="profile_badge">Profile badge</string>
+    <string name="profile_data_not_available">Data belum tersedia</string>
+    <string name="profile_username_format">@%1$s</string>
+    <string name="profile_status_active">Status aktif</string>
+    <string name="profile_status_inactive">Status tidak aktif</string>
+    <string name="profile_status_unknown">Status tidak diketahui</string>
+    <string name="profile_error_load">Gagal memuat profil</string>
+    <string name="profile_error_connection">Gagal terhubung ke server</string>
     <string name="login_logo">Application logo</string>
     <string name="_0">0</string>
     <string name="nama">Nama</string>

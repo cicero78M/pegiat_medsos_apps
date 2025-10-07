@@ -10,8 +10,8 @@ import android.net.Uri
 import androidx.appcompat.app.AppCompatActivity
 import android.widget.ImageView
 import android.content.SharedPreferences
+import androidx.lifecycle.lifecycleScope
 import com.bumptech.glide.Glide
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -214,7 +214,7 @@ class ReportActivity : AppCompatActivity() {
     }
 
     private fun loadExistingReport() {
-        CoroutineScope(Dispatchers.IO).launch {
+        lifecycleScope.launch(Dispatchers.IO) {
             val obj = getExistingReport(shortcode!!)
             if (obj != null) {
                 withContext(Dispatchers.Main) {
@@ -390,7 +390,7 @@ class ReportActivity : AppCompatActivity() {
             return
         }
 
-        CoroutineScope(Dispatchers.IO).launch {
+        lifecycleScope.launch(Dispatchers.IO) {
             val remoteDuplicates = fetchExistingLinks(
                 links.values.mapNotNull { it }
             )

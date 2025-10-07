@@ -10,10 +10,13 @@ import android.widget.Toast
 import android.net.Uri
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.edit
-import kotlinx.coroutines.CoroutineScope
+import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.isActive
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -21,6 +24,8 @@ import okhttp3.RequestBody.Companion.toRequestBody
 import org.json.JSONObject
 
 class LoginActivity : AppCompatActivity() {
+    private val httpClient by lazy { OkHttpClient() }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         supportActionBar?.hide()
@@ -78,8 +83,7 @@ class LoginActivity : AppCompatActivity() {
     }
 
     private fun login(nrp: String, phone: String, saveLogin: Boolean) {
-        CoroutineScope(Dispatchers.IO).launch {
-            val client = OkHttpClient()
+        lifecycleScope.launch(Dispatchers.IO) {
             val json = JSONObject().apply {
                 put("nrp", nrp)
                 put("whatsapp", phone)
@@ -91,7 +95,14 @@ class LoginActivity : AppCompatActivity() {
                 .build()
 
             try {
-                client.newCall(request).execute().use { response ->
+                val call = httpClient.newCall(request)
+                coroutineContext[Job]?.invokeOnCompletion { cause ->
+                    if (cause is CancellationException) {
+                        call.cancel()
+                    }
+                }
+
+                call.execute().use { response ->
                     val responseBody = response.body?.string()
                     val success = response.isSuccessful
                     val message = if (success) {
@@ -105,6 +116,9 @@ class LoginActivity : AppCompatActivity() {
                     }
 
                     withContext(Dispatchers.Main) {
+                        if (!isActive) {
+                            return@withContext
+                        }
                         if (success) {
                             val obj = try {
                                 JSONObject(responseBody ?: "{}")
@@ -141,7 +155,13 @@ class LoginActivity : AppCompatActivity() {
                     }
                 }
             } catch (e: Exception) {
+                if (e is CancellationException || !isActive) {
+                    return@launch
+                }
                 withContext(Dispatchers.Main) {
+                    if (!isActive) {
+                        return@withContext
+                    }
                     Toast.makeText(
                         this@LoginActivity,
                         "Gagal terhubung ke server",
@@ -153,21 +173,33 @@ class LoginActivity : AppCompatActivity() {
     }
 
     private fun validateToken(token: String, userId: String) {
-        CoroutineScope(Dispatchers.IO).launch {
-            val client = OkHttpClient()
+        lifecycleScope.launch(Dispatchers.IO) {
             val request = Request.Builder()
                 .url("${BuildConfig.API_BASE_URL}/api/users/$userId")
                 .header("Authorization", "Bearer $token")
                 .build()
             try {
-                client.newCall(request).execute().use { resp ->
+                val call = httpClient.newCall(request)
+                coroutineContext[Job]?.invokeOnCompletion { cause ->
+                    if (cause is CancellationException) {
+                        call.cancel()
+                    }
+                }
+
+                call.execute().use { resp ->
                     withContext(Dispatchers.Main) {
+                        if (!isActive) {
+                            return@withContext
+                        }
                         if (resp.isSuccessful) {
                             navigateToDashboard(token, userId)
                         }
                     }
                 }
-            } catch (_: Exception) {
+            } catch (e: Exception) {
+                if (e is CancellationException || !isActive) {
+                    return@launch
+                }
             }
         }
     }

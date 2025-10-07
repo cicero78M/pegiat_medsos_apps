@@ -17,7 +17,24 @@ The Express development backend that ships with the project exposes
 `/api/link-reports` and `/api/link-reports-khusus`. Both endpoints accept optional
 `shortcode` and `user_id` query parameters to return at most one matching record,
 which allows the Android client to load any existing submission without
-retrieving the full dataset.
+retrieving the full dataset. When either endpoint receives one or more
+`links[]` query parameters it now returns a compact duplicate summary instead of
+the entire report list:
+
+```http
+GET /api/link-reports?links[]=https://instagram.com/p/example
+
+HTTP/1.1 200 OK
+Content-Type: application/json
+
+{
+  "duplicates": ["https://instagram.com/p/example"],
+  "count": 1
+}
+```
+
+Clients should rely on the `duplicates` array and avoid falling back to
+inspecting a `data` payload for these filtered requests.
 
 The project uses Gradle Kotlin DSL. To build the project you would typically run:
 

@@ -453,14 +453,17 @@ open class DashboardFragment : Fragment(R.layout.fragment_dashboard) {
         if (!post.caption.isNullOrBlank()) {
             intent.putExtra(Intent.EXTRA_TEXT, post.caption)
         }
-        if (packageName != null) {
-            intent.setPackage(packageName)
-        }
         val clipboard = requireContext().getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
         clipboard.setPrimaryClip(ClipData.newPlainText("caption", post.caption ?: ""))
-        try {
-            startActivity(intent)
-        } catch (_: Exception) {
+        if (packageName != null) {
+            intent.setPackage(packageName)
+            try {
+                startActivity(intent)
+            } catch (_: Exception) {
+                intent.setPackage(null)
+                startActivity(Intent.createChooser(intent, "Share via"))
+            }
+        } else {
             startActivity(Intent.createChooser(intent, "Share via"))
         }
     }

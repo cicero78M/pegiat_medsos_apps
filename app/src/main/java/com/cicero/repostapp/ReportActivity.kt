@@ -47,6 +47,7 @@ class ReportActivity : AppCompatActivity() {
     private var taskNumber: Int = 0
     private var shortcode: String? = null
     private var isSpecial: Boolean = false
+    private val httpClient = OkHttpClient()
 
     private fun reportPrefs() = getSharedPreferences("report_links", MODE_PRIVATE)
 
@@ -232,13 +233,12 @@ class ReportActivity : AppCompatActivity() {
 
     private suspend fun getExistingReport(sc: String): JSONObject? {
         if (token.isBlank()) return null
-        val client = OkHttpClient()
         val req = Request.Builder()
             .url("${BuildConfig.API_BASE_URL}/api/link-reports${if (isSpecial) "-khusus" else ""}")
             .header("Authorization", "Bearer $token")
             .build()
         return try {
-            client.newCall(req).execute().use { resp ->
+            httpClient.newCall(req).execute().use { resp ->
                 if (!resp.isSuccessful) return null
                 val body = resp.body?.string()
                 val arr = try {
@@ -294,13 +294,12 @@ class ReportActivity : AppCompatActivity() {
         val httpUrl = baseUrl.toHttpUrlOrNull()?.newBuilder()?.apply {
             sanitized.forEach { addQueryParameter("links[]", it) }
         }?.build() ?: return emptySet()
-        val client = OkHttpClient()
         val req = Request.Builder()
             .url(httpUrl)
             .header("Authorization", "Bearer $token")
             .build()
         return try {
-            client.newCall(req).execute().use { resp ->
+            httpClient.newCall(req).execute().use { resp ->
                 if (!resp.isSuccessful) return emptySet()
                 val body = resp.body?.string()
                 val duplicatesJson = try {
@@ -422,14 +421,13 @@ class ReportActivity : AppCompatActivity() {
                     put("youtube_link", links["youtube"])
                 }
                 val body = json.toString().toRequestBody("application/json".toMediaType())
-                val client = OkHttpClient()
                 val req = Request.Builder()
                     .url("${BuildConfig.API_BASE_URL}/api/link-reports${if (isSpecial) "-khusus" else ""}")
                     .header("Authorization", "Bearer $token")
                     .post(body)
                     .build()
                 val success = try {
-                    client.newCall(req).execute().use { it.isSuccessful }
+                    httpClient.newCall(req).execute().use { it.isSuccessful }
                 } catch (_: Exception) { false }
                 withContext(Dispatchers.Main) {
                     if (success) {

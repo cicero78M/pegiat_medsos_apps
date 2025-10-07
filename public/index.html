@@ -1,11 +1,591 @@
 <!DOCTYPE html>
-<html>
+<html lang="id">
 <head>
     <meta charset="utf-8">
-    <title>TikTok Login</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Pegiat Medsos - Tingkatkan Dampak Sosialmu</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #0f7db1;
+            --primary-light: #1fb2cc;
+            --primary-dark: #0a5576;
+            --accent: #2ef0d3;
+            --surface: #ffffff;
+            --text: #0f172a;
+            --text-light: #475569;
+            --bg: #f1f5f9;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: 'Poppins', Arial, sans-serif;
+            color: var(--text);
+            background: var(--bg);
+            line-height: 1.6;
+        }
+
+        header {
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(15, 125, 177, 0.08);
+        }
+
+        .nav-container {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 1rem 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+        }
+
+        .brand {
+            font-weight: 700;
+            font-size: 1.35rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--primary);
+        }
+
+        .brand span {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 36px;
+            height: 36px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+            color: #fff;
+            font-size: 1.1rem;
+        }
+
+        nav ul {
+            list-style: none;
+            display: flex;
+            gap: 1.5rem;
+            margin: 0;
+            padding: 0;
+        }
+
+        nav a {
+            text-decoration: none;
+            color: var(--text-light);
+            font-weight: 500;
+            transition: color 0.2s ease;
+        }
+
+        nav a:hover,
+        nav a:focus {
+            color: var(--primary);
+        }
+
+        .btn-primary {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.75rem 1.5rem;
+            border-radius: 999px;
+            border: none;
+            font-weight: 600;
+            color: #fff;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+            box-shadow: 0 15px 30px rgba(15, 125, 177, 0.25);
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            text-decoration: none;
+        }
+
+        .btn-primary:hover,
+        .btn-primary:focus {
+            transform: translateY(-2px);
+            box-shadow: 0 20px 34px rgba(15, 125, 177, 0.28);
+        }
+
+        main {
+            display: flex;
+            flex-direction: column;
+            gap: 5rem;
+        }
+
+        .hero {
+            background: linear-gradient(135deg, rgba(15, 125, 177, 0.1) 0%, rgba(47, 240, 211, 0.08) 100%);
+            padding: 6rem 1.5rem 5rem;
+        }
+
+        .hero-content {
+            max-width: 1100px;
+            margin: 0 auto;
+            display: grid;
+            gap: 3rem;
+        }
+
+        .hero-text h1 {
+            font-size: clamp(2.5rem, 5vw, 3.75rem);
+            margin: 0 0 1rem;
+            color: var(--primary-dark);
+        }
+
+        .hero-text p {
+            max-width: 560px;
+            color: var(--text-light);
+            font-size: 1.05rem;
+        }
+
+        .hero-cta {
+            margin-top: 2.5rem;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .hero-cta span {
+            font-size: 0.95rem;
+            color: var(--text-light);
+        }
+
+        .hero-visual {
+            position: relative;
+            padding: 2rem;
+            background: rgba(255, 255, 255, 0.75);
+            border-radius: 30px;
+            box-shadow: 0 25px 50px -20px rgba(15, 125, 177, 0.35);
+            display: grid;
+            gap: 1.5rem;
+        }
+
+        .hero-visual::before {
+            content: "";
+            position: absolute;
+            inset: 12px;
+            border-radius: 24px;
+            border: 1px dashed rgba(15, 125, 177, 0.25);
+            pointer-events: none;
+        }
+
+        .hero-stat {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #fff;
+            border-radius: 20px;
+            padding: 1.25rem 1.5rem;
+            box-shadow: 0 15px 25px -18px rgba(15, 125, 177, 0.5);
+        }
+
+        .hero-stat strong {
+            font-size: 1.8rem;
+            color: var(--primary);
+        }
+
+        .hero-stat span {
+            color: var(--text-light);
+            font-size: 0.9rem;
+        }
+
+        .features {
+            padding: 0 1.5rem;
+        }
+
+        .section-heading {
+            max-width: 1100px;
+            margin: 0 auto 2rem;
+            text-align: center;
+        }
+
+        .section-heading h2 {
+            margin: 0 0 0.75rem;
+            font-size: clamp(2rem, 4vw, 3rem);
+            color: var(--primary-dark);
+        }
+
+        .section-heading p {
+            margin: 0;
+            color: var(--text-light);
+        }
+
+        .feature-grid {
+            max-width: 1100px;
+            margin: 0 auto;
+            display: grid;
+            gap: 1.5rem;
+        }
+
+        .feature-card {
+            background: #fff;
+            border-radius: 24px;
+            padding: 2rem;
+            box-shadow: 0 20px 35px -25px rgba(15, 125, 177, 0.45);
+            border: 1px solid rgba(15, 125, 177, 0.08);
+        }
+
+        .feature-icon {
+            width: 54px;
+            height: 54px;
+            border-radius: 16px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            background: linear-gradient(135deg, rgba(15, 125, 177, 0.2), rgba(47, 240, 211, 0.4));
+            color: var(--primary-dark);
+            margin-bottom: 1.25rem;
+        }
+
+        .feature-card h3 {
+            margin: 0 0 0.75rem;
+            font-size: 1.3rem;
+            color: var(--primary-dark);
+        }
+
+        .feature-card p {
+            margin: 0;
+            color: var(--text-light);
+            font-size: 0.95rem;
+        }
+
+        .cta-section {
+            padding: 0 1.5rem;
+        }
+
+        .cta-box {
+            max-width: 1100px;
+            margin: 0 auto;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+            border-radius: 28px;
+            padding: clamp(2.5rem, 4vw, 3.5rem);
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+            color: #fff;
+            box-shadow: 0 25px 45px -20px rgba(10, 85, 118, 0.6);
+        }
+
+        .cta-box h2 {
+            margin: 0;
+            font-size: clamp(2rem, 4vw, 3rem);
+        }
+
+        .cta-box p {
+            margin: 0;
+            max-width: 540px;
+        }
+
+        .cta-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .btn-outline {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.75rem 1.5rem;
+            border-radius: 999px;
+            border: 2px solid rgba(255, 255, 255, 0.8);
+            color: #fff;
+            text-decoration: none;
+            font-weight: 600;
+            transition: background 0.2s ease;
+        }
+
+        .btn-outline:hover,
+        .btn-outline:focus {
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .testimonials {
+            padding: 0 1.5rem 5rem;
+        }
+
+        .testimonial-grid {
+            max-width: 1100px;
+            margin: 0 auto;
+            display: grid;
+            gap: 1.5rem;
+        }
+
+        .testimonial-card {
+            background: #fff;
+            border-radius: 24px;
+            padding: 2rem;
+            box-shadow: 0 20px 35px -25px rgba(15, 125, 177, 0.45);
+            border: 1px solid rgba(15, 125, 177, 0.08);
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .testimonial-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .avatar {
+            width: 52px;
+            height: 52px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary-light), var(--accent));
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-weight: 600;
+        }
+
+        .testimonial-header div {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .testimonial-header strong {
+            color: var(--primary-dark);
+        }
+
+        .testimonial-header span {
+            color: var(--text-light);
+            font-size: 0.9rem;
+        }
+
+        .testimonial-card p {
+            margin: 0;
+            color: var(--text-light);
+            font-size: 0.95rem;
+        }
+
+        footer {
+            background: #fff;
+            padding: 2.5rem 1.5rem;
+            border-top: 1px solid rgba(15, 125, 177, 0.08);
+        }
+
+        .footer-content {
+            max-width: 1100px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            text-align: center;
+            color: var(--text-light);
+            font-size: 0.9rem;
+        }
+
+        @media (min-width: 768px) {
+            .hero-content {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+                align-items: center;
+            }
+
+            .feature-grid {
+                grid-template-columns: repeat(3, minmax(0, 1fr));
+            }
+
+            .testimonial-grid {
+                grid-template-columns: repeat(3, minmax(0, 1fr));
+            }
+
+            .cta-box {
+                flex-direction: row;
+                align-items: center;
+                justify-content: space-between;
+            }
+
+            .cta-box p {
+                margin-bottom: 0;
+            }
+        }
+
+        @media (max-width: 767px) {
+            nav ul {
+                display: none;
+            }
+
+            header {
+                position: static;
+            }
+
+            .hero {
+                padding-top: 4.5rem;
+            }
+
+            .hero-visual {
+                padding: 1.5rem;
+            }
+
+            .feature-card,
+            .testimonial-card {
+                padding: 1.75rem;
+            }
+        }
+    </style>
 </head>
 <body>
-    <h1>TikTok QR Login</h1>
-    <p>Gunakan aplikasi Android untuk memindai QR code dan login.</p>
+    <header>
+        <div class="nav-container">
+            <a class="brand" href="#beranda" aria-label="Pegiat Medsos">
+                <span>PM</span>
+                Pegiat Medsos
+            </a>
+            <nav aria-label="Navigasi utama">
+                <ul>
+                    <li><a href="#fitur">Fitur</a></li>
+                    <li><a href="#testimoni">Testimoni</a></li>
+                    <li><a href="#aksi">Gabung</a></li>
+                </ul>
+            </nav>
+            <a class="btn-primary" href="#aksi">Mulai Sekarang</a>
+        </div>
+    </header>
+
+    <main>
+        <section id="beranda" class="hero">
+            <div class="hero-content">
+                <div class="hero-text">
+                    <h1>Kelola Kampanye Sosial Media dengan Percaya Diri</h1>
+                    <p>Pegiat Medsos membantu komunitas dan organisasi mengoptimalkan jejak digital melalui analitik real-time, koordinasi tim yang mudah, dan strategi konten siap pakai.</p>
+                    <div class="hero-cta">
+                        <a class="btn-primary" href="#aksi">Coba Platform</a>
+                        <a class="btn-outline" href="#fitur">Lihat Fitur</a>
+                        <span>Tanpa kartu kredit. Gratis 14 hari.</span>
+                    </div>
+                </div>
+                <div class="hero-visual" aria-hidden="true">
+                    <div class="hero-stat">
+                        <div>
+                            <strong>120K</strong>
+                            <span>Konten terjadwal per bulan</span>
+                        </div>
+                        <div>
+                            <strong>98%</strong>
+                            <span>Tingkat kepuasan pengguna</span>
+                        </div>
+                    </div>
+                    <div class="hero-stat">
+                        <div>
+                            <strong>24/7</strong>
+                            <span>Dukungan strategis untuk tim Anda</span>
+                        </div>
+                        <div>
+                            <strong>+65%</strong>
+                            <span>Peningkatan engagement rata-rata</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="fitur" class="features" aria-labelledby="fitur-heading">
+            <div class="section-heading">
+                <h2 id="fitur-heading">Solusi Lengkap untuk Aktivasi Digital</h2>
+                <p>Dari monitoring hingga publikasi, semua alat yang Anda butuhkan hadir dalam satu dashboard terpadu.</p>
+            </div>
+            <div class="feature-grid">
+                <article class="feature-card">
+                    <div class="feature-icon" aria-hidden="true">📊</div>
+                    <h3>Analitik Interaktif</h3>
+                    <p>Pantau performa kampanye dengan laporan mendalam, insight sentimen, dan rekomendasi otomatis berbasis AI.</p>
+                </article>
+                <article class="feature-card">
+                    <div class="feature-icon" aria-hidden="true">🤝</div>
+                    <h3>Kolaborasi Tim</h3>
+                    <p>Atur peran, persetujuan konten, dan kalender editorial sehingga setiap anggota bergerak sinkron.</p>
+                </article>
+                <article class="feature-card">
+                    <div class="feature-icon" aria-hidden="true">⚡</div>
+                    <h3>Otomasi Publikasi</h3>
+                    <p>Jadwalkan konten multi-platform dalam sekali klik dan optimalkan waktu posting terbaik secara otomatis.</p>
+                </article>
+                <article class="feature-card">
+                    <div class="feature-icon" aria-hidden="true">🛡️</div>
+                    <h3>Keamanan Terpercaya</h3>
+                    <p>Proteksi akun dengan autentikasi berlapis, audit trail, dan standar enkripsi kelas dunia.</p>
+                </article>
+                <article class="feature-card">
+                    <div class="feature-icon" aria-hidden="true">🎯</div>
+                    <h3>Strategi Tepat Sasaran</h3>
+                    <p>Dapatkan rekomendasi konten berdasarkan audiens target Anda dan insight tren sosial terbaru.</p>
+                </article>
+                <article class="feature-card">
+                    <div class="feature-icon" aria-hidden="true">📱</div>
+                    <h3>Akses Dimana Saja</h3>
+                    <p>Gunakan aplikasi mobile maupun web untuk memonitor kampanye saat bepergian.</p>
+                </article>
+            </div>
+        </section>
+
+        <section id="testimoni" class="testimonials" aria-labelledby="testimoni-heading">
+            <div class="section-heading">
+                <h2 id="testimoni-heading">Dibuktikan oleh Komunitas Digital</h2>
+                <p>Lembaga, komunitas, hingga brand sosial mempercayai Pegiat Medsos untuk memperluas dampak mereka.</p>
+            </div>
+            <div class="testimonial-grid">
+                <article class="testimonial-card">
+                    <div class="testimonial-header">
+                        <div class="avatar" aria-hidden="true">AR</div>
+                        <div>
+                            <strong>Amelia Rahma</strong>
+                            <span>Manager Komunitas, BeraniBerbagi</span>
+                        </div>
+                    </div>
+                    <p>"Platform ini memudahkan kami mengelola banyak kanal sekaligus. Insight-nya tajam dan membantu kami merancang konten lebih relevan."</p>
+                </article>
+                <article class="testimonial-card">
+                    <div class="testimonial-header">
+                        <div class="avatar" aria-hidden="true">DT</div>
+                        <div>
+                            <strong>Damar Triyoga</strong>
+                            <span>Kepala Kampanye, SatwaLestari</span>
+                        </div>
+                    </div>
+                    <p>"Kami bisa merespons isu hangat lebih cepat berkat monitoring real-time. Tim dukungan Pegiat Medsos juga sangat responsif."</p>
+                </article>
+                <article class="testimonial-card">
+                    <div class="testimonial-header">
+                        <div class="avatar" aria-hidden="true">NL</div>
+                        <div>
+                            <strong>Nabila Lazuardi</strong>
+                            <span>Koordinator Program, LiterasiCerdas</span>
+                        </div>
+                    </div>
+                    <p>"Kolaborasi antar relawan kini lebih terstruktur. Setiap unggahan melewati alur persetujuan yang jelas dan minim revisi."</p>
+                </article>
+            </div>
+        </section>
+
+        <section id="aksi" class="cta-section" aria-labelledby="cta-heading">
+            <div class="cta-box">
+                <div>
+                    <h2 id="cta-heading">Siap Naikkan Jangkauan Kampanye Anda?</h2>
+                    <p>Bergabunglah dengan ribuan pegiat sosial media yang memperluas dampak positifnya bersama platform kami.</p>
+                </div>
+                <div class="cta-actions">
+                    <a class="btn-primary" href="mailto:halo@pegiatmedsos.id">Hubungi Tim Kami</a>
+                    <a class="btn-outline" href="#beranda">Pelajari Lebih Lanjut</a>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="footer-content">
+            <span>&copy; 2024 Pegiat Medsos. Seluruh hak cipta dilindungi.</span>
+            <span>Ikuti kami di berbagai platform sosial media untuk mendapatkan inspirasi kampanye terbaru.</span>
+        </div>
+    </footer>
 </body>
 </html>

@@ -13,6 +13,12 @@ several activities:
   and host a bottom navigation bar
 - `ReportActivity` for viewing repost links
 
+The Express development backend that ships with the project exposes
+`/api/link-reports` and `/api/link-reports-khusus`. Both endpoints accept optional
+`shortcode` and `user_id` query parameters to return at most one matching record,
+which allows the Android client to load any existing submission without
+retrieving the full dataset.
+
 The project uses Gradle Kotlin DSL. To build the project you would typically run:
 
 ```bash

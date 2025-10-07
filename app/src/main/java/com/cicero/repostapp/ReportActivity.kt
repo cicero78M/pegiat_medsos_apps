@@ -233,22 +233,30 @@ class ReportActivity : AppCompatActivity() {
 
     private suspend fun getExistingReport(sc: String): JSONObject? {
         if (token.isBlank()) return null
+        val baseUrl = "${BuildConfig.API_BASE_URL}/api/link-reports${if (isSpecial) "-khusus" else ""}"
+        val httpUrl = baseUrl.toHttpUrlOrNull()?.newBuilder()?.apply {
+            addQueryParameter("shortcode", sc)
+            addQueryParameter("user_id", userId)
+        }?.build() ?: return null
         val req = Request.Builder()
-            .url("${BuildConfig.API_BASE_URL}/api/link-reports${if (isSpecial) "-khusus" else ""}")
+            .url(httpUrl)
             .header("Authorization", "Bearer $token")
             .build()
         return try {
             httpClient.newCall(req).execute().use { resp ->
                 if (!resp.isSuccessful) return null
                 val body = resp.body?.string()
-                val arr = try {
-                    JSONObject(body ?: "{}").optJSONArray("data") ?: JSONArray()
-                } catch (_: Exception) { JSONArray() }
-                for (i in 0 until arr.length()) {
-                    val o = arr.optJSONObject(i) ?: continue
-                    if (o.optString("shortcode") == sc && o.optString("user_id") == userId) {
-                        return o
-                    }
+                val firstObj = try {
+                    val arr = JSONObject(body ?: "{}").optJSONArray("data")
+                    arr?.optJSONObject(0)
+                } catch (_: Exception) {
+                    null
+                }
+                if (firstObj != null &&
+                    firstObj.optString("shortcode") == sc &&
+                    firstObj.optString("user_id") == userId
+                ) {
+                    return firstObj
                 }
                 null
             }

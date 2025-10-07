@@ -47,14 +47,33 @@ const collectDuplicates = (reports, requestedLinks) => {
 
 const getCollection = (isSpecial) => (isSpecial ? linkReportsStore.special : linkReportsStore.regular);
 
+const readSingleQueryParam = (value) => {
+  if (value === undefined || value === null) return '';
+  const raw = Array.isArray(value) ? value[0] : value;
+  return typeof raw === 'string' ? raw.trim() : String(raw).trim();
+};
+
 const handleGetLinkReports = (isSpecial) => (req, res) => {
   const collection = getCollection(isSpecial);
   const requestedLinks = parseRequestedLinks(req.query);
+  const shortcodeFilter = readSingleQueryParam(req.query.shortcode);
+  const userIdFilter = readSingleQueryParam(req.query.user_id);
+
+  let filteredData = collection;
+  if (shortcodeFilter || userIdFilter) {
+    const match = collection.find((report) => {
+      if (shortcodeFilter && report.shortcode !== shortcodeFilter) return false;
+      if (userIdFilter && report.user_id !== userIdFilter) return false;
+      return true;
+    });
+    filteredData = match ? [match] : [];
+  }
+
   if (requestedLinks.length) {
     const duplicates = collectDuplicates(collection, requestedLinks);
-    return res.json({ data: collection, duplicates });
+    return res.json({ data: filteredData, duplicates });
   }
-  res.json({ data: collection });
+  res.json({ data: filteredData });
 };
 
 const handlePostLinkReports = (isSpecial) => (req, res) => {

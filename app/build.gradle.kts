@@ -68,6 +68,10 @@ kotlin {
     jvmToolchain(17)
 }
 
+configurations.all {
+    exclude(group = "com.google.errorprone", module = "error_prone_annotations")
+}
+
 dependencies {
     implementation("androidx.core:core-ktx:1.13.1")
     implementation("androidx.appcompat:appcompat:1.6.1")
